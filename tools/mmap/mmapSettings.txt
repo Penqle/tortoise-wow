@@ -1,0 +1,4 @@
+# MapID, agentMaxClimbModelTerrainTransition, agentMaxClimbTerrain, WalkableSlopeAngle, bIncludeLimitsOnRasterizeTriangles
+# Default:
+# 0, 1.2, 1.8, 75, 0
+189, 1.2, 1.8, 75, 1

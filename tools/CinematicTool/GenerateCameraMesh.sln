@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34309.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenerateCameraMesh", "GenerateCameraMesh.vcxproj", "{C4E8FCFF-5A5A-4175-99A3-EA28333861E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C4E8FCFF-5A5A-4175-99A3-EA28333861E3}.Debug|x86.ActiveCfg = Debug|Win32
+		{C4E8FCFF-5A5A-4175-99A3-EA28333861E3}.Debug|x86.Build.0 = Debug|Win32
+		{C4E8FCFF-5A5A-4175-99A3-EA28333861E3}.Release|x86.ActiveCfg = Release|Win32
+		{C4E8FCFF-5A5A-4175-99A3-EA28333861E3}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {00BFDACE-46A5-413F-B9D6-04DFEAC6D1D5}
+	EndGlobalSection
+EndGlobal

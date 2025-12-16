@@ -1,0 +1,37 @@
+
+-- Changes by SHANG
+REPLACE INTO `creature` VALUES (2575745,61390,0,0,0,815,-1129.85,2248.39,183.12,2.88415,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2575745;
+DELETE FROM creature_addon WHERE guid=2575745;
+DELETE FROM creature_movement WHERE id=2575745;
+DELETE FROM game_event_creature WHERE guid=2575745;
+DELETE FROM game_event_creature_data WHERE guid=2575745;
+DELETE FROM creature_battleground WHERE guid=2575745;
+REPLACE INTO `creature` VALUES (2575746,61391,0,0,0,815,-1134.36,2249.58,183.474,2.88415,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2575746;
+DELETE FROM creature_addon WHERE guid=2575746;
+DELETE FROM creature_movement WHERE id=2575746;
+DELETE FROM game_event_creature WHERE guid=2575746;
+DELETE FROM game_event_creature_data WHERE guid=2575746;
+DELETE FROM creature_battleground WHERE guid=2575746;
+REPLACE INTO `creature` VALUES (2575747,61364,0,0,0,815,-1134.4,2249.59,183.473,2.88415,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2575747;
+DELETE FROM creature_addon WHERE guid=2575747;
+DELETE FROM creature_movement WHERE id=2575747;
+DELETE FROM game_event_creature WHERE guid=2575747;
+DELETE FROM game_event_creature_data WHERE guid=2575747;
+DELETE FROM creature_battleground WHERE guid=2575747;
+REPLACE INTO `creature` VALUES (2575748,61363,0,0,0,815,-1131.82,2248.91,183.295,2.88415,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2575748;
+DELETE FROM creature_addon WHERE guid=2575748;
+DELETE FROM creature_movement WHERE id=2575748;
+DELETE FROM game_event_creature WHERE guid=2575748;
+DELETE FROM game_event_creature_data WHERE guid=2575748;
+DELETE FROM creature_battleground WHERE guid=2575748;
+REPLACE INTO `creature` VALUES (2575749,61365,0,0,0,815,-1130.25,2248.5,183.14,2.88415,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2575749;
+DELETE FROM creature_addon WHERE guid=2575749;
+DELETE FROM creature_movement WHERE id=2575749;
+DELETE FROM game_event_creature WHERE guid=2575749;
+DELETE FROM game_event_creature_data WHERE guid=2575749;
+DELETE FROM creature_battleground WHERE guid=2575749;

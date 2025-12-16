@@ -1,0 +1,4 @@
+UPDATE quest_template SET
+Details = 'I don''t envy you right now, kid. See, those weird vultures aren''t the worst thing in the woods. Some of the other bruisers were havin'' a look around, and they found a tomb that looks like it''s from Uldaman for how old it is.$B$BTried to get close, but they heard some kind of unholy sound coming from inside. These guys have been around for some of the boss''s "persuasive" interviews before, and they''ve never heard sounds like that. Said it echoed around the hills all unnatural-like, as if it was bouncin'' off trees that weren''t there.$B$BI''ll fight elves. I''ll fight plant monsters. I''ll fight our own blasted tanks! But I am not messing with some ancient cursed tomb. I want you to go down there, find out what''s behind those doors, and deal with it. Do that for me, and you and me are chums for life. There may even be a promotion in your future.',
+ObjectiveText1 = 'Breach the locked crypt.'
+WHERE entry = 80107;

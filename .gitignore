@@ -1,0 +1,6 @@
+/samples/
+/data/
+/build/
+/.vscode/
+*.kate-swp
+*.exe

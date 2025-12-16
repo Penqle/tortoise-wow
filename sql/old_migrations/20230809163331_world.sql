@@ -1,0 +1,31 @@
+
+-- Changes by VOJI
+REPLACE INTO `creature` VALUES (2578641,61235,0,0,0,0,4048.89,-2747.49,2.45117,2.71623,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2578641;
+DELETE FROM creature_addon WHERE guid=2578641;
+DELETE FROM creature_movement WHERE id=2578641;
+DELETE FROM game_event_creature WHERE guid=2578641;
+DELETE FROM game_event_creature_data WHERE guid=2578641;
+DELETE FROM creature_battleground WHERE guid=2578641;
+REPLACE INTO `creature` VALUES (2578642,80241,0,0,0,0,4121.42,-2727.45,4.36262,3.87077,120,120,5,100,100,1,0,0);
+DELETE FROM creature WHERE guid=2578642;
+DELETE FROM creature_addon WHERE guid=2578642;
+DELETE FROM creature_movement WHERE id=2578642;
+DELETE FROM game_event_creature WHERE guid=2578642;
+DELETE FROM game_event_creature_data WHERE guid=2578642;
+DELETE FROM creature_battleground WHERE guid=2578642;
+REPLACE INTO `creature` VALUES (2578643,80241,0,0,0,0,4058.57,-2752.73,1.15244,2.94792,120,120,5,100,100,1,0,0);
+DELETE FROM creature WHERE guid=2578643;
+DELETE FROM creature_addon WHERE guid=2578643;
+DELETE FROM creature_movement WHERE id=2578643;
+DELETE FROM game_event_creature WHERE guid=2578643;
+DELETE FROM game_event_creature_data WHERE guid=2578643;
+DELETE FROM creature_battleground WHERE guid=2578643;
+REPLACE INTO `creature` VALUES (2578644,80241,0,0,0,0,4045.6,-2748.39,2.78414,2.87331,120,120,5,100,100,1,0,0);
+REPLACE INTO `creature` VALUES (2578644,80241,0,0,0,0,4045.6,-2748.39,2.78414,2.87331,300,300,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2578644;
+DELETE FROM creature_addon WHERE guid=2578644;
+DELETE FROM creature_movement WHERE id=2578644;
+DELETE FROM game_event_creature WHERE guid=2578644;
+DELETE FROM game_event_creature_data WHERE guid=2578644;
+DELETE FROM creature_battleground WHERE guid=2578644;

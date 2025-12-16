@@ -1,0 +1,2 @@
+-- Reduce resistances of AQ mobs that had 75 resists to 15.
+UPDATE `creature_template` SET `fire_res`=15, `nature_res`=15, `frost_res`=15, `shadow_res`=15, `arcane_res`=15 WHERE `entry` IN (15229, 15230, 15233, 15235, 15236, 15240, 15246, 15247, 15249, 15250, 15252, 15262, 15263, 15264, 15275, 15276, 15277, 15299, 15300, 15311, 15312, 15316, 15317, 15509, 15510, 15511, 15516, 15543, 15544, 15727);

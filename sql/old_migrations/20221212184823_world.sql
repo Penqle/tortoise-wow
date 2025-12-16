@@ -1,0 +1,12 @@
+
+-- Changes by SHANG
+REPLACE INTO `creature` VALUES (2573895,50037,0,0,0,1,-8833.14,-6880.69,12.3799,5.67832,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2573895;
+DELETE FROM creature_addon WHERE guid=2573895;
+DELETE FROM creature_movement WHERE id=2573895;
+DELETE FROM game_event_creature WHERE guid=2573895;
+DELETE FROM game_event_creature_data WHERE guid=2573895;
+DELETE FROM creature_battleground WHERE guid=2573895;
+REPLACE INTO `creature` VALUES (2573896,61163,0,0,0,1,4305.6,-3919.18,938.674,0.206934,120,120,0,100,100,0,0,0);
+REPLACE INTO `creature` VALUES (2573896,61163,0,0,0,1,4305.6,-3919.18,938.674,0.206934,300,300,15,100,100,1,0,0);
+UPDATE creature SET position_x = '4296.381836', position_y = '-3939.050781', position_z = '935.233521', orientation = '3.973702' WHERE guid = '2573896';

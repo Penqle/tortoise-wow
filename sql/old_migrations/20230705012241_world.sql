@@ -1,0 +1,10 @@
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 19299;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 23161;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 5265;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 18300;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 4600;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 17405;
+UPDATE npc_vendor_template SET incrtime = 0 WHERE entry = 50534 and item = 19300;
+UPDATE npc_vendor_template SET incrtime = 3600 WHERE entry = 50534 and item = 23176;
+UPDATE creature_template SET type = 1 WHERE entry = 60632;
+UPDATE quest_template SET Title = 'Gusting Vortexes', Details = 'This desert holds many secrets and magical properties, much of which is buried deep within the sand. Leaking emanations have begun to stir up the ground into swirling elementals of sand and wind!$B$BAt least, that is what I am here to look into anyway!$B$BTo get concrete proof I\'d like you to find one of the many Gusting Vortex that roam all across Tanaris, kill them, and collect a single collection of Harmonized Sand.$B$BI warn you, Harmonized Sand is rare, and valueable, many brave travelers have died in search of it.$B$BNot all of the Gusting Vortex elementals will be within a harmonized state, so don\'t give up, and keep looking until you find it!' WHERE entry = 40592;

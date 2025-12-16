@@ -1,0 +1,3 @@
+UPDATE quest_template SET
+Details = 'Hey there! You wouldn''t mind lending a hand, would you? We conduct all sorts of research here in Everlook, and where there''s research, there''s coin to be earned. I had this side gig going on with a shipment from Tel''Abim for a while now, but I haven''t heard diddly-nothing, and I got a client that''s been waiting around.$B$BYou mind being the third party here and clearing up this issue for me? I''ll toss in some complimentary food or drink on the house. All I need you to do is head to Tel''Abim far to the south of here, and find some of those angry rock elemental types. They contain Heavy Earthen Cores and it''s those I need, eight of ''em.$B$BMake it lickety-split.'
+WHERE entry = 40788;

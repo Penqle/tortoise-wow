@@ -1,0 +1,2 @@
+-- Adjust invisible wall position.
+REPLACE INTO `gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecsmin`, `spawntimesecsmax`, `animprogress`, `state`, `spawn_flags`, `visibility_mod`) VALUES (90086, 180322, 30, 528.156, 37.5008, 54.5377, 6.11506, 0, 0, 0.0839626, -0.996469, 300, 300, 100, 1, 0, 0);

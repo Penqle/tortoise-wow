@@ -1,0 +1,1 @@
+UPDATE quest_template SET RewItemId1 = 23083, RewItemCount1 = 1, RewItemId2 = 23247, RewItemCount2 = 10, PrevQuestId = 0, RewMoneyMaxLevel = 2970, RewXP = 4950, ObjectiveText1 = 'Flame of Dire Maul', ObjectiveText2 = 'Flame of Blackrock Spire', ObjectiveText3 = 'Flame of Stratholme', ObjectiveText4 = 'Flame of the Scholomance' WHERE entry IN (9319, 9386);

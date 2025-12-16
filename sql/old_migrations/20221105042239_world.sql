@@ -1,0 +1,7 @@
+INSERT IGNORE INTO `spell_group` VALUES (2001, 0, 3034);
+INSERT IGNORE INTO `spell_group` VALUES (2001, 1, 14279);
+INSERT IGNORE INTO `spell_group` VALUES (2001, 2, 14280);
+
+INSERT IGNORE INTO `spell_group_stack_rules` VALUES(2001, 1);
+
+

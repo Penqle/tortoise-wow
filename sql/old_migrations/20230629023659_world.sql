@@ -1,0 +1,2 @@
+UPDATE spell_template SET effectBonusCoefficient1 = 0.161 WHERE entry in (15237, 15430, 15431, 27799, 27800, 27801);
+UPDATE spell_template SET effectBonusCoefficient1 = 0.857 WHERE entry in (14914, 15262, 15263, 15264, 15265, 15266, 15267, 15261);

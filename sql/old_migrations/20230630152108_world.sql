@@ -1,0 +1,1 @@
+UPDATE quest_template SET Objectives = 'Gather 12 Mosshide Gnoll Armbands from the nearby Mosshide Gnolls for Gowlfang near the Greenbelt in Wetlands.' WHERE entry = 40679;

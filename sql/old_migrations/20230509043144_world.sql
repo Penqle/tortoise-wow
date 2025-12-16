@@ -1,0 +1,2 @@
+UPDATE quest_template SET RequestItemsText = 'Sometimes I get so bored out here in Tarren Mill I like to open up the formaldehyde jar and let the lovely aroma waft through the air. Makes Umpi a little nervous though.$B$BSo were you able to get a keg from the Dwarves? I swear if I have to stare at this deadly elixir without using it on someone for another day I am going to scream.' WHERE entry = 517;
+UPDATE quest_template SET OfferRewardText = 'You rest the tainted keg on the dusty rug.' WHERE entry = 524;

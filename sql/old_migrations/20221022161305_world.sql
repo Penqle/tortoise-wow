@@ -1,0 +1,9 @@
+UPDATE `quest_template` SET `Details` = 'I have another task for you, $N. While you\'re hunting Sharptusk, look for any signs of battle plans.\n\nIt would give us a strategic advantage over them. If they are planning to attack us, then we best be ready for when they do.\n\nIf I had to guess, they would probably hide it in a safe location like a Cave.\n\nKill whoever is defending the plans and bring me their mane as proof.', `Objectives` = 'Brave Windfeather has asked you to kill and bring the mane of whoever is protecting the battle plans.\n\nThen look around for the attack plans.' WHERE `entry` = 60115;
+
+UPDATE `quest_template` SET `OfferRewardText` = 'What is this? \"Squealer\" was planning to attack us?\n\nI shall inform Chief Hawkwind immediately!\n\nYour actions speak highly of your dedication to protect our tribe.\n\nEarthmother guide your path, $N.' WHERE `entry` = 60115;
+
+-- Fixes https://github.com/slowtorta/turtlewow-bug-tracker/issues/2326
+
+UPDATE `quest_template` SET `Details` = 'I’d love to take a peek through those again, I was sure they were lost!\n\nThalestien was such an awe-inspiring engineer. So many exciting stories about people and their crafts.\n\nHave you ever heard of Brymidaine Zecker?\n\nA trickster dwarf, that is what he was! Many believed he was the greatest dwarven mage of all time, but rumors say that his magic was no magic at all.\n\nBut the benefit of Engineering and Technology! Look at me babbling, Nel\'doriel surely awaits these notes.\n\nOh well, do tell Nor’diel I’ll visit soon, maybe even help with his Golem!' WHERE `entry` = 40517;
+
+UPDATE `quest_template` SET `OfferRewardText` = 'You return with the notes! Much appreciated, friend.\n\nNow I can finally start working on this thing again. I\'m glad Masey would like to help me because this is meant to be a gift for Princess Moira, her own personal bodyguard!\n\nHere, this is for you.' WHERE `entry` = 40517;

@@ -1,0 +1,2 @@
+-- Blocked "Mithril Deposit" in Western Plaguelands (35.80) has been moved to a nearby place. https://turtle-wow.org/bug-report?id=6525
+update gameobject set position_x = 1122.92, position_y = -1057.97, position_z = 96.7667 where guid = 7146;

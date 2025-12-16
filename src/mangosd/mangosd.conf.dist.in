@@ -1,0 +1,2128 @@
+# Turtle WoW configuration file
+
+[MangosdConf]
+ConfVersion=2010100901
+
+# RealmID. RealmID must match the realmlist inside the realmd database.
+
+RealmID = 1
+
+# DataDir. Data directory setting.
+
+DataDir = "../data"
+
+# LogsDir. Logs directory setting. Important: Logs dir must exists, or all logs need to be disabled
+
+LogsDir = "../logs"
+
+# HonorDir. Folder to store HCR files. These are logs of weekly honor calculation.
+
+HonorDir = "../honor"
+
+# PDumpDir. Folder to store pdump files.
+
+PDumpDir = "../pdump"
+
+# AutoPDump.MinCharLevel. Minimum level to backup character.
+
+AutoPDump.MinCharLevel = 30
+
+# AutoPDump.DeleteAfterDays. Automatically delete pdumps older than this many days.
+
+AutoPDump.DeleteAfterDays = 60
+
+# HardcoreModeLogFile. HardcoreModeLogFile name.
+
+HardcoreModeLogFile = "hardcore.log"
+
+# Database.Info. Database connection settings for the world server.
+
+LoginDatabase.Info = "127.0.0.1;3306;mangos;mangos;tw_logon"
+WorldDatabase.Info = "127.0.0.1;3306;mangos;mangos;tw_world"
+CharacterDatabase.Info = "127.0.0.1;3306;mangos;mangos;tw_chars"
+LogsDatabase.Info = "127.0.0.1;3306;mangos;mangos;tw_logs"
+
+# DB Auto-updater
+
+Database.AutoUpdate.Enabled = 1
+Database.AutoUpdate.Path = "../../sql/"
+Database.AutoUpdate.AuthUpdateName = "unused"
+Database.AutoUpdate.CharUpdateName = "unused"
+Database.AutoUpdate.WorldUpdateName = "database_updates"
+
+# Automatically committing world changes to github. Set to 0 to disable.
+
+AutoCommit.Minutes = 0
+
+# Database.Connections. Amount of connections to database which will be used for SELECT queries. Maximum 16 connections per database.
+
+LoginDatabase.Connections = 4
+WorldDatabase.Connections = 1
+CharacterDatabase.Connections = 6
+LogsDatabase.Connections = 2
+
+# Database.WorkerThreads. Amount of async threads (with dedicated connection) which will be used for async SELECT, executes, and transactions.
+
+LoginDatabase.WorkerThreads = 2
+WorldDatabase.WorkerThreads = 1
+CharacterDatabase.WorkerThreads = 4
+LogsDatabase.WorkerThreads = 6
+
+# MaxPingTime. Settings for maximum database-ping interval.
+
+MaxPingTime = 30
+
+# WorldServerPort. Port on which the server will listen.
+
+WorldServerPort = 8090
+
+# BindIP. This option is useful for running multiple worldd/realmd instances on different IP addresses using default ports.
+
+BindIP = "0.0.0.0"
+
+# HttpApi.Enable - Enables or disables http api used for character transfers
+
+HttpApi.Enable = 0
+
+# UseProcessors. Used processors mask for multi-processors system. (Used only at Windows)
+
+UseProcessors = 0
+
+# ProcessPriority. Process priority setting. (Used only at Windows)
+
+ProcessPriority = 1
+
+# Compression. Compression level for update packages sent to client. (1-9)
+
+Compression = 1
+
+# PlayerLimit. Initial realm capacity. (Excluding Mods, GMs and Admins)
+
+PlayerLimit = 0
+
+# PlayerHardLimit. Maximum number of players in the world, after increasing PlayerLimit with LoginPerTick.
+
+PlayerHardLimit = 4000
+
+# LoginVIPQueue. Enable (1) or Disable (0) checks that allow skipping the queue.
+
+LoginVIPQueue = 0
+
+# LoginVIPQueueLevelThreshold. All accounts with characters above or equal to this level will skip the queue.
+
+LoginVIPQueueLevelThreshold = 55
+
+# LoginQueue.GracePeriodSecs. How many seconds after last logout can we login and skip the queue.
+
+LoginQueue.GracePeriodSecs = 300
+
+# LoginPerTick. Maximum number of players allowed to login from the queue during a world update tick. (~ Every 100 ms)
+
+LoginPerTick = 8
+
+# CharacterScreenMaxIdleTime. Number of seconds to allow for players to remain on the character screen before disconnecting.
+
+CharacterScreenMaxIdleTime = 900
+
+# SaveRespawnTimeImmediately. Save respawn time for creatures at death and for gameobjects at use.
+
+SaveRespawnTimeImmediately = 1
+
+# MaxOverspeedPings. Maximum overspeed ping count before player kick.
+
+MaxOverspeedPings = 15
+
+# AutoRestart.MaxServerUptime. Schedule a restart if server has been up for this many seconds.
+
+AutoRestart.MaxServerUptime = 259200
+AutoRestart.HourMin = 4
+AutoRestart.HourMax = 6
+
+# GridUnload. Unload grids. (If you have lot memory you can disable it to speed up player move to new grids second time)
+
+GridUnload = 0
+
+# CleanupTerrain. Enable / Disable CleanupTerrain.
+
+CleanupTerrain = 1
+
+# GridCleanUpDelay. Grid clean up delay.
+
+GridCleanUpDelay = 300000
+
+# MapUpdateInterval. Map update interval.
+
+MapUpdateInterval = 50
+
+# ChangeWeatherInterval. Weather update interval.
+
+ChangeWeatherInterval = 1200000
+
+# PlayerSave.Interval. Player save interval.
+
+PlayerSave.Interval = 60000
+
+# PlayerSave.Stats.MinLevel. Minimum level for saving character stats for external usage in database.
+
+PlayerSave.Stats.MinLevel = 0
+
+# PlayerSave.Stats.SaveOnlyOnLogout. Enable/Disable saving of character stats only on logout.
+
+PlayerSave.Stats.SaveOnlyOnLogout = 1
+
+# Terrain.Preload.Continents
+# Terrain.Preload.Instances
+# Enable/Disable to load all terrain data on server startup.
+# Recommended value: 1. Else, can cause crashes if 'MapUpdate.Threads' > 1
+
+Terrain.Preload.Continents = 0
+Terrain.Preload.Instances  = 0
+
+# vmap.enableLOS | vmap.enableHeight. Enable/Disable VMaps support for line of sight and height calculation.
+
+vmap.enableLOS = 1
+vmap.enableHeight = 1
+
+# vmap.ignoreSpellIds. These spells are ignored for LoS calculation. (List of ids with delimiter ',')
+
+vmap.ignoreSpellIds = "7720"
+
+# vmap.enableIndoorCheck. Enable / Disable VMap based indoor check to remove outdoor-only auras.
+
+vmap.enableIndoorCheck = 1
+vmap.petLOS = 1
+
+# mmap.enabled. Enable / Disable pathfinding using mmaps.
+
+mmap.enabled = 1
+
+# Collision.Models.Unload. Free model when no one uses it anymore.
+
+Collision.Models.Unload = 1
+
+# DetectPosCollision. Check final move position, summon position, etc. For visible collision with other objects or walls.
+
+DetectPosCollision = 1
+
+# TargetPosRecalculateRange
+# Max distance from movement target point (+moving unit size) and targeted object (+size)
+# after that new target movement point calculated. Max: melee attack range (5), min: contact range (0.5)
+# More distance let have better performence, less distance let have more sensitive reaction at target move.
+
+TargetPosRecalculateRange = 1.5
+
+# UpdateUptimeInterval. Update realm uptime period for save data in 'uptime' table. (Must be > 0)
+
+UpdateUptimeInterval = 10
+
+# MaxCoreStuckTime
+# Periodically check if the process got freezed, if this is the case force crash after the specified amount of seconds.
+# Must be > 0. Recommended > 10 secs if you use this.
+
+MaxCoreStuckTime = 0
+
+# BanListReloadTimer. Time between 'ip_banned' / 'account_banned' reload. Useful in multi realm cases.
+
+BanListReloadTimer = 5
+
+# AddonChannel
+# Enable / Disable the use of the addon channel through the server.
+# (Some client side addons can stop work correctly with disabled addon channel)
+
+AddonChannel = 1
+
+# CleanCharacterDB. Perform character db cleanups on start up
+
+CleanCharacterDB = 1
+
+# Continents & MapUpdate
+
+Continents.Instanciate = 0
+Continents.InactivePlayers.SkipUpdates = 5
+MapUpdate.ReduceGridActivationDist.Tick = 190
+MapUpdate.IncreaseGridActivationDist.Tick = 130
+MapUpdate.MinGridActivationDistance = 57
+MapUpdate.ReduceVisDist.Tick = 190
+MapUpdate.IncreaseVisDist.Tick = 130
+MapUpdate.MinVisibilityDistance = 55
+
+# MapUpdate.Empty.UpdateTime
+# Maps with no player for more than $UpdateTime (Milliseconds) will no longer be updated.
+
+MapUpdate.Empty.UpdateTime = 60000
+
+# MapUpdate.Instanced.UpdateThreads. Per-map threading.
+
+MapUpdate.Instanced.UpdateThreads = 4
+
+# Per-map subthreads. (Not for instanced maps)
+
+MapUpdate.ObjectsUpdate.MaxThreads = 2
+MapUpdate.ObjectsUpdate.Timeout = 80
+MapUpdate.VisibilityUpdate.MaxThreads = 1
+MapUpdate.VisibilityUpdate.Timeout = 100
+
+# Hardcode multithreading options.
+
+MapUpdate.UpdatePacketsDiff = 40
+MapUpdate.UpdatePlayersDiff = 30
+MapUpdate.UpdateCellsDiff = 40
+
+# MapUpdate.Continents.MTCells.Threads. Number of different cells to update at the sametime.
+
+MapUpdate.Continents.MTCells.Threads = 1
+
+# MapUpdate.Continents.MTCells.SafeDistance.
+# 2 cells wont be updated at the same time if they are at an inferior distance from each other. (Thread race issues)
+
+MapUpdate.Continents.MTCells.SafeDistance = 600
+
+# Continents.MotionUpdate.Threads. Parallelized execution of cells from same map.
+
+Continents.MotionUpdate.Threads = 1
+
+# AsyncTasks.Threads | AsyncQueriesTickTimeout. Number of threads for async tasks. (/who, list AH items ...)
+
+AsyncTasks.Threads = 2
+AsyncQueriesTickTimeout = 15000
+
+# Movement.RelocationVmapsCheckDelay
+# Movement.MaxPointsPerPacket
+# Delayed repositionning checks. (Mounts inside / swimming ...)
+
+Movement.RelocationVmapsCheckDelay = 200
+Movement.MaxPointsPerPacket = 80
+
+# Movement interpolation system - not stable now
+
+Movement.ExtrapolatePlayerPosition = 0
+Movement.ExtrapolatePetPosition = 1
+
+# Anticrash.Options. Flag values: 1 Announce, 2 Save all, 4 Crash instances, 8 Crash continents, Coredump 16.
+
+Anticrash.Options = 24
+
+# Anticrash.Rearm.Timer. Timer between 2 crashes to be protected by anticrash.
+
+Anticrash.Rearm.Timer = 60000
+
+# PvP.AccurateEquipRequirements. Whether to enforce Blizzlike PVP rank requirements to equip PVP gear before patch 1.6.
+
+PvP.AccurateEquipRequirements = 1
+
+# PvP.AccuratePurchaseRequirements. Whether to enforce Blizzlike PVP rank requirements to purchase PVP gear (i.e. lifetime or current rank).
+
+PvP.AccuratePurchaseRequirements = 1
+
+# PvP.AccurateTimeline
+# Whether to enforce accurate PVP timelines. eg. the honour system was not implemented before patch 1.4.
+# If set, players will be unable to gain rank until the appropriate patch.
+
+PvP.AccurateTimeline = 1
+
+# PvP.AccurateRewards. Whether to alter PVP reputation and honorable kill rewards based on patch (changed several times).
+
+PvP.AccurateRewards = 1
+
+# PvP.DishonorableKills. Whether to give dishonorable kills to players who kill civilians.
+
+PvP.DishonorableKills = 1
+
+# PvP.OpenWorldHonorMultiplier. Increased honor gained from kills in open world.
+
+PvP.OpenWorldHonorMultiplier = 1.5
+
+# Progression.ContentPhase. Controls availability of raids and events.
+
+Progression.ContentPhase = 3
+
+# Progression.AccuratePetStatistics. Whether to allow Blizzlike pet statistic (damage, speed, resists) progression.
+
+Progression.RestoreDeletedItems = 1
+
+# Progression.AccurateLFGAvailability. If set, disables the LFG system pre-1.3
+
+Progression.AccuratePetStatistics = 1
+
+# Progression.AccuratePVEEvents
+# Whether to apply progressional changes in PVE events (NOT boss scripts). 
+# These are events which affect quests and other scripted scenes.
+
+Progression.AccurateLFGAvailability = 1
+
+# Progression.AccurateSpellEffects
+# Whether to accurately portray changes in spell effects (eg. Deviate Fish). NOT applicable to effects
+# which change their functionality (eg. spell changed) or values between patches. Only affects
+# spells which had effects added or removed which still exist in the game client.
+
+Progression.AccuratePVEEvents = 1
+
+# Progression.RestoreDeletedItems
+# Whether to automatically restore items which were previously deleted because no item template with
+# this entry existed on that content patch. Players will receive the item in the mail once it has been added to the game.
+
+Progression.AccurateSpellEffects = 1
+
+# Progression.NoRespecPriceDecay
+# If set, the talent respec cost will not decay until patch 1.11 when the monthly reduction was added.
+
+Progression.NoRespecPriceDecay = 1
+
+# Progression.NoQuestXpToGold
+# If set, quest xp gained at max level will not be converted to gold until patch 1.10 when the feature was added.
+
+Progression.NoQuestXpToGold = 1
+
+# Progression.UnlinkedAuctionHouses
+# If set, every auction house is separate until patch 1.9. Does not apply to goblin auction houses.
+
+Progression.UnlinkedAuctionHouses = 1
+
+# DebuffLimit
+# How many debuffs can be present on a target simultaneously
+
+DebuffLimit = 0
+
+# LogSQL
+# Enable logging of GM commands. (All SQL code will be written to a log file)
+# If a new day starts (00:00:00), a new file is created, the old file will not be deleted.
+
+LogSQL = 1
+
+# PidFile. World daemon PID file.
+
+PidFile = "twlive.pid"
+
+# LogLevel. Server console level of logging. 0 = Minimum; 1 = Basic&Error; 2 = Detail; 3 = Full/Debug
+
+LogLevel = 1
+
+# LogTime. Include time in server console output.
+
+LogTime = 0
+
+# LogFile. Logfile name.
+
+LogFile = "server.log"
+
+# LogTimestamp. Logfile with timestamp of server start in name.
+
+LogTimestamp = 1
+
+# LogFileLevel. Server file level of logging. 0 = Minimum; 1 = Error; 2 = Detail; 3 = Full/Debug
+
+LogFileLevel = 1
+
+# HonorLogFile. HonorLogFile name.
+
+HonorLogFile = "honor.log"
+
+# HonorLogTimestamp. HonorLogTimestamp with timestamp of server start in name.
+
+HonorLogTimestamp = 0
+
+# RaidLogFile. RaidLogFile name.
+
+RaidLogFile = "raid.log"
+
+# RaidLogTimestamp. RaidLogTimestamp with timestamp of server start in name.
+
+RaidLogTimestamp = 0
+
+# LogFilter. Log filtes.
+
+LogFilter_TransportMoves = 1
+LogFilter_CreatureMoves = 1
+LogFilter_VisibilityChanges = 1
+LogFilter_DbStrictedCheck = 1
+LogFilter_Honor = 1
+LogFilter_PlayerStats = 0
+LogFilter_SQLText = 0
+LogFilter_PlayerMoves = 0
+LogFilter_PeriodicAffects = 0
+LogFilter_AIAndMovegens = 0
+LogFilter_Damage = 0
+LogFilter_Combat = 0
+LogFilter_SpellCast = 0
+LogFilter_Pathfinding = 0
+LogFilter_Weather = 0
+
+# AnticheatLogFile. Log file for anticheat check results.
+
+AnticheatLogFile = "anticheat.log"
+
+# AnticheatLogTimestamp. Logfile with timestamp of server start in name.
+
+AnticheatLogTimestamp = 0
+
+# WardenLogFile. Log file for warden check results.
+
+WardenLogFile = "warden.log"
+
+# WardenLogTimestamp. Logfile with timestamp of server start in name.
+
+WardenLogTimestamp = 0
+
+# WorldLogFile. Packet logging file for the worldserver.
+
+WorldLogFile = ""
+
+# WorldLogTimestamp. Logfile with timestamp of server start in name.
+
+WorldLogTimestamp = 0
+
+# DBErrorLogFile. Log file of DB errors detected at server run.
+
+DBErrorLogFile = "errors.log"
+
+# DBErrorFixFile. Log file of SQL requests to apply to fix detected database errors.
+
+DBErrorFixFile = ""
+
+# CharLogFile. Character operations logfile name.
+
+CharLogFile = "char.log"
+
+# CharLogTimestamp. Log file with timestamp of server start in name.
+
+CharLogTimestamp = 0
+
+# CharLogDump
+# Write character dump before deleting in Char.log.
+# For restoration, cut character data from log starting from
+# line == START DUMP == to line == END DUMP == (without its) in file and load it using loadpdump command
+
+CharLogDump = 0
+
+# ChatLogEnable. Enable or disable logging of player chat.
+
+ChatLogEnable = 1
+
+# ChatLogFile. Log file for player chat.
+
+ChatLogFile = "chat.log"
+
+# ChatLogTimestamp. Add time stamp to logged chat messages.
+
+ChatLogTimestamp = 0
+
+# BgLogFile. Log file for battlegrounds system.
+
+BgLogFile = "bg.log"
+
+# BgLogTimestamp. Add time stamp to battleground logs.
+
+BgLogTimestamp = 0
+
+# GmLogFile. GM Log file of gm commands.
+
+GmLogFile = "gm.log"
+
+# GmLogTimestamp. GM Logfile with timestamp of server start in name.
+
+GmLogTimestamp = 0
+
+# GmLogPerAccount. GM Logfiles with GM account id. (Note: logs not created if GmLogFile not set).
+
+GmLogPerAccount = 0
+
+# Log file for commands marked as critical, when used on own character. (Same IP for example).
+
+CriticalCommandsLogFile = "gm_critical.log"
+
+# Log file for spam detected by antispam.
+
+ChatSpamLogFile = "chatspam.log"
+
+# Log file for possible exploits for abuse detection.
+
+ExploitsLogFile = ""
+
+# Log file for client traffic.
+
+ClientIdsLogFile = "client.log"
+
+# Log file for loot.
+
+LootsLogFile = "loot.log"
+RareLootsLogFile = "rareloot.log"
+
+# Log file for level ups.
+
+LevelupLogFile = "levelup.log"
+
+# Log file for trades.
+
+LogMoneyTrades = "trades.log"
+LogMoneyTreshold = 10000
+
+# NostalriusLogFile. Log file for various logs.
+
+NostalriusLogFile = "info.log"
+
+# NostalriusLogTimestamp. Nostalrius Logfile with timestamp of server start in name
+
+NostalriusLogTimestamp = 0
+
+# PerformanceLog. Log file for performance.
+
+PerformanceLog.File = "perf.log"
+PerformanceLog.SlowWorldUpdate = 250
+PerformanceLog.SlowMapSystemUpdate = 200
+PerformanceLog.SlowSessionsUpdate = 200
+PerformanceLog.SlowUniqueSessionUpdate = 100
+PerformanceLog.SlowMapUpdate = 200
+PerformanceLog.SlowAsynQueries = 200
+PerformanceLog.SlowPackets = 100
+PerformanceLog.SlowMapPackets = 100
+PerformanceLog.SlowPacketBroadcast = 0
+
+# RaLogFile. Log file of RA commands.
+
+RaLogFile = ""
+
+# LogColors. Color for messages. (Format "normal_color details_color debug_color error_color")
+# Colors: 0 - BLACK, 1 - RED, 2 - GREEN,  3 - BROWN, 4 - BLUE, 5 - MAGENTA, 6 -  CYAN, 7 - GREY,
+# 8 - YELLOW, 9 - LRED, 10 - LGREEN, 11 - LBLUE, 12 - LMAGENTA, 13 - LCYAN, 14 - WHITE
+
+LogColors = ""
+
+# GameType. Server realm style.
+# 0 = NORMAL; 1 = PVP; 4 = NORMAL; 6 = RP; 8 = RPPVP; 16 = FFA_PVP
+
+GameType = 6
+
+# RealmZone. Server realm zone (set allowed alphabet in character names/etc). See also Strict*Names options.
+# Be careful when changing this as it can cause the realm to not be visible on certain clients.
+
+RealmZone = 1
+
+# TimeZoneOffset. Time zone offset in hours.
+
+TimeZoneOffset = 0
+
+# DBC.Locale. DBC Language Settings. 
+# 0 = English; 1 = Korean; 2 = French; 3 = German; 4 = Chinese; 5 = Taiwanese; 6 = Spanish;
+
+DBC.Locale = 255
+
+# LoadLocales. Whether to load the text locale tables.
+
+LoadLocales = 1
+
+# StrictPlayerNames. Limit player name to language specific symbols set, not allow create characters, 
+# and set rename request and disconnect at not allowed symbols name.
+
+StrictPlayerNames = 1
+
+# StrictCharterNames. Limit guild team charter names to language specific symbols set, not allow create characters with not allowed symbols in name.
+
+StrictCharterNames = 1
+
+# StrictPetNames. Limit pet names to language specific symbols set.
+
+StrictPetNames = 1
+
+# MinPlayerName. Minimal name length. (1 - 12).
+
+MinPlayerName = 2
+
+# MinCharterName. Minimal name length. (1 - 24).
+
+MinCharterName = 2
+
+# MinPetName. Minimal name length. (1 - 12).
+
+MinPetName = 2
+
+# CharactersCreatingDisabled. Disable characters creating for specific team or any.
+
+CharactersCreatingDisabled = 0
+
+# CharactersPerAccount. Limit numbers of characters per account.
+
+CharactersPerAccount = 50
+
+# CharactersPerRealm. Limit numbers of characters for account at realm. (The number must be between 1 and 10)
+
+CharactersPerRealm = 10
+
+# SkipCinematics. Disable intro movie at first character's login.
+
+SkipCinematics = 0
+
+# ShowHealthValues. Show real NPC & player health values instead of percentages.
+
+ShowHealthValues = 0
+
+# MaxPlayerLevel. Max level that can be reached by a player for experience. (1 - 255)
+
+MaxPlayerLevel = 60
+
+# StartPlayerLevel. Staring level that have character at creating.
+
+StartPlayerLevel = 1
+
+# StartPlayerMoney. Amount of money that new players will start with. (In copper)
+
+StartPlayerMoney = 0
+
+# MaxHonorPoints. Max honor points that player can have.
+
+MaxHonorPoints = 75000
+
+# StartHonorPoints. Amount of honor that new players will start with.
+
+StartHonorPoints = 0
+
+# MinHonorKills. Min kills that players must obtain to enter in weekly honor calculation.
+
+MinHonorKills = 1
+
+# MaintenanceDay. The day of the week is performed server maintenance.
+
+MaintenanceDay = 3
+
+# InstantLogout. Enable or disable instant logout for security level (0 - 4) or high.
+
+InstantLogout = 1
+
+# AutoHonorRestart. Server will schedule a restart on its own when it's time to perform PvP rank calculations.
+
+AutoHonorRestart = 1
+
+# AllFlightPaths. Players will start with all flight paths.
+
+AllFlightPaths = 0
+
+# AlwaysMaxSkillForLevel. Players will automatically gain max level dependent (weapon/defense) skill when logging in, leveling up etc.
+
+AlwaysMaxSkillForLevel = 0
+
+# ActivateWeather. Activate weather system.
+
+ActivateWeather = 1
+
+# CastUnstuck. Allow cast Unstuck spell at .start or client Help option use.
+
+CastUnstuck = 1
+
+# MaxSpellCastsInChain
+# Max amount triggered spell casts in chain by one caster, prevent stack overflow crash.
+# Too Low value will make some correct triggered casts fail.
+
+MaxSpellCastsInChain = 10
+
+# Instance.IgnoreLevel. Ignore level requirement to enter instance.
+
+Instance.IgnoreLevel = 0
+
+# Instance.IgnoreRaid. Ignore raid requirement to enter instance.
+
+Instance.IgnoreRaid = 0
+
+# Instance.ResetTimeHour. The hour of the day (0-23) when the global instance resets occur.
+
+Instance.ResetTimeHour = 4
+
+# Instance.UnloadDelay. Unload the instance map from memory after some time if no players are inside.
+
+Instance.UnloadDelay = 1800000
+
+# Item.InstantSaveQuality. Save character inventory instantly on receiving item of this quality or higher.
+
+Item.InstantSaveQuality = 4
+
+# Item.PreventDataMining. Forbid querying information about items that have never been obtained.
+
+Item.PreventDataMining = 0
+
+# Quests.LowLevelHideDiff. Level difference wheater to show the quest mark above the NPC or not.
+
+Quests.LowLevelHideDiff = -1
+
+# Quests.HighLevelHideDiff. Level difference wheater to show the quest mark above the NPC or not.
+
+Quests.HighLevelHideDiff = -1
+
+# Quests.IgnoreRaid. Non-raid quests allowed in raids.
+
+Quests.IgnoreRaid = 0
+
+# Group.OfflineLeaderDelay. A grace period for an offline group leader to reconnect before tranfering leadership to a next suitable member of the group.
+
+Group.OfflineLeaderDelay = 300
+
+# Guild.EventLogRecordsCount
+# Count of guild event log records stored in guild_eventlog table.
+# Increase to store more guild events in table.
+# You can set it to very high value to prevent oldest guild events to be rewritten by latest guild events, but it can slow down performance.
+
+Guild.EventLogRecordsCount = 100
+
+# MirrorTimer.Fatigue.Max. Fatigue max timer value (in secs)
+
+MirrorTimer.Fatigue.Max = 0
+
+# MirrorTimer.Breath.Max. Waterbreathing max timer value (in secs)
+
+MirrorTimer.Breath.Max = 60
+
+# MirrorTimer.Environmental.Max. Generic environmental (lava/slime/etc) damage delay max timer value (in secs)
+
+MirrorTimer.Environmental.Max = 1
+
+# EnvironmentalDamage.Min. Generic environmental (lava/slime/etc) damage taken on tick
+
+EnvironmentalDamage.Min = 605
+
+# EnvironmentalDamage.Max. Generic environmental (lava/slime/etc) damage taken on tick
+
+EnvironmentalDamage.Max = 610
+
+# MaxPrimaryTradeSkill. Max count that player can learn the primary trade skill. (Max 10)
+
+MaxPrimaryTradeSkill = 2
+
+# MinPetitionSigns. Min signatures count to creating guild. (0 - 9)
+
+MinPetitionSigns = 9
+
+# MaxGroupXPDistance. Max distance to creature for group memeber to get XP at creature death.
+
+MaxGroupXPDistance = 74
+
+# PasswordChangeRewardItem. Item that will be sent to players when they change password.
+
+PasswordChangeRewardItem = 13342
+
+# MailDeliveryDelay. Mail delivery delay time for item sending.
+
+MailDeliveryDelay = 3600
+
+# MailMaxPerHour. How many mails each account is allowed to send per hour.
+
+MailMaxPerHour = 3
+
+# Mails.COD.ForceTag.MaxLevel
+# Prevent COD scam attempts by adding "COD" prefix to the mail subject.
+# Only affects senders below given level.
+
+Mails.COD.ForceTag.MaxLevel = 61
+
+# MassMailer.SendPerTick. Max amount mail send each tick from mails list scheduled for mass mailer proccesing.
+
+MassMailer.SendPerTick = 10
+
+# PetUnsummonAtMount. Permanent pet will unsummoned at player mount.
+
+PetUnsummonAtMount = 0
+
+# PetDefaultLoyalty. Initial loyalty level for newly tamed pets.
+
+PetDefaultLoyalty = 1
+
+# PlayerCommands. Should player chat be parsed for GM commands.
+
+PlayerCommands = 1
+
+# Event.Announce. Announce game events in everyone's chat.
+
+Event.Announce = 0
+
+# BeepAtStart. Beep at mangosd start finished. (Linux systems)
+
+BeepAtStart = 1
+
+# ShowProgressBars. Control show progress bars for load steps at server startup.
+
+ShowProgressBars = 0
+
+# WaitAtStartupError. After startup error report wait <Enter> or some time before continue.
+
+WaitAtStartupError = 0
+
+# Message of the Day. Displayed at worldlogin for every user ('@' for a newline).
+
+Motd = "Welcome to Turtle WoW! @/join world to connect with the community around you!"
+
+# AllowTwoSide.Accounts. Allow accounts to create characters in both teams in any game type.
+
+AllowTwoSide.Accounts = 1
+
+# AllowTwoSide.Interaction. Allow interaction with the hostiled faction.
+
+AllowTwoSide.Interaction.Chat = 0
+AllowTwoSide.Interaction.Channel = 1
+AllowTwoSide.Interaction.Group = 0
+AllowTwoSide.Interaction.Guild = 1
+AllowTwoSide.Interaction.Trade = 0
+AllowTwoSide.Interaction.Auction = 1
+AllowTwoSide.Interaction.Mail = 0
+
+# AllowTwoSide.WhoList. Allow show player from both team in who list.
+
+AllowTwoSide.WhoList = 1
+
+# AllowTwoSide.AddFriend. Allow adding friends from other team in friend list.
+
+AllowTwoSide.AddFriend = 1
+
+# GM.JoinOppositeFactionChannels. Allow GMs to join both faction channels.
+
+GM.JoinOppositeFactionChannels = 0
+
+#FactionBalance.Enable. Enables or disables below config to check for strict faction balance on active players.
+
+FactionBalance.Enable = 0
+
+# MaxFactionImbalance. Maximum difference between active player count per faction before character creation is disabled.
+
+MaxFactionImbalance = 0.1
+
+# Radius for creature to evade after being pulled away from combat start point.
+# If ThreatRadius is less than creature aggro radius then aggro radius will be used.
+
+ThreatRadius = 100
+
+# MaxCreaturesAttackRadius. Creatures won't search for target farther than this.
+
+MaxCreaturesAttackRadius = 35
+
+# MaxPlayersStealthDetectRange. Players won't search for stealthed units farther than this.
+
+MaxPlayersStealthDetectRange = 40
+
+# MaxCreaturesStealthDetectRange. Creatures won't search for stealthed units farther than this.
+
+MaxCreaturesStealthDetectRange = 10
+
+# MaxCreatureSummonLimit. Game objects (and other creatures) won't be able to summon more creatures than this limit
+
+MaxCreatureSummonLimit = 100
+
+# Rate.Creature.Aggro. Aggro radius percent or off.
+
+Rate.Creature.Aggro = 1
+
+# CreatureFamilyFleeAssistanceRadius. Radius which creature will use to seek for a near creature for assistance. Creature will flee to this creature.
+
+CreatureFamilyFleeAssistanceRadius = 30
+
+# CreatureFamilyAssistanceRadius  Radius which creature will use to call assistance without moving.
+
+CreatureFamilyAssistanceRadius = 10
+
+# CreatureFamilyAssistanceDelay. Reaction time for creature assistance call.
+
+CreatureFamilyAssistanceDelay = 1500
+
+# CreatureFamilyFleeDelay. Time during which creature can flee when no assistant found.
+
+CreatureFamilyFleeDelay = 7000
+
+# WorldBossLevelDiff. Difference for boss dynamic level with target.
+
+WorldBossLevelDiff = 3
+
+# SendLootRollUponReconnect. Send active loot roll windows when a player reconnects.
+
+SendLootRollUponReconnect = 0
+
+# Corpse.EmptyLootShow. If target can have loot or can be skining after loot, but no loot generated still show loot window.
+
+Corpse.EmptyLootShow = 1
+
+# Corpse.Decay. Seconds until creature corpse will decay without being looted or skinned.
+
+Corpse.Decay.NORMAL = 300
+Corpse.Decay.RARE = 900
+Corpse.Decay.ELITE = 600
+Corpse.Decay.RAREELITE = 1200
+Corpse.Decay.WORLDBOSS = 3600
+
+# Rate.Corpse.Decay.Looted. Controls how long the creature corpse stays after it had been looted, as a multiplier of its Corpse.Decay.* config.
+
+Rate.Corpse.Decay.Looted = 0.0
+
+# Rate.Creature. Creature Damage Rates.
+
+Rate.Creature.Normal.Damage = 1
+Rate.Creature.Elite.Elite.Damage = 1
+Rate.Creature.Elite.RAREELITE.Damage = 1
+Rate.Creature.Elite.WORLDBOSS.Damage = 1
+Rate.Creature.Elite.RARE.Damage = 1
+
+# Creature Spell Damage Rates.
+
+Rate.Creature.Normal.SpellDamage = 1
+Rate.Creature.Elite.Elite.SpellDamage = 1
+Rate.Creature.Elite.RAREELITE.SpellDamage = 1
+Rate.Creature.Elite.WORLDBOSS.SpellDamage = 1
+Rate.Creature.Elite.RARE.SpellDamage = 1
+
+# Creature Health Ammount Modifier.
+
+Rate.Creature.Normal.HP = 1
+Rate.Creature.Elite.Elite.HP = 1
+Rate.Creature.Elite.RAREELITE.HP = 1
+Rate.Creature.Elite.WORLDBOSS.HP = 1
+Rate.Creature.Elite.RARE.HP = 1
+
+# ListenRange.Say. Distance a player can listen to "say".
+
+ListenRange.Say = 40
+
+# ListenRange.TextEmote. Distance a player can listen to "emote".
+
+ListenRange.TextEmote = 40
+
+# ListenRange.Yell. Distance a player can listen to "yell".
+
+ListenRange.Yell = 300
+
+# Amount guids reserved for .npc add/.gobject add directly after last used in DB static spawned creature/gameobject guid
+# Commands .npc add/.gobject add can be used only for guids from this reserve and required server restart if all guids
+# from reserve used before above commands can be used in like case. Less size increase amount guids for dynamic spawns
+# in game from other side.
+
+GuidReserveSize.Creature = 1000
+GuidReserveSize.GameObject = 1000
+
+# ChatFakeMessagePreventing
+# Chat protection from creating fake messages using a lot spaces (other invisible symbols),
+# not applied to addon language messages, but can prevent working old addons
+# that use normal languages for sending data to another clients.
+
+ChatFakeMessagePreventing = 1
+
+# ChatStrictLinkChecking.Severity. Check chat messages for ingame links to spells, items, quests, achievements etc.
+
+ChatStrictLinkChecking.Severity = 2
+
+# ChatStrictLinkChecking.Kick. Defines, what should be done if a message is considered to contain invalid pipe commands.
+
+ChatStrictLinkChecking.Kick = 0
+
+# ChatFlood.MessageCount. Chat anti-flood protection, haste message count to activate protection.
+
+ChatFlood.MessageCount = 10
+
+# ChatFlood.MessageDelay. Chat anti-flood protection, minimum message delay to count message.
+
+ChatFlood.MessageDelay = 1
+
+# ChatFlood.MuteTime. Chat anti-flood protection, mute time at activation flood protection.
+
+ChatFlood.MuteTime = 10
+
+# Channel.SilentlyGMJoin. Should Mods or higher be announced if they join a channel.
+
+Channel.SilentlyGMJoin = 1
+
+# Channel.StrictLatinInGeneral. Filter out messages using non-Latin characters in general channels.
+
+Channel.StrictLatinInGeneral = 0
+
+# WorldChan.MinLevel. Minimum level to use world channels.
+
+WorldChan.MinLevel = 1
+
+# Worldchan.Cooldown between messages on world channels.
+
+WorldChan.Cooldown = 0
+WorldChan.CooldownMaxLevel = 0
+WorldChan.CooldownScaling = 0
+
+# WhisperDiffZone.MinLevel. Minimum level to whisper players in other zones.
+
+WhisperDiffZone.MinLevel = 1
+
+# YellMinLevel. Minimum level to /yell in chat.
+
+YellMinLevel = 1;
+
+# Limit yell range based on level.
+
+YellRange.LinearScale.MaxLevel = 0
+YellRange.QuadraticScale.MaxLevel = 0
+
+# ChannelInvite.MinLevel. Minimum level to invite other players into a private channel.
+
+ChannelInvite.MinLevel = 10
+
+# PublicChansMute.BypassLevel. Required character level on account to bypass all chat restrictions.
+
+PublicChansMute.BypassLevel = 20
+
+# WhisperRestriction. Allow players to prevent getting whispered with .wr command.
+
+WhisperRestriction = 0
+
+# SayMinLevel. Minimum level to /say in chat.
+
+SayMinLevel = 1
+
+# SayEmoteMinLevel. Minimum level to /emote in chat.
+
+SayEmoteMinLevel = 1
+
+# Antiflood.Sanction. Sanction applied to a player if sending too many packets.
+
+Antiflood.Sanction = 4
+
+# Warden.WinEnabled. Enables Warden checks for Windows clients.
+
+Warden.WinEnabled = 0
+
+# Warden.OSXEnabled. Enables Warden checks for OSX clients.
+
+Warden.OSXEnabled = 0
+
+# Warden.PlayersOnly. Ignore game master accounts.
+
+Warden.PlayersOnly = 1
+
+# Warden.NumMemChecks. Number of Warden memory checks that are sent to the client each cycle.
+
+Warden.NumMemChecks = 3
+
+# Warden.NumOtherChecks. Number of Warden checks other than memory checks that are added to request each checking cycle.
+
+Warden.NumOtherChecks = 7
+
+# Warden.ClientResponseDelay. Time (in seconds) before client is getting disconnecting for not responding.
+
+Warden.ClientResponseDelay = 120
+
+# Warden.ClientCheckHoldOff
+# Time (in seconds) to wait before sending the next check request to the client.
+# A low number increases traffic and load on client and server side.
+
+Warden.ClientCheckHoldOff = 30
+
+# Warden.DefaultPenalty. Default action being taken if a client check failed. Penalties can be customized per check id in the warden_checks table.
+
+Warden.DefaultPenalty  = 2
+
+# Warden.BanDuration. Time (in seconds) an account will be banned if Penalty is set to ban.
+
+Warden.BanDuration = 0
+
+# Warden.DebugLog. Prints additional information about performed checks.
+
+Warden.DebugLog = 0
+
+# Warden.DBLogLevel. The minimal WardenActions value of Warden check to be logged into realmd.warden_log table.
+
+Warden.DBLogLevel = 0
+
+# Warden.ModuleDir. Directory where warden modules are stored.
+
+Warden.ModuleDir = "warden_modules"
+
+# Anticheat.Enable. Enables player movement checks.
+
+Anticheat.Enable = 0
+
+# Anticheat.PlayersOnly. Ignore game master accounts.
+
+Anticheat.PlayersOnly = 1
+
+# Anticheat.NotifyCheaters. Informs players if they fail a movement check.
+
+Anticheat.NotifyCheaters = 0
+
+# Anticheat.BanDuration. Time (seconds) an account will be banned if Penalty is set to ban.
+
+Anticheat.BanDuration = 86400
+
+# Anticheat.LogData. Save the result of every anticheat tick in the database.
+
+Anticheat.LogData = 0
+
+# Anticheat.MaxAllowedDesync. Client time desynchronization allowed when doing movement interpolation.
+
+Anticheat.MaxAllowedDesync = 0
+
+# Anticheat.ReverseTime.Enable. Check for players whose clock went back in time.
+
+Anticheat.ReverseTime.Enable = 1
+
+# Anticheat.ReverseTime.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.ReverseTime.Threshold = 1
+
+# Anticheat.ReverseTime.Penalty. Action to take upon failing this check.
+
+Anticheat.ReverseTime.Penalty = 7
+
+# Anticheat.NullTime.Enable. Check for players sending a null timestamp.
+
+Anticheat.NullTime.Enable = 1
+
+# Anticheat.NullTime.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.NullTime.Threshold = 2
+
+# Anticheat.NullTime.Penalty. Action to take upon failing this check.
+
+Anticheat.NullTime.Penalty = 7
+
+# Anticheat.SkippedHeartbeats.Enable. Check for players missing a heartbeat packet.
+
+Anticheat.SkippedHeartbeats.Enable = 1
+
+# Anticheat.SkippedHeartbeats.Threshold.Tick. Detections needed to trigger a penalty in one tick.
+
+Anticheat.SkippedHeartbeats.Threshold.Tick = 2
+
+# Anticheat.SkippedHeartbeats.Threshold.Total. Detections needed to trigger a penalty total.
+
+Anticheat.SkippedHeartbeats.Total = 11
+
+# Anticheat.SkippedHeartbeats.Penalty. Action to take upon failing this check.
+
+Anticheat.SkippedHeartbeats.Penalty = 7
+
+# Anticheat.TimeDesync.Enable. Check for players that claim more time has passed for them than for the server since last time they moved.
+
+Anticheat.TimeDesync.Enable = 1
+
+# Anticheat.TimeDesync.Threshold. Milliseconds of time difference tolerated.
+
+Anticheat.TimeDesync.Threshold = 10000
+
+# Anticheat.TimeDesync.Penalty. Action to take upon failing this check.
+
+Anticheat.TimeDesync.Penalty = 7
+
+# Anticheat.NumDesyncs.Enable. Check for players that claim more time has passed for them than for the server since last time they moved.
+
+Anticheat.NumDesyncs.Enable = 1
+
+# Anticheat.NumDesyncs.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.NumDesyncs.Threshold = 5
+
+# Anticheat.NumDesyncs.Penalty. Action to take upon failing this check.
+
+Anticheat.NumDesyncs.Penalty = 7
+
+# Anticheat.SpeedHack.Enable. Check for players moving too fast using extrapolation.
+
+Anticheat.SpeedHack.Enable = 1
+
+# Anticheat.OverpspeedDistance.Enable. Check for players that claim to have traveled further than possible.
+
+Anticheat.OverpspeedDistance.Enable = 1
+
+# Anticheat.OverpspeedDistance.Threshold. Yards traveled beyond what we think is possible.
+
+Anticheat.OverpspeedDistance.Threshold = 30
+
+# Anticheat.OverpspeedDistance.Penalty. Action to take upon failing this check.
+
+Anticheat.OverpspeedDistance.Penalty = 7
+
+# Anticheat.OverspeedJump.Enable. Check for players that are moving too fast while jumping.
+
+Anticheat.OverspeedJump.Enable = 1
+
+# Anticheat.OverspeedJump.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.OverspeedJump.Reject = 1
+
+# Anticheat.OverspeedJump.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.OverspeedJump.Threshold = 3
+
+# Anticheat.OverspeedJump.Penalty. Action to take upon failing this check.
+
+Anticheat.OverspeedJump.Penalty = 7
+
+# Anticheat.JumpSpeedChange.Enable. Check for players that change speed while in the middle of a jump.
+
+Anticheat.JumpSpeedChange.Enable = 1
+
+# Anticheat.JumpSpeedChange.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.JumpSpeedChange.Reject = 1
+
+# Anticheat.JumpSpeedChange.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.JumpSpeedChange.Threshold = 3
+
+# Anticheat.JumpSpeedChange.Penalty. Action to take upon failing this check.
+
+Anticheat.JumpSpeedChange.Penalty = 7
+
+# Anticheat.MultiJump.Enable. Check for players jumping while still in the air.
+
+Anticheat.MultiJump.Enable = 1
+
+# Anticheat.MultiJump.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.MultiJump.Reject = 1
+
+# Anticheat.MultiJump.Threshold.Tick. Detections needed to trigger a penalty in one tick.
+
+Anticheat.MultiJump.Threshold.Tick = 2
+
+# Anticheat.MultiJump.Threshold.Total. Detections needed to trigger a penalty total.
+
+Anticheat.MultiJump.Threshold.Total = 10
+
+# Anticheat.MultiJump.Penalty. Action to take upon failing this check.
+
+Anticheat.MultiJump.Penalty = 7
+
+# Anticheat.WallClimb.Enable.  Check for players climbing a surface that is too steep.
+
+Anticheat.WallClimb.Enable = 1
+
+# Anticheat.WallClimb.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.WallClimb.Reject = 1
+
+# Anticheat.WallClimb.Angle. Vertical angle in radians between two points that players are able to climb.
+
+Anticheat.WallClimb.Angle = 1.0
+
+# Anticheat.WallClimb.Threshold.Tick. Detections needed to trigger a penalty in one tick.
+
+Anticheat.WallClimb.Threshold.Tick = 3
+
+# Anticheat.WallClimb.Threshold.Total. Detections needed to trigger a penalty total.
+
+Anticheat.WallClimb.Threshold.Total = 30
+
+# Anticheat.WallClimb.Penalty. Action to take upon failing this check.
+
+Anticheat.WallClimb.Penalty = 7
+
+# Anticheat.Unreachable.Enable. Check for players that are in combat with a creature which can't reach them.
+
+Anticheat.Unreachable.Enable = 1
+
+# Anticheat.Unreachable.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.Unreachable.Threshold = 40
+
+# Anticheat.Unreachable.Penalty. Action to take upon failing this check.
+
+Anticheat.Unreachable.Penalty = 3
+
+# Anticheat.FlyHack.Enable. Check for players that are flying.
+
+Anticheat.FlyHack.Enable = 1
+
+# Anticheat.FlyHack.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.FlyHack.Reject = 1
+
+# Anticheat.FlyHack.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.FlyHack.Threshold = 3
+
+# Anticheat.FlyHack.Penalty. Action to take upon failing this check.
+
+Anticheat.FlyHack.Penalty = 7
+
+# Anticheat.NoFallTime.Enable. Check for players that walking in the air.
+
+Anticheat.NoFallTime.Enable = 1
+
+# Anticheat.NoFallTime.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.NoFallTime.Reject = 1
+
+# Anticheat.NoFallTime.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.NoFallTime.Threshold = 10
+
+# Anticheat.NoFallTime.Penalty. Action to take upon failing this check.
+
+Anticheat.NoFallTime.Penalty = 7
+
+# Anticheat.Teleport.Enable. Check for players teleporting far away from their current position.
+
+Anticheat.Teleport.Enable = 1
+
+# Anticheat.Teleport.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.Teleport.Reject = 1
+
+# Anticheat.Teleport.Distance. Yards that we allow players to travel in one packet. Setting this too low can cause false positives at high speeds.
+
+Anticheat.Teleport.Distance = 40.0
+
+# Anticheat.Teleport.Threshold. ctions needed to trigger a penalty.
+
+Anticheat.Teleport.Threshold = 3
+
+# Anticheat.Teleport.Penalty. Action to take upon failing this check.
+
+Anticheat.Teleport.Penalty = 11
+
+# Anticheat.TeleportToTransport.Enable. Check for players teleporting on a transport.
+
+Anticheat.TeleportToTransport.Enable = 1
+
+# Anticheat.TeleportToTransport.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.TeleportToTransport.Reject = 1
+
+# Anticheat.TeleportToTransport.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.TeleportToTransport.Threshold = 2
+
+# Anticheat.TeleportToTransport.Penalty. Action to take upon failing this check.
+
+Anticheat.TeleportToTransport.Penalty = 7
+
+# Anticheat.FakeTransport.Enable. Check for players claiming they have boarded a non-existent transport.
+
+Anticheat.FakeTransport.Enable = 1
+
+# Anticheat.FakeTransport.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.FakeTransport.Threshold = 1
+
+# Anticheat.FakeTransport.Penalty. Action to take upon failing this check.
+
+Anticheat.FakeTransport.Penalty = 7
+
+# Anticheat.WaterWalk.Enable.  Check for players walking on water without a water walking buff.
+
+Anticheat.WaterWalk.Enable = 1
+
+# Anticheat.WaterWalk.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.WaterWalk.Reject = 1
+
+# Anticheat.WaterWalk.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.WaterWalk.Threshold = 5
+
+# Anticheat.WaterWalk.Penalty. Action to take upon failing this check.
+
+Anticheat.WaterWalk.Penalty = 7
+
+# Anticheat.SlowFall.Enable. Check for players slow falling without a slow fall buff.
+
+Anticheat.SlowFall.Enable = 1
+
+# Anticheat.SlowFall.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.SlowFall.Reject = 1
+
+# Anticheat.SlowFall.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.SlowFall.Threshold = 5
+
+# Anticheat.SlowFall.Penalty. Action to take upon failing this check.
+
+Anticheat.SlowFall.Penalty = 7
+
+# Anticheat.Hover.Enable. Check for players hovering without a hover buff.
+
+Anticheat.Hover.Enable = 1
+
+# Anticheat.Hover.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.Hover.Reject = 1
+
+# Anticheat.Hover.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.Hover.Threshold = 5
+
+# Anticheat.Hover.Penalty. Action to take upon failing this check.
+
+Anticheat.Hover.Penalty = 7
+
+# Anticheat.FixedZ.Enable. Check for players that have a fixed Z axis.
+
+Anticheat.FixedZ.Enable = 1
+
+# Anticheat.FixedZ.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.FixedZ.Reject = 1
+
+# Anticheat.FixedZ.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.FixedZ.Threshold = 5
+
+# Anticheat.FixedZ.Penalty. Action to take upon failing this check.
+
+Anticheat.FixedZ.Penalty = 7
+
+# Anticheat.RootMove.Enable. Check for players that are moving while rooted.
+
+Anticheat.RootMove.Enable = 1
+
+# Anticheat.RootMove.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.RootMove.Reject = 1
+
+# Anticheat.RootMove.Threshold.Tick. Detections needed to trigger a penalty in one tick.
+
+Anticheat.RootMove.Threshold.Tick = 5
+
+# Anticheat.RootMove.Threshold.Total. Detections needed to trigger a penalty in one tick.
+
+Anticheat.RootMove.Threshold.Total = 30
+
+# Anticheat.RootMove.Penalty. Action to take upon failing this check.
+
+Anticheat.RootMove.Penalty = 7
+
+# Anticheat.SelfRoot.Enable. Check for players that have root flag but should not.
+
+Anticheat.SelfRoot.Enable = 1
+
+# Anticheat.SelfRoot.Reject. Do not accept movement info and teleport to old position.
+
+Anticheat.SelfRoot.Reject = 1
+
+# Anticheat.SelfRoot.Threshold. Detections needed to trigger a penalty in one tick.
+
+Anticheat.SelfRoot.Threshold = 1
+
+# Anticheat.SelfRoot.Penalty. Action to take upon failing this check.
+
+Anticheat.SelfRoot.Penalty = 3
+
+# Anticheat.WrongAckData.Enable. Check for players sending wrong data in an ACK packet.
+
+Anticheat.WrongAckData.Enable = 1
+
+# Anticheat.WrongAckData.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.WrongAckData.Threshold = 3
+
+# Anticheat.WrongAckData.Penalty. Action to take upon failing this check.
+
+Anticheat.WrongAckData.Penalty = 7
+
+# Anticheat.PendingAckDelay.Enable. Check for players failing to acknowledge a forced movement change.
+
+Anticheat.PendingAckDelay.Enable = 1
+
+# Anticheat.PendingAckDelay.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.PendingAckDelay.Threshold = 3
+
+# Anticheat.PendingAckDelay.Penalty. Action to take upon failing this check.
+
+Anticheat.PendingAckDelay.Penalty = 7
+
+# Anticheat.ExploreArea.Enable. Check for players that are exploring low level zones too quickly.
+
+Anticheat.ExploreArea.Enable = 1
+
+# Anticheat.ExploreArea.Threshold. Count of areas explored this session.
+
+Anticheat.ExploreArea.Threshold = 100
+
+# Anticheat.ExploreArea.Penalty. Action to take upon failing this check.
+
+Anticheat.ExploreArea.Penalty = 7
+
+# Anticheat.ExploreHighLevelArea.Enable. Check for players that are exploring high level zones too quickly.
+
+Anticheat.ExploreHighLevelArea.Enable = 1
+
+# Anticheat.ExploreHighLevelArea.Threshold. Count of areas explored this session.
+
+Anticheat.ExploreHighLevelArea.Threshold = 50
+
+# Anticheat.ExploreHighLevelArea.Penalty. Action to take upon failing this check.
+
+Anticheat.ExploreHighLevelArea.Penalty = 7
+
+# Anticheat.ForbiddenArea.Enable. Check for players entering a forbidden area.
+
+Anticheat.ForbiddenArea.Enable = 1
+
+# Anticheat.ForbiddenArea.Threshold. Detections needed to trigger a penalty.
+
+Anticheat.ForbiddenArea.Threshold = 1
+
+# Anticheat.ForbiddenArea.Penalty. Action to take upon failing this check.
+
+Anticheat.ForbiddenArea.Penalty = 3
+
+# Movement.PendingAckResponseTime. Time to wait for movement change ack.
+
+Movement.PendingAckResponseTime = 2000
+
+# GM.LoginState. GM mode at login.
+
+GM.LoginState = 1
+
+# GM.Visible. GM visibility at login.
+
+GM.Visible = 0
+
+# GM.AcceptTickets. Is GM accepting tickets from player by default or not.
+
+GM.AcceptTickets = 1
+
+# GM.Chat. GM chat mode at login.
+
+GM.Chat = 1
+
+# GM.WhisperingTo. Is GM accepting whispers from player by default or not.
+
+GM.WhisperingTo = 1
+
+# GM.InGMList.Level. Max GM level showed in GM list (if visible) in non-GM state (.gm off)
+
+GM.InGMList.Level = 3
+
+# GM.InWhoList.Level. Max GM level showed in who list (if visible).
+
+GM.InWhoList.Level = 3
+
+# GM.LogTrade. Include GM trade and trade slot enchanting operations in GM log if it enable.
+
+GM.LogTrade = 1
+
+# GM.StartLevel. GM starting level (1-255)
+
+GM.StartLevel = 60
+
+# GM.LowerSecurity. Disallow a lower security member to interact with a higher one using commands.
+
+GM.LowerSecurity = 1
+
+# GM.CreditOnDie. Give loot, money, reputation on ".die" command.
+
+GM.CreditOnDie = 1
+
+# GM.AllowTrades. Allow trades, mailing, and using the auctionhouse.
+
+GM.AllowTrades = 1
+
+# GM.AllowPublicChannels. Allow to speak in general or world channels.
+
+GM.AllowPublicChannels = 1
+
+# GM.StartOnGMIsland. Spawn GM account characters on GM island.
+
+GM.StartOnGMIsland = 1
+
+# GMTickets.Enable. Allow opening support tickets.
+
+GMTickets.Enable = 1
+
+# GMTickets.MinLevel. Minimum required character level to open a ticket.
+
+GMTickets.MinLevel = 1
+
+# GMTickets.Admin.Security. Required security rank to assign ticket in escalation queue.
+
+GMTickets.Admin.Security = 7
+
+# Visibility.GroupMode. Group visibility modes.
+
+Visibility.GroupMode = 0
+
+# Visibility.Distance. Visibility distance for different ingame object in different maps. (Max 533)
+
+Visibility.Distance.Continents = 250
+Visibility.Distance.Instances = 250
+Visibility.Distance.BG = 533
+
+# Visibility.Distance.Continents.Min. If bad performance, visibilityDistance may be reduced.
+
+Visibility.Distance.Continents.Min = 60
+
+# Visibility.Distance.InFlight. Visible distance for player in flight.
+
+Visibility.Distance.InFlight = 120
+
+# Visibility.Distance.Grey.Unit.  Visibility grey distance for creatures and players.
+
+Visibility.Distance.Grey.Unit = 1
+
+# Visibility.Distance.Grey.Object. isibility grey distance for dynobjects/gameobjects/corpses/creature bodies.
+
+Visibility.Distance.Grey.Object = 10
+
+# Visibility.RelocationLowerLimit
+# Object's visibility update called, when distance between current object's position and position,
+# where visiblity was updated last time, reaches RelocationLoverLimit value.
+
+Visibility.RelocationLowerLimit = 10
+
+# Visibility.AIRelocationNotifyDelay
+# Delay time between creature AI reactions on nearby movements.
+
+Visibility.AIRelocationNotifyDelay = 1000
+
+# Visibility.ForceActiveObjects
+# Force any creatures or gameobjects with increased visibility set in template to be active objects.
+# The modifier will not work for creatures that don't have the active flag set in spawn table otherwise.
+
+Visibility.ForceActiveObjects = 1
+
+# Health and power regeneration and rage income from damage.
+
+Rate.Health = 1
+Rate.Mana = 1
+Rate.Rage.Income = 1
+Rate.Rage.Loss = 1
+Rate.Focus = 1
+Rate.Loyalty = 1
+Rate.Energy = 1
+
+# Rate.Skill.Discovery. Skill Discovery Rates.
+
+Rate.Skill.Discovery = 1
+
+# Rate.Drop. Drop rates. (Items by quality and money)
+
+Rate.Drop.Item.Poor = 1
+Rate.Drop.Item.Normal = 1
+Rate.Drop.Item.Uncommon = 2
+Rate.Drop.Item.Rare = 1
+Rate.Drop.Item.Epic = 1
+Rate.Drop.Item.Legendary = 1
+Rate.Drop.Item.Artifact = 1
+Rate.Drop.Item.Referenced = 1
+Rate.Drop.Money = 1
+
+# Rate.XP. XP rates (player's favorite, haha)
+
+Rate.XP.Kill = 1
+Rate.XP.Quest = 1
+Rate.XP.Explore = 1
+
+# Rate.Rest. Resting points grow rates. (1 Standard, 2 Double rate, 0.5 Half rate)
+
+Rate.Rest.InGame = 1
+Rate.Rest.Offline.InTavernOrCity = 1
+Rate.Rest.Offline.InWilderness = 1
+
+# Rate.Damage.Fall. Damage after fall rate. (1 Standard, 2 Double damage, 0.5 Half damage)
+
+Rate.Damage.Fall = 1
+
+# Auction rates: auction time, deposit get at auction start, auction cut from price at auction end.
+
+Rate.Auction.Time = 3
+Rate.Auction.Deposit = 0
+Rate.Auction.Cut = 0
+
+# Auction.Deposit.Min. Minimum auction deposit size in copper.
+
+Auction.Deposit.Min = 0
+
+# Auction.AccountConcurrentLimit. Maximum auctions (Per auction house, including shared) an account can have posted at once.
+
+Auction.AccountConcurrentLimit = 5000
+
+# Rate.Honor. Honor gain rate.
+
+Rate.Honor = 1
+
+# Mining.Amount changes minimum/maximum usetimes of a deposit.
+
+Rate.Mining.Amount = 1
+
+# Mining.Next changes chance to have next use of a deposit.
+
+Rate.Mining.Next = 1
+
+# Rate.Talent. Talent Point rates.
+
+Rate.Talent = 1
+
+# Rate.RespecBaseCost. Minimum cost for unlearning talents. (Gold)
+
+Rate.RespecBaseCost = 1
+
+# Rate.RespecMultiplicativeCost. Cost * multiplier = total cost of unlearning talents. (Gold)
+
+Rate.RespecMultiplicativeCost = 5
+
+# Rate.RespecMaxMultiplier. RespecMultiplicativeCost * RespecMaxMultiplier = maximum cost of unlearning talents. (Gold)
+
+Rate.RespecMaxMultiplier = 1
+
+# Rate.RespecMinMultiplier. Once the player exceeds this multiplier value, they can never drop below it again.
+
+Rate.RespecMinMultiplier = 2
+
+# Rate.Reputation.Gain. Reputation Gain rate.
+
+Rate.Reputation.Gain = 1
+
+# Rate.Reputation.LowLevel.Kill. Reputation Gain form low level kill. (Grey creture)
+
+Rate.Reputation.LowLevel.Kill = 0.2
+
+# Rate.Reputation.LowLevel.Quest. Reputation Gain rate.
+
+Rate.Reputation.LowLevel.Quest = 1
+
+# Rate.InstanceResetTime. Multiplier for the number of days in between global raid/heroic instance resets.
+
+Rate.InstanceResetTime = 1
+
+#  Crafting/defense/gathering/weapon skills gain at skill grow.
+
+SkillGain.Crafting = 1
+SkillGain.Defense = 1
+SkillGain.Gathering = 1
+SkillGain.Weapon = 1
+
+# Skill chance values. (0 - 100)
+
+SkillChance.Orange = 100
+SkillChance.Yellow = 75
+SkillChance.Green = 25
+SkillChance.Grey = 0
+
+# SkillChance.MiningSteps
+# SkillChance.SkinningSteps
+#  For skinning and Mining chance decrease with skill level.
+
+SkillChance.MiningSteps = 0
+SkillChance.SkinningSteps = 0
+
+# SkillFail.Loot.Fishing. For fishing instead fail provided junk loot.
+
+SkillFail.Loot.Fishing = 0
+
+# SkillFail.Gain.Fishing. For fishing skill gain possible at fail also.
+
+SkillFail.Gain.Fishing = 0
+
+# SkillFail.Possible.FishingPool. For fishing pool impossible fail from low skill by default.
+
+SkillFail.Possible.FishingPool = 1
+
+# DurabilityLossChance.Damage. Chance lost one from equiped items durability point at damage apply or receive.
+
+DurabilityLossChance.Damage = 0.5
+
+# DurabilityLossChance.Absorb. Chance lost one from armor items durability point at damage absorb.
+
+DurabilityLossChance.Absorb = 0.5
+
+# DurabilityLossChance.Parry. Chance lost weapon durability point at parry.
+
+DurabilityLossChance.Parry = 0.05
+
+# DurabilityLossChance.Block. Chance lost sheild durability point at damage block.
+
+DurabilityLossChance.Block = 0.05
+
+# Death.SicknessLevel
+#  Start to add ressurection sickness on level and higher. (Level)
+
+Death.SicknessLevel = 11
+
+# Death.CorpseReclaimDelay.PvP
+# Death.CorpseReclaimDelay.PvE
+#  Enabled / Disabled increase corpse reclaim delay at often PvP / PvE deaths.
+
+Death.CorpseReclaimDelay.PvP = 1
+Death.CorpseReclaimDelay.PvE = 1
+
+# Death.Bones.World
+# Death.Bones.Battleground
+#  Enabled / Disabled creating bones instead corpse at resurrection. (In normal zones/instacnes, or battleground)
+
+Death.Bones.World = 1
+Death.Bones.Battleground = 1
+
+# Death.Ghost.RunSpeed.World
+# Death.Ghost.RunSpeed.Battleground
+#  Modifies the speed of player's ghosts, removed upon reviving, not permanent/saved, in non-BG and BG maps.
+
+Death.Ghost.RunSpeed.World = 1.0
+Death.Ghost.RunSpeed.Battleground = 1.0
+
+# Corpses.UpdateMinutes
+
+Corpses.UpdateMinutes = 20
+
+# Bones.ExpireMinutes
+
+Bones.ExpireMinutes = 60
+
+# Rate.WarEffortResourceComplete
+
+Rate.WarEffortResourceComplete = 0.0
+
+# WarEffortResourceCompletePeriod
+
+WarEffortResourceCompletePeriod = 86400
+
+# Battleground.CastDeserter. Cast Deserter spell at player who leave battleground in progress.
+
+Battleground.CastDeserter = 1
+
+# Battleground.QueueAnnouncer.Join. Enable queue announcer posting to chat at join.
+
+Battleground.QueueAnnouncer.Join = 0
+
+# Battleground.QueueAnnouncer.Start. Enable queue announcer posting to chat at BG start.
+
+Battleground.QueueAnnouncer.Start = 1
+
+# Battleground.QueuesCount. Maximum battleground queues a player can join at the same time.
+
+BattleGround.QueuesCount = 0
+
+# Battleground.InvitationType. Set Battleground invitation type.
+
+Battleground.InvitationType = 1
+
+# Battleground.PrematureFinishTimer. The time to end the bg if there are less than MinPlayersPerTeam on one side.
+
+BattleGround.PrematureFinishTimer = 300000
+
+# BattleGround.PremadeGroupWaitForMatch.The time in which premade group of 1 faction waits 
+# in BG Queue for premade group of other faction. (Milliseconds)
+
+BattleGround.PremadeGroupWaitForMatch = 0
+
+# BattleGround.RandomizeQueues. Randomize the queue positions.
+
+BattleGround.RandomizeQueues = 0
+
+# BattleGround.GroupQueueLimit
+# The maximum number of players that can be queued as a group.
+# If the group is bigger than this value, players are queued solo.
+
+BattleGround.GroupQueueLimit = 40
+
+# Reputation reward rates for battlegrounds
+BattleGround.Rate.Reputation.AV = 0.85
+BattleGround.Rate.Reputation.WS = 1.15
+BattleGround.Rate.Reputation.AB = 1.15
+BattleGround.Rate.Reputation.SV = 1.15
+
+# Honor reward rates for battlegrounds
+BattleGround.Rate.Honor.AV = 0.75
+BattleGround.Rate.Honor.WS = 1.25
+BattleGround.Rate.Honor.AB = 1.25
+BattleGround.Rate.Honor.SV = 1.25
+
+# Honor reward rates for battlegrounds
+BattleGround.Rate.Honor.AV = 0.75
+BattleGround.Rate.Honor.WS = 1.25
+BattleGround.Rate.Honor.AB = 1.25
+
+# Alterac.MinPlayersInQueue. Minimum players in queue per faction before starting a match.
+
+Alterac.MinPlayersInQueue = 0
+
+# Alterac.InitMaxPlayers. Maximum number of players at AV creation.
+
+Alterac.InitMaxPlayers = 0
+
+# BattleGround.PremadeQueue.MinGroupSize
+
+BattleGround.PremadeQueue.MinGroupSize = 6
+
+# BattleGround.TagInBattleGrounds
+
+BattleGround.TagInBattleGrounds = 1
+
+# OutdoorPvp.SIEnabled. Enable Silithus Outdoor pvp.
+
+OutdoorPvp.SIEnabled = 1
+
+# OutdoorPvp.EPEnabled. Enable Eastern Plaguelands Outdoor pvp.
+
+OutdoorPvp.EPEnabled = 1
+
+# Network.Threads. Number of threads for network, recommend 1 thread per 1000 connections.
+
+Network.Threads = 4
+
+# Network.OutKBuff. The size of the output kernel buffer used ( SO_SNDBUF socket option, tcp manual ).
+
+Network.OutKBuff = -1
+
+# Network.OutUBuff. Userspace buffer for output. This is amount of memory reserved per each connection.
+
+Network.OutUBuff = 54288
+
+# Network.TcpNoDelay: TCP Nagle algorithm setting.
+
+Network.TcpNodelay = 1
+
+# Network.KickOnBadPacket. Kick player on bad packet format.
+
+Network.KickOnBadPacket = 0
+
+# Network.PacketBroadcast.Threads. Number of threads for packets broadcasting.
+
+Network.PacketBroadcast.Threads = 0
+
+# Network.PacketBroadcast.Frequency. How often packet broadcasting threads run in milliseconds.
+
+Network.PacketBroadcast.Frequency = 20
+
+# Network.Interval. How often ACE will transmit the client's outbound packet buffer.
+
+Network.Interval = 35
+
+# Network.PacketBroadcast.ReduceVisDistance.DiffAbove
+
+Network.PacketBroadcast.ReduceVisDistance.DiffAbove = 400
+
+# Console.Enable. Enable console.
+
+Console.Enable = 1
+
+# CharDelete.Method. Character deletion behavior.
+
+CharDelete.Method = 1
+
+# CharDelete.MinLevel. Character gets deleted by CharDelete.Method=0 when the character hasn't the specified level yet.
+
+CharDelete.MinLevel = 10
+
+# CharDelete.KeepDays. Define the amount of days for which the characters are kept in the database before they will be removed.
+
+CharDelete.KeepDays = 90
+
+# Make a copy of character_inventory table on startup.
+
+BackupCharacterInventory = 1
+
+# BeginnersGuilds. This feature will auto invite players into a guild, helping them easily find players who are also just starting out fresh.
+
+BeginnersGuilds = 1
+
+# BeginnersGuildHorde | BeginnersGuildAlliance. Specify guild ID for both factions.
+
+BeginnersGuildHorde = 126
+BeginnersGuildAlliance = 126
+
+# AutoBroadcast.Timer. Print broadcast messages in players chat.
+
+AutoBroadcast.Timer = 2400000
+
+# Transmog.Enable. Enable / Disable transmog feature.
+
+Transmog.Enable = 0
+
+# Transmog.ReqItemID. Adds/disables item cost.
+
+Transmog.ReqItemID = 51217
+
+# Transmog.ReqItemCount. Count of required items.
+
+Transmog.ReqItemCount = 1
+
+# Transmog.ReqMoneyRate. Required gold modificator.
+
+Transmog.ReqMoneyRate = 0
+
+# Miscellaneous
+
+StaticObjectLOS = 1
+
+PlayerBot.Enable = 1
+PlayerBot.Debug = 0
+PlayerBot.UpdateMs = 1000
+PlayerBot.MinBots = 0
+PlayerBot.MaxBots = 0
+PlayerBot.Refresh = 10000
+PlayerBot.ForceLogoutDelay = 1
+
+MailSpam.ExpireSecs = 30
+MailSpam.MaxMails = 5
+MailSpam.Level = 10
+MailSpam.AccountCharLevel = 1
+MailSpam.Money = 10000
+MailSpam.Item = 1
+
+DynamicRespawn.Range = 120
+DynamicRespawn.PercentPerPlayer = 7
+DynamicRespawn.MaxReductionRate = 0.25
+DynamicRespawn.MinRespawnTime = 25
+DynamicRespawn.AffectRespawnTimeBelow = 900
+DynamicRespawn.AffectLevelBelow = 60
+DynamicRespawn.PlayersThreshold = 4
+DynamicRespawn.PlayersMaxLevelDiff = 5
+
+Spells.CCDelay = 200
+
+Hardcore.Disable.Duel = 0
+
+PTR = 0
+
+#
+#    WhisperTargets.MaxTargets
+#    WhisperTargets.DecayTime
+#        Sets how many different players can be whispered in a specific time window. (WhisperTargets.DecayTime)
+#        Hyjal Default: 15 (Player), 1800 (30 Minutes)
+
+WhisperTargets.MaxTargets = 15
+WhisperTargets.DecayTime = 1800
+
+#
+#    WhisperTargets.BypassLevel
+#        Checking for the highest toon on the players account if there is a toon which is on level (WhisperTargets.BypassLevel), skip this mechanic.
+#        Hyjal Default: 40 (Level)
+
+WhisperTargets.BypassLevel = 40
+
+
+#    Account.ShowWarningAge
+#        Amount of days a warning will be shown to the player upon logging in from the moment the warning was given.
+#        Default: 3
+
+Account.ShowWarningAge = 3
+
+# Suspicious Manager features
+Suspicious.Enable = 1
+Suspicious.Movement.Enable = 1
+Suspicious.Fishing.Enable = 1
+Suspicious.Npckilling.Enable = 1
+
+# If player reach speed higher then this - it will be reported
+# For reference - walking speed is 8 units per second
+# Please note, that calculation is not precise!
+Suspicious.Movement.MovementSpeedThreshold = 100.0
+
+# Shop.RefundWindow - how long players have to request refund of shop items after buying them (in seconds)
+Shop.RefundWindow = 2592000
+
+# Performance tracking
+Perf.Enable = 1
+
+# Report to logs DB. Time in seconds
+Perf.ReportInterval = 600
+
+
+# Leech Module
+# Enables a baseline heal on damage
+Leech.Enable = 0
+
+# Sets the percentage of damage to leech
+Leech.Amount = 0.05
+
+# AutoScaler.Enable. Enable or disable instance auto-scaling. 0 = off, 1 = on.
+AutoScalerEnable = 0
+
+# AutoScaler scalar clamp values for instances of different sizes.
+# 
+ScalarMin5ManHP = 0.6
+ScalarMin5ManDMG = 0.4
+ScalarMin10ManHP = 0.3
+ScalarMin10ManDMG = 0.3
+ScalarMin20ManHP = 0.1
+ScalarMin20ManDMG = 0.1
+ScalarMin40ManHP = 0.01
+ScalarMin40ManDMG = 0.01

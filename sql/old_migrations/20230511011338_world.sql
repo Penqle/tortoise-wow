@@ -1,0 +1,1 @@
+UPDATE quest_template SET ZoneOrSort = 5077 WHERE entry = 40147;

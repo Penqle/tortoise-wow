@@ -1,0 +1,1 @@
+UPDATE `creature_template` SET `dynamic_flags`='32' WHERE  `entry`=65126;

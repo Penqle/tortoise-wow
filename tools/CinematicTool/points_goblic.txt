@@ -1,0 +1,17 @@
+189 -8347 32; Original Point
+62; Duration in Seconds
+164; Cinematic ID (for SQL)
+185 -8336 32:70 -7931 42:0; First Point, start on water
+120 -8101 32:70 -7930 42:6; Finished fly from water
+-17 -8007 69:-169 -7811 42:12; Ruins
+-168 -7824 46:-239 -7724 47:19; Lumber yard
+-207 -7768 47:-361 -7549 96:23; Finishing Lumber yard
+-269 -7605 116:-289 -7425 75:32; Path to village
+-309 -7421 101:-323 -7377 77:41; Finishing village
+-321 -7372 74:-219 -7357 41:45; Flying on road
+-314 -7372 69:-219 -7356 41:46; Flying on road 2
+-279 -7369 60:-196 -7254 19:49; Flying on road 3
+-277 -7361 58:-214 -7216 17:50; Flying on road 4
+-244 -7314 40:-237 -7182 17:54; Flying on road 5
+-238 -7233 32:-233 -7177.5 17:59; Arrived at spawn point
+-236 -7202 25.9:-233 -7177 17:62; Stand still for one second

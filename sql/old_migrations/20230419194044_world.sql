@@ -1,0 +1,4 @@
+-- Remove Gold Veins in Western Plaguelands.
+DELETE FROM `gameobject` WHERE `guid` IN (5769, 5770, 5778, 5783, 5788, 5799, 5819, 5838, 5849, 5859, 5861, 5863, 5893, 5952, 5956, 6000, 45502);
+DELETE FROM `pool_gameobject` WHERE `guid` IN (5769, 5770, 5778, 5783, 5788, 5799, 5819, 5838, 5849, 5859, 5861, 5863, 5893, 5952, 5956, 6000, 45502);
+DELETE FROM `pool_template` WHERE `entry`=1331;

@@ -1,0 +1,2 @@
+UPDATE `creature_template` SET `ai_name` = '' , `script_name` = 'boss_blackwald_ii' WHERE `entry` = '61222'; 
+UPDATE `creature_template` SET `ai_name` = '' , `script_name` = 'boss_clawlord_howlfang' WHERE `entry` = '61223';

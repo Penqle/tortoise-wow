@@ -1,0 +1,1 @@
+UPDATE quest_template SET QuestLevel = 60 WHERE entry IN (70000, 70001);

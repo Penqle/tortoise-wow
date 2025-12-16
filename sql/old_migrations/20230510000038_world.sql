@@ -1,0 +1,1 @@
+UPDATE item_template SET stackable = 3 WHERE entry = 60669;

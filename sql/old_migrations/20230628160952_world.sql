@@ -1,0 +1,1 @@
+UPDATE creature_template SET skinning_loot_id = 9164 WHERE entry = 91966;

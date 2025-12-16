@@ -1,0 +1,4 @@
+update item_template set armor = 170, item_level = 68, required_level = 60, stat_value1 = 12, stat_value2 = 6, stat_value3 = 0, spellid_2 = 45530, spellid_1 = 7597, spelltrigger_2 = 1, spellid_3 = 9346, spelltrigger_3 = 1 where entry = 20046; -- Highlander's Lizardhide Girdle
+update item_template set armor = 170, item_level = 68, required_level = 60, stat_value1 = 12, stat_value2 = 6, stat_value3 = 0, spellid_2 = 45530, spellid_1 = 7597, spelltrigger_2 = 1, spellid_3 = 9346, spelltrigger_3 = 1 where entry = 20171; -- Defiler's Lizardhide Girdle
+update item_template set item_level = 71, required_level = 60, spellid_1 = 17367, spellid_2 = 0, spelltrigger_2 = 1, stat_value2 = 10 where entry = 19570; -- Lorekeeper's Staff
+update item_template set item_level = 71, required_level = 60, spellid_1 = 17367, spellid_2 = 0, spelltrigger_2 = 1, stat_value2 = 10 where entry = 19566; -- Advisor's Gnarled Staff

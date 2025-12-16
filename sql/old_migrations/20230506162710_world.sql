@@ -1,0 +1,2 @@
+UPDATE item_template SET Description = 'Allows you to control marvelous gnomish inventions. Handle with care.', Bonding = 1 WHERE entry = 50524;
+UPDATE item_template SET Description = 'You''re driving the best GOBLIN car ever, kid! What makes it fast? Explosions, of course!', Bonding = 1 WHERE entry = 50525;

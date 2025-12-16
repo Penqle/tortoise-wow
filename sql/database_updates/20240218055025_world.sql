@@ -1,0 +1,1 @@
+UPDATE spell_template SET effectBonusCoefficient1 = 0.30 WHERE entry = 45522;

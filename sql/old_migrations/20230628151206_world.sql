@@ -1,0 +1,16 @@
+DELETE FROM npc_trainer WHERE entry = 3156 AND spell = 45910;
+DELETE FROM npc_trainer WHERE entry = 3156 AND spell = 45911;
+DELETE FROM npc_trainer WHERE entry = 3156 AND spell = 47301;
+DELETE FROM npc_trainer WHERE entry = 3156 AND spell = 47328;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 47267;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 47265;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 45520;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 47266;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 47268;
+DELETE FROM npc_trainer WHERE entry = 3062 AND spell = 47264;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 47267;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 47265;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 45520;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 47266;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 47268;
+DELETE FROM npc_trainer WHERE entry = 3157 AND spell = 47264;

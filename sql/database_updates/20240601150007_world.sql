@@ -1,0 +1,3 @@
+-- Activate the display IDS 20642, and 20643 for creature archibald earlwake and harold coldsworth.
+REPLACE INTO `creature_display_info_addon` (`display_id`, `bounding_radius`, `combat_reach`, `gender`, `display_id_other_gender`) VALUES (20642, 0, 0, 0, 0);
+REPLACE INTO `creature_display_info_addon` (`display_id`, `bounding_radius`, `combat_reach`, `gender`, `display_id_other_gender`) VALUES (20643, 0, 0, 0, 0);

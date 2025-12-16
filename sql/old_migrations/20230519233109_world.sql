@@ -1,0 +1,4 @@
+-- New gossip text for Thultash.
+INSERT INTO `broadcast_text` (`entry`, `male_text`, `female_text`, `chat_type`, `sound_id`, `language_id`, `emote_id1`, `emote_id2`, `emote_id3`, `emote_delay1`, `emote_delay2`, `emote_delay3`) VALUES (41028, 'I bet you never expected to find fresh meat and drinks in the middle of this inhospitable swamp. You can hardly be blamed.', 'I bet you never expected to find fresh meat and drinks in the middle of this inhospitable swamp. You can hardly be blamed.', 0, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO `npc_text` (`ID`, `BroadcastTextID0`, `Probability0`, `BroadcastTextID1`, `Probability1`, `BroadcastTextID2`, `Probability2`, `BroadcastTextID3`, `Probability3`, `BroadcastTextID4`, `Probability4`, `BroadcastTextID5`, `Probability5`, `BroadcastTextID6`, `Probability6`, `BroadcastTextID7`, `Probability7`) VALUES (41028, 41028, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+UPDATE `gossip_menu` SET `text_id`=41028 WHERE `entry`=41028;

@@ -1,0 +1,147 @@
+########################################
+# Turtle WoW realmd configuration file #
+########################################
+
+[RealmdConf]
+ConfVersion=2010062001
+
+#   Database connection settings for the realm server.
+
+LoginDatabaseInfo = ""
+
+#   Logs directory setting.
+
+LogsDir = "../logs/"
+
+#   Folder to serve client patches.
+#   Important: Patches dir must contain mpq files like this: <build><lang>.mpq e.g. 65535enGB.mpq
+
+PatchesDir = "./patches"
+
+#   Settings for maximum database-ping interval.
+
+MaxPingTime = 3
+
+#   Port on which the server will listen.
+
+RealmServerPort = 3724
+
+#   Bind Realm Server to IP/hostname.
+#   This option is useful for running multiple worldd/realmd instances on different IP addresses using default ports.
+
+BindIP = "0.0.0.0"
+
+#   Realmd daemon PID file.
+
+PidFile = "twrealmd.pid"
+
+#   Server console level of logging.
+#   0 = Minimum; 1 = Error; 2 = Detail; 3 = Full/Debug
+
+LogLevel = 1
+
+#   Include time in server console output.
+
+LogTime = 0
+
+#   Logfile name.
+
+LogFile = "Realmd.log"
+
+#   Logfile with timestamp of server start in name.
+
+LogTimestamp = 0
+
+#   Server file level of logging.
+#   0 = Minimum; 1 = Error; 2 = Detail; 3 = Full/Debug
+
+LogFileLevel = 1
+
+#   Color for messages (format "normal_color details_color debug_color error_color).
+#   Colors: 0 - BLACK, 1 - RED, 2 - GREEN,  3 - BROWN, 4 - BLUE, 5 - MAGENTA, 6 -  CYAN, 7 - GREY,
+#       8 - YELLOW, 9 - LRED, 10 - LGREEN, 11 - LBLUE, 12 - LMAGENTA, 13 - LCYAN, 14 - WHITE
+
+LogColors = ""
+
+#   Used processors mask for multi-processors system (Used only at Windows).
+
+UseProcessors = 0
+
+#   Process proirity setting (Used only at Windows).
+
+ProcessPriority = 1
+
+#   After startup error report wait <Enter> or some time before continue (and possible close console window).
+
+WaitAtStartupError = 0
+
+#   Minimum amount of time that must pass before a second realm list request is considered legitimate.
+
+MinRealmListDelay = 1
+
+#   Realm list update up delay.
+
+RealmsStateUpdateDelay = 10
+
+#   Number of login attemps with wrong password before the account or IP is banned.
+
+WrongPass.MaxCount = 10
+
+#   Duration of the ban.
+
+WrongPass.BanTime = 300
+
+#   Ban the IP or account.
+
+WrongPass.BanType = 0
+
+#   Required verified email address before allowing to log on.
+
+ReqEmailVerification = 0
+
+#   Require email verification since.
+
+ReqEmailSince = 0
+
+#   Blocks account logins when a change in geographical location is detected.
+
+GeoLocking = 0
+
+#   Prevent modified clients from connnecting.
+
+StrictVersionCheck = 1
+
+#   Whether the server is allowed to send emails.
+#   (The server must have been compiled with USE_SENDGRID)
+
+SendMail = 0
+
+#   Specify the email address to send mail from.
+
+MailFrom = "no-reply@turtle-wow.org"
+
+#   Whether to validate the certificates of the mail server.
+
+MailCertChecks = 1
+
+#   If SendGrid is being used for emailing, specify your API key here.
+#   (This option must be set if SendGrid is enabled)
+
+SendGridKey = ""
+
+#   The SendGrid template GUID for geolocking emails.
+
+GeolockGUID = ""
+
+#   When set, the address forcibly overrides ALL addresses in realmlist table.
+#   This is not needed except for when proxies are being used.
+
+HostAddressOverride = "0.0.0.0"
+
+#   Force 2FA for accounts with rank.
+
+ForcePinAccountRank = 1
+
+#   MaxSessionDuration - Time in seconds after which session will be closed.
+
+MaxSessionDuration = 300

@@ -1,0 +1,12 @@
+
+-- Changes by GHEOR
+REPLACE INTO `creature` VALUES (2583282,61984,0,0,0,1,16227.1,16289.8,20.8449,4.68423,120,120,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2583282;
+DELETE FROM creature_addon WHERE guid=2583282;
+DELETE FROM creature_movement WHERE id=2583282;
+DELETE FROM game_event_creature WHERE guid=2583282;
+DELETE FROM game_event_creature_data WHERE guid=2583282;
+DELETE FROM creature_battleground WHERE guid=2583282;
+
+-- Changes by MORIENA
+REPLACE INTO `creature` VALUES (2583283,61984,0,0,0,0,-11842.2,-3200.33,-29.5934,3.26206,120,120,0,100,100,0,0,0);

@@ -1,0 +1,2 @@
+update creature_loot_template set chanceorquestchance = chanceorquestchance * 2 where item in (774 , 818 , 1206 , 1210 , 1529 , 1705 , 3864 , 7909 , 7910 , 11382, 12361, 12364, 12799, 12800, 19774);
+update gameobject_loot_template set chanceorquestchance = chanceorquestchance * 2 where item in (774 , 818 , 1206 , 1210 , 1529 , 1705 , 3864 , 7909 , 7910 , 11382, 12361, 12364, 12799, 12800, 19774);

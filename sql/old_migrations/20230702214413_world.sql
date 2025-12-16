@@ -1,0 +1,11 @@
+REPLACE INTO creature_onkill_reputation VALUES (4661,93,92,4,0,20,4,0,-100,0);
+REPLACE INTO creature_onkill_reputation VALUES (4654,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (4655,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (4656,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (4657,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (4658,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (4659,92,93,6,0,5,6,0,5,0);
+REPLACE INTO creature_onkill_reputation VALUES (11685,92,93,6,0,5,6,0,5,0);
+UPDATE quest_template SET RewRepValue1 = 200 WHERE entry IN (40631, 40619);
+UPDATE quest_template SET RewRepValue1 = 250 WHERE entry IN (40630, 40617);
+UPDATE quest_template SET RewXP = 0, RewMoneyMaxLevel = 0 WHERE entry IN (40617, 40618, 40619, 40630, 40631, 40632);

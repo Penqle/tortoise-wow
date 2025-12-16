@@ -1,0 +1,1 @@
+UPDATE page_text SET `text` = 'Dear McCoy$B$BI''ve been having some troubles with supply issues, from troll attacks to not receiving deliveries. The one you sent has been plenty of help and has gotten things back on track. You should receive everything soon.\n\n\'Wincing\' Willy.' WHERE entry = 50524;

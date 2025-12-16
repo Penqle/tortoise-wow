@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="robin_hood::unordered_map&lt;*, *, *, *, *&gt;">
+		<DisplayString>AWDADAWDAWD</DisplayString>
+	</Type>
+
+	<Type Name="robin_hood::detail::Table&lt;1, *, *, *, *, *&gt;">
+		<DisplayString>HueHue</DisplayString>
+	</Type>
+
+	<Type Name="robin_hood::detail::Table&lt;0, *, *, *, *, *&gt;">
+		<DisplayString>Kek</DisplayString>
+	</Type>
+	
+</AutoVisualizer>

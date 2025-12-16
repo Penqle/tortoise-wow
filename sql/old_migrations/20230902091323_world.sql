@@ -1,0 +1,3 @@
+UPDATE quest_template SET
+Details = 'Yo $R, fancy seeing a capable adventurer out here! Interested in some work? You see, when Tel Co. came here, this place was deserted. Just monkeys and bananas.$B$BBut that wasn''t the case before, you know? Thousands of years ago, this island was a mountain range on the border of nations, and there''s sure to be riches hidden here. To begin with, my surveyors have discovered some ancient Zandalari ruins on the northern coast dating back over ten thousand years.$B$BHowever, the ruins are infested with restless ghosts! As muscle, go there and slay those ghosts, and bring any tablets or writings you find. I''ll make it worth your time. Promise, yeah?'
+WHERE entry = 40763

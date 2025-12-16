@@ -1,0 +1,1 @@
+UPDATE `spell_mod` SET `DurationIndex`='31' WHERE  `Id`=15283;

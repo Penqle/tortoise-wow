@@ -1,0 +1,1 @@
+UPDATE quest_template SET Objectives = 'Slay Twilight Marauder Morna and 5 Twilight Marauders.  Report to Windcaller Proudhorn when your task is finished.  You must also bring Tactical Task Briefing IX in order to complete this quest.' WHERE entry = 8740;

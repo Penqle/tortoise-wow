@@ -1,0 +1,2 @@
+-- Fix grammar mistake in quest Translating the Unknown.
+UPDATE `quest_template` SET `Details`='The parchment is written in an unknown script that appears to be logographic. Judging by your surroundings, this building does not belong to any native culture to Tel\'Abim. The calligraphy is elegant. The strokes for each character appears perfect. Seek out someone who may be able to decipher the script.' WHERE `entry`=40749;

@@ -1,0 +1,3 @@
+This is a place for working on SQL scripts that will become an update.
+Kept here because the changes seem too small or incomplete to be a full update
+Once they are large enough for a full update they will be concatenated and moved to the updates folder.

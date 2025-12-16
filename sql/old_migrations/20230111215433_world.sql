@@ -1,0 +1,1 @@
+UPDATE creature_template SET script_name = 'npc_guard_emote' WHERE entry in (68, 4262, 5595, 3296, 3084);

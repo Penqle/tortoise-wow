@@ -1,0 +1,1 @@
+UPDATE gameobject SET spawn_flags = spawn_flags | 8 WHERE id IN (180712, 180657, 180683, 180752, 180902, 180582, 180664, 180682, 180750, 180900, 180753, 80684, 180656, 180663, 180658, 180248) AND (map = 0 OR map = 1); -- Fix dynamic respawns on fishing pools too.

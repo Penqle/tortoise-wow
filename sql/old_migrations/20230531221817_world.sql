@@ -1,0 +1,1 @@
+UPDATE gameobject SET spawntimesecsmin = 60, spawntimesecsmax = 60 WHERE id = 2010976;

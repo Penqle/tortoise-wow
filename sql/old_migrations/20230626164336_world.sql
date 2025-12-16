@@ -1,0 +1,1 @@
+update creature_loot_template set ChanceOrQuestChance = 18 where item = 19914;

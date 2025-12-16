@@ -1,0 +1,38 @@
+
+-- Changes by SHANG
+REPLACE INTO `gameobject` VALUES ( 5010991, 2010934, 0, -6878.12, -3766.56, 316.853, 0.47466, 0, 0, 0.235108, 0.971969, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010991';
+DELETE FROM game_event_gameobject WHERE guid = '5010991';
+DELETE FROM gameobject_battleground WHERE guid = '5010991';
+REPLACE INTO `gameobject` VALUES ( 5010992, 2010933, 0, -6880.47, -3767.07, 316.788, 0.147935, 0, 0, 0.0738998, 0.997266, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010992';
+DELETE FROM game_event_gameobject WHERE guid = '5010992';
+DELETE FROM gameobject_battleground WHERE guid = '5010992';
+REPLACE INTO `gameobject` VALUES ( 5010993, 2010935, 1, 279.309, -4754.91, 11.6983, 3.14548, 0, 0, 0.999998, -0.00194303, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010993';
+DELETE FROM game_event_gameobject WHERE guid = '5010993';
+DELETE FROM gameobject_battleground WHERE guid = '5010993';
+REPLACE INTO `gameobject` VALUES ( 5010994, 2010935, 0, -6336.56, -3107.75, 294.292, 3.40501, 0, 0, 0.991339, -0.131331, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5010994, 2010935, 0, -6336.56, -3107.75, 294.292, 2.95969, 0, 0, 0.995867, 0.0908237, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5010994, 2010935, 0, -6336.56, -3107.75, 294.292, 1.43916, 0, 0, 0.65907, 0.752082, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5010994, 2010935, 0, -6336.56, -3107.75, 294.292, 5.17896, 0, 0, 0.524487, -0.851418, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5010994, 2010935, 0, -6336.56, -3107.75, 294.292, 4.83731, 0, 0, 0.661589, -0.749867, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5010995, 2010934, 0, -6338.78, -3108.51, 293.056, 4.83731, 0, 0, 0.661589, -0.749867, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010995';
+DELETE FROM game_event_gameobject WHERE guid = '5010995';
+DELETE FROM gameobject_battleground WHERE guid = '5010995';
+REPLACE INTO `gameobject` VALUES ( 5010996, 2010932, 0, -6338.78, -3108.51, 293.056, 4.83731, 0, 0, 0.661589, -0.749867, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010996';
+DELETE FROM game_event_gameobject WHERE guid = '5010996';
+DELETE FROM gameobject_battleground WHERE guid = '5010996';
+REPLACE INTO `gameobject` VALUES ( 5010997, 2010931, 0, -6338.78, -3108.51, 293.056, 4.83731, 0, 0, 0.661589, -0.749867, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5010997';
+DELETE FROM game_event_gameobject WHERE guid = '5010997';
+DELETE FROM gameobject_battleground WHERE guid = '5010997';
+REPLACE INTO `creature` VALUES (2572896,61052,0,0,0,1,-1039.36,-3654.47,23.8777,2.92958,3600,3600,0,100,100,0,0,0);
+DELETE FROM creature WHERE guid=2572896;
+DELETE FROM creature_addon WHERE guid=2572896;
+DELETE FROM creature_movement WHERE id=2572896;
+DELETE FROM game_event_creature WHERE guid=2572896;
+DELETE FROM game_event_creature_data WHERE guid=2572896;
+DELETE FROM creature_battleground WHERE guid=2572896;

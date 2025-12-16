@@ -1,0 +1,1 @@
+UPDATE gameobject_template SET flags = 4 WHERE entry IN (2010905, 2010906, 2010907);

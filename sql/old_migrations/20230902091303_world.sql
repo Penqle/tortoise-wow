@@ -1,0 +1,5 @@
+UPDATE quest_template SET
+Details = 'It''s getting difficult to maintain repairs on much of the machinery, especially with all of the chaos recently.$B$BI''m experienced, but I''m lacking a lot of my tools, bub. You know how hard it is to work with a spanner when you really need a spin-wrench?$B$BJust to the north of here is a place called ''The Derelict Camp.'' Well, at one point it wasn''t so derelict. We used to have many operations there: wood cutting, banana collecting, and much more. It''s there I lost my toolbox with all my gizmos, and I want it back.$B$BYou can find the camp on the western edge of the island. Follow the road up north, and you''ll find it.',
+RequestItemsText = 'You find my tools yet, kid?',
+OfferRewardText = 'Why, this is it! I''ll be honest with you, I thought the apes would tear you apart when you trundled out of here, but to actually have it in my hands...$B$BHere, take this ring. I''m trying to save gold just in case this Tel Co. thing goes even more pear-shaped.' 
+WHERE entry = 40727;

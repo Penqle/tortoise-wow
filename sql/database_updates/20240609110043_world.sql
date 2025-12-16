@@ -1,0 +1,15 @@
+-- Faredin <Guild Vault Keeper>, display ID is 4484, equipment ID is 12744, faction ID is 69, copy everything else from NPC ID 80918. This NPC opens the guild vault when talked to exactly like NPC ID 80918.
+REPLACE INTO creature_template VALUES
+(62008, 4484, 0, 0, 0, 0, 'Faredin', 'Guild Vault Keeper', 0, 30, 30, 1002, 1002, 0, 0, 1200, 69, 1, 1, 1.14286, 0, 18, 5, 0, 0, 1, 42, 53, 0, 122, 1, 2000, 2000, 1, 4608, 0, 0, 0, 0, 0, 0, 45.144, 62.073, 100, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 'EventAI', 0, 3, 0, 0, 3, 12744, 0, 0, 0, 0, 0, 524298, 0, '');
+-- Lorien Cogmender <Guild Vault Keeper> display ID is 10215, equipment ID is 12744, faction ID is 64, copy everything else from NPC ID 80918. This NPC opens the guild vault when talked to exactly like NPC ID 80918.
+REPLACE INTO creature_template VALUES
+(62009, 10215, 0, 0, 0, 0, 'Lorien Cogmender', 'Guild Vault Keeper', 0, 30, 30, 1002, 1002, 0, 0, 1200, 64, 1, 1, 1.14286, 0, 18, 5, 0, 0, 1, 42, 53, 0, 122, 1, 2000, 2000, 1, 4608, 0, 0, 0, 0, 0, 0, 45.144, 62.073, 100, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 'EventAI', 0, 3, 0, 0, 3, 12744, 0, 0, 0, 0, 0, 524298, 0, '');
+-- Gewana Mosshoof <Guild Vault Keeper> display ID is 3820, equipment ID is 12744, faction ID is 104, copy everything else from NPC ID 80918. This NPC opens the guild vault when talked to exactly like NPC ID 80918.
+REPLACE INTO creature_template VALUES
+(62010, 3820, 0, 0, 0, 0, 'Gewana Mosshoof', 'Guild Vault Keeper', 0, 30, 30, 1002, 1002, 0, 0, 1200, 104, 1, 1, 1.14286, 0, 18, 5, 0, 0, 1, 42, 53, 0, 122, 1, 2000, 2000, 1, 4608, 0, 0, 0, 0, 0, 0, 45.144, 62.073, 100, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 'EventAI', 0, 3, 0, 0, 3, 12744, 0, 0, 0, 0, 0, 524298, 0, '');
+-- Golgan Maltbrew <Guild Vault Keeper> display ID is 1684, equipment ID is 12744, faction ID is 55, copy everything else from NPC ID 80918. This NPC opens the guild vault when talked to exactly like NPC ID 80918.
+REPLACE INTO creature_template VALUES
+(62011, 1684, 0, 0, 0, 0, 'Golgan Maltbrew', 'Guild Vault Keeper', 0, 30, 30, 1002, 1002, 0, 0, 1200, 55, 1, 1, 1.14286, 0, 18, 5, 0, 0, 1, 42, 53, 0, 122, 1, 2000, 2000, 1, 4608, 0, 0, 0, 0, 0, 0, 45.144, 62.073, 100, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 'EventAI', 0, 3, 0, 0, 3, 12744, 0, 0, 0, 0, 0, 524298, 0, '');
+-- Arthur Montague <Guild Vault Keeper> display ID is 3516, equipment ID is 12744, faction ID is 68, level is 45, health is 5544, copy everything else from NPC ID 80918. This NPC opens the guild vault when talked to exactly like NPC ID 80918.
+REPLACE INTO creature_template VALUES
+(62012, 3516, 0, 0, 0, 0, 'Arthur Montague', 'Guild Vault Keeper', 0, 45, 45, 5544, 5544, 0, 0, 1200, 68, 1, 1, 1.14286, 0, 18, 5, 0, 0, 1, 42, 53, 0, 122, 1, 2000, 2000, 1, 4608, 0, 0, 0, 0, 0, 0, 45.144, 62.073, 100, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 'EventAI', 0, 3, 0, 0, 3, 12744, 0, 0, 0, 0, 0, 524298, 0, '');

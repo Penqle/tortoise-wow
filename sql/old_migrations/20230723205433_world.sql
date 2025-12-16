@@ -1,0 +1,3 @@
+UPDATE quest_template SET
+Details = 'The Bristleback are a ruthless and uncaring tribe of quilboar, who expand their territory and domain without care for diplomacy or good will. They have recently attacked Suntail Pass, causing the spirit walkers that reside here to vacate the cave just to the East.$B$BIn battle, they ended up wounding me. Luckily, Elder Pyrestrider came to my rescue, and we both escaped their wrath.$B$BIf Suntail Pass is to remain a safe haven for travel, and for the spirit walkers to remain in peace, then the Bristleback must be eradicated.'
+WHERE ENTRY = 40466;

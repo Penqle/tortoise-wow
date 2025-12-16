@@ -1,0 +1,1 @@
+UPDATE item_template SET flags = 32 WHERE entry in (6993, 6992);

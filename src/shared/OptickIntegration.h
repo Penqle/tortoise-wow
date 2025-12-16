@@ -1,0 +1,27 @@
+// Giperion Turtle
+// EUREKA: July 2023
+#pragma once
+
+#ifndef TURTLE_PROFILE
+#define OPTICK_DEBUG_EVENT(x)
+
+#define OPTICK_SETUP_THREAD(x) 
+#define OPTICK_FRAME_TASK(x) 
+#define OPTICK_FRAME_UPDATE()
+#define OPTICK_BEGIN_TASK(x)
+#define OPTICK_END_TASK(x)
+
+#define OPTICK_SET_CATEGORY(x, y)
+#else
+
+#include <optick.h>
+
+#define OPTICK_DEBUG_EVENT(x) OPTICK_EVENT(x)
+#define OPTICK_SETUP_THREAD(x) OPTICK_THREAD(x)
+#define OPTICK_FRAME_TASK(x) OPTICK_FRAME(x)
+#define OPTICK_FRAME_UPDATE() OPTICK_UPDATE()
+#define OPTICK_BEGIN_TASK(x) OPTICK_PUSH_DYNAMIC(x)
+#define OPTICK_END_TASK(x) OPTICK_POP()
+
+#define OPTICK_SET_CATEGORY(x, y) OPTICK_CATEGORY(x, y)
+#endif

@@ -1,0 +1,11 @@
+UPDATE `map_template` SET `script_name` = 'instance_lower_karazhan_halls' WHERE `entry` = '532';
+UPDATE `creature_template` SET `script_name` = 'shadowbane_glutton' WHERE `entry` = '61211';
+UPDATE `creature_template` SET `script_name` = 'phantom_cook' WHERE `entry` = '61210';
+UPDATE `creature_template` SET `script_name` = 'shadowbane_alpha' WHERE `entry` = '61191';
+UPDATE `creature_template` SET `script_name` = 'shadowbane_darkcaster' WHERE `entry` = '61192';
+UPDATE `creature_template` SET `script_name` = 'shadowbane_ragefang' WHERE `entry` = '61194';
+UPDATE `creature_template` SET `script_name` = 'haunted_blacksmith' WHERE `entry` = '61202';
+UPDATE `creature_template` SET `script_name` = 'phantom_guardsman' WHERE `entry` = '61200';
+UPDATE `creature_template` SET `script_name` = 'haunted_stable_tender' WHERE `entry` = '61201';
+UPDATE `creature_template` SET `script_name` = 'shattercage_spearman' WHERE `entry` = '61198';
+UPDATE `creature_template` SET `script_name` = 'shattercage_magiskull' WHERE `entry` = '61199';

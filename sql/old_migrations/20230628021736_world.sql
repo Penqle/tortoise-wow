@@ -1,0 +1,8 @@
+UPDATE quest_template SET
+RequestItemsText = 'I can tell just by looking at you that you, my friend, have an eye for FASHION! Don''t try to hide it: I can see it in your bold attire, undeterred by the scoffs of the unenlightened philistines.$B$BI am willing to provide you, and only you, with some Fashion Coins to up your FABULOUS game. In return, I would ask that you provide me some materials for my next groundbreaking design. Together, we can set the fashion world on FIRE!$B$BHere''s a list of what I need. Please be sure that they are undamaged and of the highest quality.',
+OfferRewardText = 'Splendid, splendid! Everything that I requested, and in such good condition as well. I hope that I can look forward to your continued cooperation. If you ever need more coins, you know where to find me.'
+WHERE entry BETWEEN 60030 AND 60035;
+UPDATE quest_template SET
+RequestItemsText = 'Have I got a FABULOUS deal for you today!$B$BRumor has it some crazed zealots that reside within Stratholme carry orbs imbued with divine power. Righteous Orbs, they''re called. Another priceless pearl, the Flawless Draenethyst Sphere, is said to be in the clutches of every horrible fiend in the Blasted Lands.$B$BI''m prepared to give you three, count them, THREE Fashion Coins in exchange for one of each of these rare jewels. I simply cannot complete my latest design without them!',
+OfferRewardText = 'Oh my! Oh my, oh my, oh my! Yes, these are absolutely perfect! Their lustre, their smoothness, their perfection!$B$BHere, take these coins for your trouble. I knew that you wouldn''t disappoint me. You are well and truly FABULOUS!'
+WHERE entry = 60036;

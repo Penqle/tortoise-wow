@@ -1,0 +1,3 @@
+UPDATE item_template SET spellcharges_1 = 0 WHERE entry IN (50603, 50603, 50605, 50606, 50607, 50608, 50609, 50610, 50613, 50612);
+
+

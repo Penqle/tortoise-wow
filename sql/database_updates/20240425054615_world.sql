@@ -1,0 +1,1 @@
+UPDATE quest_template SET OfferRewardText = 'We survived the attack!$B$BWe could not have done it without you, $N.$B$BWe''ll be heading out as soon as the tide rises. If you weren''t such a promising hero I''d offer you a place on my crew. But I can tell you have bigger fish to fry.$B$BEven if you are a puny $r....' WHERE entry = 667;

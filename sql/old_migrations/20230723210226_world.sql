@@ -1,0 +1,3 @@
+UPDATE quest_template SET
+Details = 'So the shield really belonged to the tauren from Brackenwall. Good work.$B$B On the other hand, the reported killing of Paval Reethe by our soldiers is troubling. Deeply troubling. I cannot just trust the Horde on this. My role, as a captain, is not only to order, but also to serve.$B$B I''m worried that Lieutenant Caldwell only acted in self defense. But, if the orc was really speaking the truth, you may find some evidence in Caldwell''s belongings. You can find his quarters downstairs. He was sent there with a soldier named Hallan. Check hers, too.$B$B I will prepare the report for Lady Jaina.'
+WHERE Entry = 40599;

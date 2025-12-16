@@ -1,0 +1,1 @@
+UPDATE quest_template SET OfferRewardText = 'Excellent work, $N. Without their tunnelers, the silithid will have a hard time repairing any damage inflicted to their hive''s structure. I assume you''ll want a new task.' WHERE entry = 8687;

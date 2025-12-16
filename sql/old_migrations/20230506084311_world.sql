@@ -1,0 +1,33 @@
+
+-- Changes by GHEOR
+REPLACE INTO `gameobject` VALUES ( 5015098, 2004161, 451, 16703.1, 15876.9, 46.6335, 1.46298, 0, 0, 0.667981, 0.744178, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `object_scaling` (`fullGuid`, `scale`) VALUES (17370417387015013946, 0.400000);
+REPLACE INTO `gameobject` VALUES ( 5015098, 2004161, 451, 16703.1, 15876.9, 46.6335, 1.46298, 0, 0, 0.667981, 0.744178, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015098';
+DELETE FROM game_event_gameobject WHERE guid = '5015098';
+DELETE FROM gameobject_battleground WHERE guid = '5015098';
+REPLACE INTO `gameobject` VALUES ( 5015099, 1000081, 451, 16709.5, 15924.1, 47.5727, 0.822887, 0, 0, 0.399933, 0.916545, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015099';
+DELETE FROM game_event_gameobject WHERE guid = '5015099';
+DELETE FROM gameobject_battleground WHERE guid = '5015099';
+REPLACE INTO `gameobject` VALUES ( 5015100, 2000425, 451, 16706, 15922.8, 47.9416, 1.10799, 0, 0, 0.526087, 0.850431, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015100';
+DELETE FROM game_event_gameobject WHERE guid = '5015100';
+DELETE FROM gameobject_battleground WHERE guid = '5015100';
+REPLACE INTO `gameobject` VALUES ( 5015101, 2000425, 451, 16705.4, 15919.1, 48.336, 1.16925, 0, 0, 0.551885, 0.83392, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015101';
+DELETE FROM game_event_gameobject WHERE guid = '5015101';
+DELETE FROM gameobject_battleground WHERE guid = '5015101';
+REPLACE INTO `gameobject` VALUES ( 5015102, 2002570, 451, 16703.2, 15923.7, 48.8594, 4.81978, 0, 0, 0.668137, -0.744038, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015102';
+DELETE FROM game_event_gameobject WHERE guid = '5015102';
+DELETE FROM gameobject_battleground WHERE guid = '5015102';
+REPLACE INTO `gameobject` VALUES ( 5015103, 2008651, 451, 16704.5, 15920.5, 48.4694, 1.76223, 0, 0, 0.771447, 0.636293, 300, 300, 100, 1, 0, 0);
+REPLACE INTO `gameobject` VALUES ( 5015103, 2008651, 451, 16704.5, 15920.5, 48.8694, 1.76223, 0, 0, 0.771447, 0.636293, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015103';
+DELETE FROM game_event_gameobject WHERE guid = '5015103';
+DELETE FROM gameobject_battleground WHERE guid = '5015103';
+REPLACE INTO `gameobject` VALUES ( 5015104, 2007265, 451, 16721.8, 15924.1, 47.0851, 5.13237, 0, 0, 0.544178, -0.83897, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5015104';
+DELETE FROM game_event_gameobject WHERE guid = '5015104';
+DELETE FROM gameobject_battleground WHERE guid = '5015104';

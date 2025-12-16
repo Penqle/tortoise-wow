@@ -1,0 +1,2 @@
+UPDATE quest_template SET RequiredRaces = 589 WHERE RequiredRaces = 0 AND (RewRepFaction1 = 47 OR RewRepFaction1 = 54 OR RewRepFaction1 = 72 OR RewRepFaction1 = 69 OR RewRepFaction1 = 269);
+UPDATE quest_template SET RequiredRaces = 434 WHERE RequiredRaces = 0 AND (RewRepFaction1 = 76  OR RewRepFaction1 = 530 OR RewRepFaction1 = 81 OR RewRepFaction1 = 68 OR RewRepFaction1 = 893 OR RewRepFaction1 = 1001);

@@ -1,0 +1,3 @@
+REPLACE INTO `taxi_nodes` (`id`, `map_id`, `x`, `y`, `z`, `name`, `mount_creature_id1`, `mount_creature_id2`) VALUES (186, 1, 5497.7, -3690.7, 1594.21, 'Nordanaar, Hyjal', 3837, 3837);
+REPLACE INTO `taxi_nodes` (`id`, `map_id`, `x`, `y`, `z`, `name`, `mount_creature_id1`, `mount_creature_id2`) VALUES (187, 0, -2165.310, 974.400, 2.220, 'Ravenshire, Gilneas', 0, 541);
+REPLACE INTO `taxi_nodes` (`id`, `map_id`, `x`, `y`, `z`, `name`, `mount_creature_id1`, `mount_creature_id2`) VALUES (188, 0, -1300.589, 1160.949, 126.860, 'Stillward Church, Gilneas', 3574, 0);

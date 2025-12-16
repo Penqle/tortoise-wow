@@ -1,0 +1,3 @@
+-- Fixes https://github.com/slowtorta/turtlewow-bug-tracker/issues/2378
+
+UPDATE `quest_template` SET `Details` = 'You know, since there\'s another shipment coming, I might as well just wait for them here. I got a few more coins here to spare, and so far my eye for talent hasn\'t lead me wrong with you.\n\nNow I know I want to hire more $cs for later jobs, but we still have to get these weapon crates to Orgrimmar. A goblin\'s reputation is ninety percent of his business! How about it? Mind hauling this stuff the rest of the way for me?\n\nMy no good cousin Kozish should have made it there hours ago. He had more cargo to deliver and is probably drinking away his paycheck at the first pub he saw by now. Check there for him in the Valley of Strength.' WHERE `entry` = 60121;

@@ -1,0 +1,9 @@
+-- Respawn Lady Katrana Prestor when Highlord Bolvar Fordragon evades.
+DELETE FROM `creature_ai_events` WHERE `creature_id`=1748;
+INSERT INTO `creature_ai_events` (`id`, `creature_id`, `condition_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_script`, `action2_script`, `action3_script`, `comment`) VALUES (174801, 1748, 0, 2, 0, 100, 1, 90, 1, 40000, 60000, 174801, 0, 0, 'Highlord Bolvar Fordragon - Cast Shield Wall at 90% HP');
+INSERT INTO `creature_ai_events` (`id`, `creature_id`, `condition_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_script`, `action2_script`, `action3_script`, `comment`) VALUES (174802, 1748, 0, 2, 0, 100, 0, 20, 1, 0, 0, 174802, 0, 0, 'Highlord Bolvar Fordragon - Cast Lay on Hands at 20% HP');
+INSERT INTO `creature_ai_events` (`id`, `creature_id`, `condition_id`, `event_type`, `event_inverse_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action1_script`, `action2_script`, `action3_script`, `comment`) VALUES (174803, 1748, 0, 7, 0, 100, 0, 0, 0, 0, 0, 174803, 0, 0, 'Highlord Bolvar Fordragon - Respawn Lady Katrana Prestor on Evade');
+DELETE FROM `creature_ai_scripts` WHERE `id`=174803;
+INSERT INTO `creature_ai_scripts` (`id`, `delay`, `priority`, `command`, `datalong`, `datalong2`, `datalong3`, `datalong4`, `target_param1`, `target_param2`, `target_type`, `data_flags`, `dataint`, `dataint2`, `dataint3`, `dataint4`, `x`, `y`, `z`, `o`, `condition_id`, `comments`) VALUES
+(174803, 0, 0, 71, 0, 0, 0, 0, 10497, 0, 9, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Highlord Bolvar Fordragon - Respawn Lady Katrana Prestor');
+UPDATE `creature` SET `spawntimesecsmin`=300, `spawntimesecsmax`=300 WHERE `guid`=10497;

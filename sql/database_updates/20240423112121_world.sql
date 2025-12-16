@@ -1,0 +1,4 @@
+-- NPC IDs 61964, 5055, 5761, 61967, 61966, 634, 61960, 598, 61959, 1731, 622, 61962, 4417, 3854, 3855, 61970, 4283, 61971, 4306, 4293, 6547 should have a 5 hour respawn timer, this is for all NPCs with this entry id.
+update creature set spawntimesecsmin = 18000, spawntimesecsmax = 18000 where ID in (61964,5055,5761,61967,61966,634,61960,598,61959,1731,622,61962,4417,3854,3855,61970,4283,61971,4306,4293,6547);
+-- NPC IDs 61965, 61968, 61961, 61963, 61969, 61972 should have a 7 day respawn timer.
+update creature set spawntimesecsmin = 604800, spawntimesecsmax = 604800 where ID in (61965,61968,61961,61963,61969,61972);

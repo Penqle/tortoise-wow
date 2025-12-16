@@ -1,0 +1,7 @@
+
+-- Changes by MORIENA
+REPLACE INTO `gameobject` VALUES ( 5019632, 2020110, 808, -8162.79, -3540.13, 92.7702, 3.07278, 0, 0, 0.999408, 0.0343989, 300, 300, 100, 1, 0, 0);
+DELETE FROM gameobject WHERE guid = '5019632';
+DELETE FROM game_event_gameobject WHERE guid = '5019632';
+DELETE FROM gameobject_battleground WHERE guid = '5019632';
+REPLACE INTO `gameobject` VALUES ( 5019633, 2020110, 808, -8260.93, -3583.19, 93.2672, 0.19743, 0, 0, 0.0985546, 0.995132, 300, 300, 100, 1, 0, 0);

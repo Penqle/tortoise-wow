@@ -1,0 +1,51 @@
+
+# Prograssive Rates Config, VERY custom Turtle WoW feature. We have developed a system to regulate the kill 
+# XP rates for level ranges where it’s necessary, due to a lack of quests, such as 20-25, 40-42. 
+
+###################################################################################################################
+# Progressive rate profiles:
+###################################################################################################################
+
+[Default]
+Rate.XP.Kill    = 1
+
+[LowLevel]
+Rate.XP.Kill    = 0.9
+
+[LowLevel2]
+Rate.XP.Kill    = 0.8
+
+[MidLevel]
+Rate.XP.Kill    = 0.9
+
+[HighLevel1]
+Rate.XP.Kill    = 0.8
+
+[HighLevel2]
+Rate.XP.Kill    = 0.7
+
+###################################################################################################################
+# Dungeon rate profile (0.5x rates for Crature.Kill)
+###################################################################################################################
+
+[Dungeon]
+Rate.XP.Kill    = 1
+
+###################################################################################################################
+# Hardcore Mode (0.5x rates for Creature.Kill)
+###################################################################################################################
+
+[Hardcore]
+Rate.XP.Kill    = 0.5
+
+###################################################################################################################
+# Set profile for each level range, if not set, default is used.
+###################################################################################################################
+
+[Settings]
+1_8 = LowLevel
+9_12 = Default
+13_35 = LowLevel2
+36_45 = MidLevel
+46_55 = HighLevel1
+56_60 = HighLevel2

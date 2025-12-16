@@ -1,0 +1,1 @@
+UPDATE spell_template SET effectApplyAuraName1 = 13 WHERE entry = 12686;

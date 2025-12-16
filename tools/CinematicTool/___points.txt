@@ -1,0 +1,16 @@
+4929 -3057 54; Original Point
+88; Duration in Seconds
+162; Cinematic ID (for SQL)
+4926 -3056 54:4590 -2918 34:0; First Point, start in front of statue
+4832 -3021 53:4590 -2918 33:4; Enough staring at statue, let's go!
+4629 -2935 53:4401 -2874 9:12.5; On top of circle building
+4511 -2904 24:4356 -2867 11:16; Fountain 1
+4326 -2847 15:4223 -2733 8:25; On the way to second fountain
+4146 -2752 54:3976 -2702 35:33; Fountain 2
+3962 -2738 63:3878 -2557 34:39; 2 elf statue
+3854 -2588 52:3669 -2393 62:49; Crossroad 1
+3840 -2545 51:3669 -2393 61.9:51.5; Smooth Crossroad 1
+3619 -2442 96:3383 -2429 95:63; Crossroad 2
+3405 -2457 112:3313 -2468 107:71; Before podium
+3338 -2450 143:3237 -2473 109:75; Podium
+3231 -2488 128:3212 -2500 111:87; Zoom on character

@@ -1,0 +1,1 @@
+UPDATE `spell_template` SET `startRecoveryCategory` = 0, `startRecoveryTime` = 0 WHERE `entry` = 5019;

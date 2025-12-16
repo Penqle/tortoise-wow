@@ -1,0 +1,33 @@
+-- Move illusions to the toy tab.
+-- 50017, 51200, 50439, 50408, 51201, 51203, 51205, 51206, 51207, 51208, 51065, 51066, 51067, 51253, 51209, 53008, 51836, 80694, 80648, 81145, 50435, 50436, 50437, 50438, 80175, 51215, 51210, 91792
+
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Blood Elf' WHERE `entry` = 50017;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Goblin' WHERE `entry` = 51200;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Harpy' WHERE `entry` = 50439;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Dryad' WHERE `entry` = 50408;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Worgen' WHERE `entry` = 51201;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: High Elf' WHERE `entry` = 51203;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Ghost' WHERE `entry` = 51205;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Banshee' WHERE `entry` = 51206;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Serpent Lord' WHERE `entry` = 51207;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Succubus' WHERE `entry` = 51208;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Shadow' WHERE `entry` = 51065;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Flamewaker' WHERE `entry` = 51066;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Bone Serpent' WHERE `entry` = 51067;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Furbolg' WHERE `entry` = 51253;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Rat' WHERE `entry` = 51209;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Two-headed Ogre' WHERE `entry` = 53008;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Murloc' WHERE `entry` = 51836;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Scourge' WHERE `entry` = 80694;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Gnoll' WHERE `entry` = 80648;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Pandaren' WHERE `entry` = 81145;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Dreadlord' WHERE `entry` = 50435;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Smolderthorn Berserker' WHERE `entry` = 50436;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Naga Explorer' WHERE `entry` = 50437;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Naga Siren' WHERE `entry` = 50438;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Chromie\'s Pocket Watch' WHERE `entry` = 80175;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Satyr' WHERE `entry` = 51215;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Green Dragonkin' WHERE `entry` = 51210;
+UPDATE `item_template` SET `spellid_1` = 46003, `name` = 'Illusion: Tiny Celestial Dragon' WHERE `entry` = 91792;
+
+REPLACE INTO `spell_template` (`entry`, `school`, `category`, `castUI`, `dispel`, `mechanic`, `attributes`, `attributesEx`, `attributesEx2`, `attributesEx3`, `attributesEx4`, `stances`, `stancesNot`, `targets`, `targetCreatureType`, `requiresSpellFocus`, `casterAuraState`, `targetAuraState`, `castingTimeIndex`, `recoveryTime`, `categoryRecoveryTime`, `interruptFlags`, `auraInterruptFlags`, `channelInterruptFlags`, `procFlags`, `procChance`, `procCharges`, `maxLevel`, `baseLevel`, `spellLevel`, `durationIndex`, `powerType`, `manaCost`, `manCostPerLevel`, `manaPerSecond`, `manaPerSecondPerLevel`, `rangeIndex`, `speed`, `modelNextSpell`, `stackAmount`, `totem1`, `totem2`, `reagent1`, `reagent2`, `reagent3`, `reagent4`, `reagent5`, `reagent6`, `reagent7`, `reagent8`, `reagentCount1`, `reagentCount2`, `reagentCount3`, `reagentCount4`, `reagentCount5`, `reagentCount6`, `reagentCount7`, `reagentCount8`, `equippedItemClass`, `equippedItemSubClassMask`, `equippedItemInventoryTypeMask`, `effect1`, `effect2`, `effect3`, `effectDieSides1`, `effectDieSides2`, `effectDieSides3`, `effectBaseDice1`, `effectBaseDice2`, `effectBaseDice3`, `effectDicePerLevel1`, `effectDicePerLevel2`, `effectDicePerLevel3`, `effectRealPointsPerLevel1`, `effectRealPointsPerLevel2`, `effectRealPointsPerLevel3`, `effectBasePoints1`, `effectBasePoints2`, `effectBasePoints3`, `effectBonusCoefficient1`, `effectBonusCoefficient2`, `effectBonusCoefficient3`, `effectMechanic1`, `effectMechanic2`, `effectMechanic3`, `effectImplicitTargetA1`, `effectImplicitTargetA2`, `effectImplicitTargetA3`, `effectImplicitTargetB1`, `effectImplicitTargetB2`, `effectImplicitTargetB3`, `effectRadiusIndex1`, `effectRadiusIndex2`, `effectRadiusIndex3`, `effectApplyAuraName1`, `effectApplyAuraName2`, `effectApplyAuraName3`, `effectAmplitude1`, `effectAmplitude2`, `effectAmplitude3`, `effectMultipleValue1`, `effectMultipleValue2`, `effectMultipleValue3`, `effectChainTarget1`, `effectChainTarget2`, `effectChainTarget3`, `effectItemType1`, `effectItemType2`, `effectItemType3`, `effectMiscValue1`, `effectMiscValue2`, `effectMiscValue3`, `effectTriggerSpell1`, `effectTriggerSpell2`, `effectTriggerSpell3`, `effectPointsPerComboPoint1`, `effectPointsPerComboPoint2`, `effectPointsPerComboPoint3`, `spellVisual1`, `spellVisual2`, `spellIconId`, `activeIconId`, `spellPriority`, `name`, `nameFlags`, `nameSubtext`, `nameSubtextFlags`, `description`, `descriptionFlags`, `auraDescription`, `auraDescriptionFlags`, `manaCostPercentage`, `startRecoveryCategory`, `startRecoveryTime`, `minTargetLevel`, `maxTargetLevel`, `spellFamilyName`, `spellFamilyFlags`, `maxAffectedTargets`, `dmgClass`, `preventionType`, `stanceBarOrder`, `dmgMultiplier1`, `dmgMultiplier2`, `dmgMultiplier3`, `minFactionId`, `minReputation`, `requiredAuraVision`, `customFlags`) VALUES (46003, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 0, 115, 0, 0, 'Add Toy to Collection', 16712190, 'Collection', 16712190, 'Adds an illusion to the player\'s illusion collection.', 16712190, '', 16712190, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0);

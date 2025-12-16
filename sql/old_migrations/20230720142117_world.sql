@@ -1,0 +1,1 @@
+UPDATE spell_template SET  effectBasePoints1 = 30, effectApplyAuraName1 = 124, effectImplicitTargetA1 = 57, effect1 = 6 WHERE entry = 45565;

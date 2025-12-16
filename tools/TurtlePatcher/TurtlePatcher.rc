@@ -1,0 +1,293 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Китайский (упрощенное письмо, Китай) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE               "ОЪ№кД§КЮёьРВІ№¶Ў°ь"
+    IDS_StartupLabel        "°ІЧ°...."
+    IDS_Cancel              "ИЎПы"
+    IDS_HelpStr1            "ДъєГ!ДъµД°ІЧ°№эіМЛЖєхіцБЛОКМвЎЈТФПВКЗТ»Р©їЙДЬµДЅвѕц·Ѕ°ё:"
+    IDS_HelpStr2            "ЗлИ·±ЈДъµДЙ±¶ѕИнјюЎў±ё·ЭИнјю»тWindows DefenderГ»УРЧиЦ№twpatch.exeЎўDiscordOverlay.dll»тWoW.exeЎЈФЪУТПВЅЗµДИООсАёЦРґтїЄґ°їЪ°ІИ«Ј¬ЧЄµЅІЎ¶ѕєНЙЁГи·А»¤>ФКРнµДНюРІ>КЬ±Ј»¤µДНюРІЈ¬И»єуСЎФсОДјюІўµҐ»ч»ЦёґСЎПо"
+    IDS_HelpStr3            "Ѕ«УОП·ТЖіцЦ»¶БОДјюјРЈ¬АэИзіМРтОДјюЎўУГ»§ОДјюјРЎўПВФШЎўЧАГжµИ."
+    IDS_HelpStr4            "іўКФТФ№ЬАнФ±ДЈКЅФЛРРwow.exe!"
+    IDS_HelpStr5            "Из№ыТ»ЗРХэіЈЈ¬ДъµДDataОДјюјРУ¦ёГ°ІЧ°БЛ%sЈ¬ДъµД¶юЅшЦЖОДјюУ¦ёГ°ІЧ°БЛ°ж±ѕ%s"
+    IDS_HelpStr6            "Из№ыЛьИФИ»І»№¤ЧчЈ¬ЗлЦ±ЅУґУОТГЗµДНшХѕЅшРРПВФШ."
+    IDS_Error               "ґнОу"
+    IDS_Err_LogFile         "ОЮ·ЁґґЅЁИХЦѕОДјюЎЈїЙДЬКЗґЕЕМЙПГ»УРЧг№»µДїЙУГїХјдЈ¬»тХЯ·ўЙъБЛґнОуЎЈ\nPatcherЅ«іўКФ№¤Чч."
+    IDS_Err_Patching        "РЮёґWoW.exeК±іцПЦОКМвЈ¬ЗлІОФДИХЦѕ"
+    IDS_Stage_BinaryPatch   "РЮёґWoW.exe"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_Stage_Downloading   "ПВФШwow-patch.mpq"
+    IDS_DownloadStatus      "ПВФШ %.02fMb ґУ %.02fMb"
+    IDS_Stage_ClearCache    "Зеіэ»єґж...."
+    IDS_Stage_UnpackFiles   "ЅвС№ОДјю...."
+    IDS_Stage_Done          "НкіЙ!"
+    IDS_CriticalError_Label "№ШјьРФґнОу"
+    IDS_CriticalError_Txt   "ОЮ·ЁРЮёґTurtle WoW. ПкПёРЕПўЗлІОјы tw_update.log."
+    IDS_Err_NotWoWFolder    "ХТІ»µЅWoW.exeЎЈ И·±Ј TWPatcher.exe ·ЕЦГФЪ WoW.exe ёЅЅьЎЈ"
+    IDS_Dbg_MakeDump        "ЧЄµЅИООс№ЬАнЖчЈ¬ХТµЅ TWPatcher.exe ЅшіМЈ¬И»єуґУЅшіМІЛµҐЦРСЎФсЎ°ґґЅЁЧЄґўОДјюЎ±ЎЈ Ѕ«ЧЄґўЧЄ·ўёшїЄ·ўИЛФ±ЎЈФЪµҐ»чЎ°И·¶ЁЎ±Ц®З°ЦґРРґЛІЩЧчЎЈ"
+END
+
+#endif    // Китайский (упрощенное письмо, Китай) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Нейтральный (по умолчанию) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
+LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOGBAR DIALOGEX 0, 0, 457, 295
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "IDS_TITLE"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,15,238,426,14
+    LTEXT           "IDS_StartupLabel",IDC_PROGRESSTXT,16,263,317,8
+    PUSHBUTTON      "IDS_Cancel",IDC_CANCELBTN,392,262,50,14
+    CONTROL         IDB_SPLASH_SMALL,IDC_STATIC,"Static",SS_BITMAP,15,14,427,215
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOGBAR, DIALOG
+    BEGIN
+        LEFTMARGIN, 6
+        RIGHTMARGIN, 450
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 288
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOGBAR AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON3               ICON                    "turtle_icon_round.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_SPLASH_SMALL        BITMAP                  "Splash_Small.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,6,0
+ PRODUCTVERSION 1,1,6,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "Turtle WoW"
+            VALUE "FileDescription", "An old World, a new Era."
+            VALUE "FileVersion", "1.1.6.0"
+            VALUE "InternalName", "TW Patcher"
+            VALUE "LegalCopyright", "Copyright (C) 2024"
+            VALUE "OriginalFilename", "TWPatcher.exe"
+            VALUE "ProductName", "Turtle WoW Patcher"
+            VALUE "ProductVersion", "Version 1.1.6"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE               "Turtle WoW Patcher"
+    IDS_StartupLabel        "Installing...."
+    IDS_Cancel              "Cancel"
+    IDS_HelpStr1            "Hello! It seems that something went wrong with your installation process. Here's a list of possible solutions:"
+    IDS_HelpStr2            "Please ensure that your Antivirus, Backup Software or Windows Defender is not blocking TWPatcher.exe, DiscordOverlay.dll or WoW.exe. Open Window Security in your right bottom taskbar, go to Virus and Scan protection > Allowed Threats > Protected Threats and select the files and click the Restore option"
+    IDS_HelpStr3            "Move the game out of read-only folders such as Program Files, User Folder, Downloads, Desktop, etc."
+    IDS_HelpStr4            "Try to run WoW as Administrator!"
+    IDS_HelpStr5            "If everything is done right, your Data folder should have %s installed an your binary file should have revision %s"
+    IDS_HelpStr6            "If it still doesn't work please use a direct download from our website."
+    IDS_Error               "Error"
+    IDS_Err_LogFile         "Can't create log file. Perhaps you don't have enough free space on disk, or something wrong happened.\nPatcher will try to work anyway."
+    IDS_Err_Patching        "Problem with patching WoW.exe, see log"
+    IDS_Stage_BinaryPatch   "Patching WoW.exe"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_Stage_Downloading   "Downloading wow-patch.mpq"
+    IDS_DownloadStatus      "Downloading %.02fMb from %.02fMb"
+    IDS_Stage_ClearCache    "Clearing cache...."
+    IDS_Stage_UnpackFiles   "Unpacking files...."
+    IDS_Stage_Done          "Done!"
+    IDS_CriticalError_Label "Critical Error"
+    IDS_CriticalError_Txt   "Couldn't patch Turtle WoW. See tw_update.log for details."
+    IDS_Err_NotWoWFolder    "Can't find WoW.exe. Ensure that TWPatcher.exe placed near WoW.exe."
+    IDS_Dbg_MakeDump        "Go to task manager and make dump from TWPatcher.exe process, before pressing ""OK"""
+END
+
+#endif    // Нейтральный (по умолчанию) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Русский (Россия) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE               "Программа обновления Turtle WoW"
+    IDS_StartupLabel        "Установка...."
+    IDS_Cancel              "Отмена"
+    IDS_HelpStr1            "Здравствуйте! Похоже, что при установке произошли проблемы. Вы можете попробовать следующее:"
+    IDS_HelpStr2            "Убедитесь, что ваш антивирус, программное обеспечение для резервного копирования или Защитник Windows не блокируют TWPatcher.exe, DiscordOverlay.dll или WoW.exe. Откройте «Безопасность Windows» на правой нижней панели задач, перейдите в раздел «Защита от вирусов и угроз» > «Разрешенные угрозы» > «Защищенные угрозы», выберите файлы и нажмите «Восстановить»."
+    IDS_HelpStr3            "Переместите игру из папок, доступных только для чтения, таких как Program Files, User Folder, Downloads, Desktop и т. д."
+    IDS_HelpStr4            "Попробуйте запустить WoW от имени администратора!"
+    IDS_HelpStr5            "Если все сделано правильно, в вашей папке данных должен быть установлен %s, а ваш двоичный файл должен иметь ревизию %s."
+    IDS_HelpStr6            "Если это по-прежнему не работает, воспользуйтесь прямой загрузкой с нашего сайта."
+    IDS_Error               "Ошибка"
+    IDS_Err_LogFile         "Невозможно создать лог файл. Вероятно это связано с тем, что папка доступна только для чтения.\nПрограмма обновления продолжит работу без журнала."
+    IDS_Err_Patching        "Проблема при обновлений WoW.exe, смотрите журнал ""tw_update.log"""
+    IDS_Stage_BinaryPatch   "Обновление WoW.exe"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_Stage_Downloading   "Загрузка wow-patch.mpq"
+    IDS_DownloadStatus      "Загружено %.02fМб из %.02fМб"
+    IDS_Stage_ClearCache    "Очистка кэша...."
+    IDS_Stage_UnpackFiles   "Распаковка файлов...."
+    IDS_Stage_Done          "Всё готово!"
+    IDS_CriticalError_Label "Критическая ошибка"
+    IDS_CriticalError_Txt   "Невозможно обновить Turtle WoW. Смотрите журнал tw_update.log для дополнительной информации."
+    IDS_Err_NotWoWFolder    "WoW.exe файл не найден. Убедитесь что программа TWPatcher.exe запускается из той же папки, что и WoW.exe"
+    IDS_Dbg_MakeDump        "Зайдите в диспетчер задач, найдите процесс TWPatcher.exe и в меню процесса выберите ""Создать файл дампа"". Перешлите дамп разработчику. Сделайте это прежде чем нажимать ""ОК""."
+END
+
+#endif    // Русский (Россия) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

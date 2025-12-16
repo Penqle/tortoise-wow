@@ -1,0 +1,1 @@
+UPDATE `map_template` SET `player_limit` = 10 WHERE `entry` = 532;

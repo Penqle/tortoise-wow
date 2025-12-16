@@ -1,0 +1,1 @@
+UPDATE broadcast_text SET female_text = 'Defias activity reported on the coastal horizon.  All clear on Sentinel Hill.' WHERE entry = 41;

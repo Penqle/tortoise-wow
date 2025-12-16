@@ -1,0 +1,2 @@
+-- Fixes https://github.com/slowtorta/turtlewow-bug-tracker/issues/2481
+UPDATE `quest_template` SET `Details` = 'Lok\'tar $r! Have you heard the news? Chen Stormstout has returned to Kalimdor! Chen Stormstout was integral in the founding and defense of Orgrimmar alongside the likes of Rokhan, Cairne, and Rexxar!\n\nMany are journeying to Ratchet to meet him, perhaps you would be interested as well, rumor is that he is looking for something and may reward whoever assists him.' WHERE `entry` = 40685;

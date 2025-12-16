@@ -1,0 +1,4 @@
+REPLACE INTO `game_weather` (`zone`, `spring_rain_chance`, `spring_snow_chance`, `spring_storm_chance`, `summer_rain_chance`, `summer_snow_chance`, `summer_storm_chance`, `fall_rain_chance`, `fall_snow_chance`, `fall_storm_chance`, `winter_rain_chance`, `winter_snow_chance`, `winter_storm_chance`) VALUES (5130, 0, 100, 0, 0, 100, 0, 0, 100, 0, 0, 100, 0);
+REPLACE INTO `game_weather` (`zone`, `spring_rain_chance`, `spring_snow_chance`, `spring_storm_chance`, `summer_rain_chance`, `summer_snow_chance`, `summer_storm_chance`, `fall_rain_chance`, `fall_snow_chance`, `fall_storm_chance`, `winter_rain_chance`, `winter_snow_chance`, `winter_storm_chance`) VALUES (5131, 0, 100, 0, 0, 100, 0, 0, 10, 0, 0, 100, 0);
+
+UPDATE `creature_template` SET `faction` = 1682 WHERE `entry` = 61133;

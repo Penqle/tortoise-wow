@@ -1,0 +1,1 @@
+UPDATE quest_template SET RequiredMinRepFaction = 0, RequiredMinRepValue = 0 WHERE entry = 40794;

@@ -1,0 +1,3 @@
+-- Remove gold vein spawns in Un'goro Crater.
+DELETE FROM `gameobject` WHERE `guid` IN (5768, 5802, 5831, 5866, 5883, 5886, 5901, 5905, 5924, 5925, 5948, 5949, 5969, 5988, 5875, 5920, 5951);
+DELETE FROM `pool_gameobject` WHERE `guid` IN (5768, 5802, 5831, 5866, 5883, 5886, 5901, 5905, 5924, 5925, 5948, 5949, 5969, 5988, 5875, 5920, 5951);
