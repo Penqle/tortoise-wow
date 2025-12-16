@@ -6545,6 +6545,41 @@ void Aura::PeriodicTick(SpellEntry const* sProto, AuraType auraType, uint32 data
 
             pdamage = target->SpellHealingBonusTaken(pCaster, spellProto, GetEffIndex(), pdamage, DOT, GetStackAmount());
 
+            // Preservation: boost Regrowth HoT ticks if the target already has the caster's Rejuvenation
+            if (pCaster && spellProto->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_REGROWTH>())
+            {
+                bool hasRejuvenation = false;
+                Unit::AuraList const& periodicHeals = target->GetAurasByType(SPELL_AURA_PERIODIC_HEAL);
+                for (const auto aura : periodicHeals)
+                {
+                    if (aura->GetCasterGuid() != pCaster->GetObjectGuid())
+                        continue;
+
+                    if (aura->GetSpellProto()->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_REJUVENATION>())
+                    {
+                        hasRejuvenation = true;
+                        break;
+                    }
+                }
+
+                if (hasRejuvenation)
+                {
+                    int32 preservationBonus = 0;
+                    Unit::AuraList const& overrides = pCaster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+                    for (const auto aura : overrides)
+                    {
+                        if (aura->GetModifier()->m_miscvalue != 5064) // Preservation script id
+                            continue;
+
+                        if (aura->GetModifier()->m_amount > preservationBonus)
+                            preservationBonus = aura->GetModifier()->m_amount;
+                    }
+
+                    if (preservationBonus)
+                        pdamage += pdamage * preservationBonus / 100;
+                }
+            }
+
             uint32 const originalAmount = pdamage;
 
             // Don't heal target if it is already at max health. We still need
