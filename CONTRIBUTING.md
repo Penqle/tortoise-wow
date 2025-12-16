@@ -8,6 +8,8 @@ Some basic guidelines for contributing to this project
 - Always comment SQL blocks
 - Test all contributions thoroughly before issuing a PR. ([DPSMate][21] is a great tool to really test changes)
 - Always point to issues that you are resolving in PRs. If no issue exists, create one and label appropriately.
+- Avoid direct spell edits, instead use spell_affect, spell_proc_event, spell_scripts, or backend code when needed
+
 
 [21]: https://github.com/laytya/DPSMate
 
