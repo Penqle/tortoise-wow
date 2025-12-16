@@ -1,5 +1,5 @@
 -- Improved Shred pwoershift proc
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
@@ -17,7 +17,7 @@ VALUES
 (16966, 0, 7, 0, 2147483648, 0, 17408, 524288, 0, 100, 0);
 
 -- Feral Adrenaline crit taken proc
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
@@ -36,7 +36,7 @@ VALUES
 
 
 -- Heart of the Wild bear and cat component
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
