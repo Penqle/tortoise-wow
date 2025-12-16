@@ -6388,7 +6388,25 @@ void Aura::PeriodicTick(SpellEntry const* sProto, AuraType auraType, uint32 data
 
             // SpellDamageBonus for magic spells
             if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE || spellProto->DmgClass == SPELL_DAMAGE_CLASS_MAGIC)
+            {
                 pdamage = target->SpellDamageBonusTaken(pCaster, spellProto, GetEffIndex(), pdamage, DOT, GetStackAmount());
+
+                // Genesis: boost periodic magical damage
+                if (pCaster && spellProto->School != SPELL_SCHOOL_NORMAL)
+                {
+                    int32 genesisBonus = 0;
+                    Unit::AuraList const& overrides = pCaster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+                    for (const auto aura : overrides)
+                    {
+                        if (aura->GetModifier()->m_miscvalue != 5063)
+                            continue;
+                        genesisBonus = std::max(genesisBonus, aura->GetModifier()->m_amount);
+                    }
+
+                    if (genesisBonus)
+                        pdamage += pdamage * genesisBonus / 100;
+                }
+            }
             // MeleeDamagebonus for weapon based spells
             else
             {
@@ -6578,6 +6596,22 @@ void Aura::PeriodicTick(SpellEntry const* sProto, AuraType auraType, uint32 data
                     if (preservationBonus)
                         pdamage += pdamage * preservationBonus / 100;
                 }
+            }
+
+            // Genesis: boost periodic magical healing
+            if (pCaster && spellProto->School != SPELL_SCHOOL_NORMAL)
+            {
+                int32 genesisBonus = 0;
+                Unit::AuraList const& overrides = pCaster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+                for (const auto aura : overrides)
+                {
+                    if (aura->GetModifier()->m_miscvalue != 5063)
+                        continue;
+                    genesisBonus = std::max(genesisBonus, aura->GetModifier()->m_amount);
+                }
+
+                if (genesisBonus)
+                    pdamage += pdamage * genesisBonus / 100;
             }
 
             uint32 const originalAmount = pdamage;
