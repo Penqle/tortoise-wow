@@ -480,6 +480,41 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
             }
             case SPELLFAMILY_DRUID:
             {
+                // Aessina's Bloom: heal for two ticks of caster's Regrowth on the target
+                if (m_spellInfo->Id == 52567)
+                {
+                    if (!unitTarget || !m_casterUnit)
+                        return;
+
+                    Aura* regrowth = nullptr;
+                    Unit::AuraList const& periodicHeals = unitTarget->GetAurasByType(SPELL_AURA_PERIODIC_HEAL);
+                    for (const auto aura : periodicHeals)
+                    {
+                        if (aura->GetCasterGuid() != m_casterUnit->GetObjectGuid())
+                            continue;
+
+                        if (aura->GetSpellProto()->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_REGROWTH>())
+                        {
+                            regrowth = aura;
+                            break;
+                        }
+                    }
+
+                    if (!regrowth)
+                        return;
+
+                    //int32 tickAmount = regrowth->GetModifier()->m_amount;
+                    //if (tickAmount <= 0)
+                    int32 tickAmount = regrowth->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1);
+
+                    if (tickAmount > 0)
+                    {
+                        uint32 healAmount = uint32(tickAmount * 2);
+                        m_casterUnit->DealHeal(unitTarget, healAmount, m_spellInfo);
+                    }
+                    return;
+                }
+
                 // Helper: count caster-applied druid bleed auras (Rake, Pounce bleed, Rip) on target
                 auto CountDruidBleedsOnTarget = [&](Unit* target, Player* caster) -> uint32
                 {
