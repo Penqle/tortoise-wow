@@ -1,5 +1,5 @@
 -- Searing Light proc event
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
@@ -17,7 +17,7 @@ VALUES
 (51466, 0, 6, 1215299712, 0, 0, 327680, 2, 0, 0, 0);
 
 -- Purifying Flames proc event
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
@@ -35,7 +35,7 @@ VALUES
 (51470, 0, 6, 1048576, 0, 0, 0, 0, 0, 0, 0);
 
 -- Enlighten proc event
-INSERT INTO spell_proc_event
+REPLACE INTO spell_proc_event
 (
     entry,
     SchoolMask,
