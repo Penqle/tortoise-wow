@@ -4295,6 +4295,40 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
     if (!foundInMap)
         sLog.outInfo("[Crash/Auras] Removing aura holder *not* in holders map ! Aura %u on %s", holder->GetId(), GetName());
     holder->SetRemoveMode(mode);
+
+    // Resurgent Shield
+    if (mode == AURA_REMOVE_BY_SHIELD_BREAK &&
+        holder->GetSpellProto()->IsFitToFamily<SPELLFAMILY_PRIEST, CF_PRIEST_POWER_WORD_SHIELD>())
+    {
+        if (Unit* caster = holder->GetCaster())
+            if (caster->HasAura(45560))
+            {
+                // Determine initial absorb amount from the shield aura.
+                int32 totalAbsorb = 0;
+                for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
+                {
+                    if (Aura* aura = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
+                    {
+                        if (aura->GetModifier()->m_auraname == SPELL_AURA_SCHOOL_ABSORB)
+                        {
+                            totalAbsorb = aura->GetInitialAbsorbAmount();
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback if no snapshot was found.
+                if (totalAbsorb <= 0)
+                    totalAbsorb = 0;
+
+                int32 base1 = totalAbsorb / 10;
+                int32 base2 = totalAbsorb / 10;
+                int32 base3 = static_cast<int32>(holder->GetSpellProto()->manaCost);
+
+                caster->CastCustomSpell(caster, 51477, &base1, &base2, &base3, true);
+            }
+    }
+
     holder->UnregisterSingleCastHolder();
     holder->HandleCastOnAuraRemoval();
 

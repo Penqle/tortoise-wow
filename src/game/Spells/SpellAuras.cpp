@@ -275,7 +275,8 @@ Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBas
     m_effIndex(eff), m_positive(false), m_isPeriodic(false), m_isAreaAura(false),
     m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder),
 // NOSTALRIUS: auras exclusifs
-    m_applied(false)
+    m_applied(false),
+    m_initialAbsorbAmount(0)
 {
     MANGOS_ASSERT(target);
    // MANGOS_ASSERT(spellproto && spellproto == sSpellMgr.GetSpellEntry(spellproto->Id) && "`info` must be pointer to a sSpellMgr element");
@@ -297,6 +298,11 @@ Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBas
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Aura: construct Spellid : %u, Aura : %u Target : %d Damage : %d", spellproto->Id, spellproto->EffectApplyAuraName[eff], spellproto->EffectImplicitTargetA[eff], damage);
 
     SetModifier(AuraType(spellproto->EffectApplyAuraName[eff]), damage, spellproto->EffectAmplitude[eff], spellproto->EffectMiscValue[eff]);
+
+    // Snapshot the starting absorb amount so we can reference it on shield break.
+    if (m_modifier.m_auraname == SPELL_AURA_SCHOOL_ABSORB)
+        m_initialAbsorbAmount = m_modifier.m_amount;
+
     CalculatePeriodic(caster ? caster->GetSpellModOwner() : nullptr, true);
     ComputeExclusive();
     if (IsLastAuraOnHolder() && !m_positive)

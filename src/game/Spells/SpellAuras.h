@@ -537,6 +537,8 @@ class Aura
 
         virtual Unit* GetTriggerTarget() const { return m_spellAuraHolder->GetTarget(); }
 
+        int32 GetInitialAbsorbAmount() const { return m_initialAbsorbAmount; }
+
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(bool apply);
 
@@ -570,6 +572,7 @@ class Aura
         time_t m_applyTime;
 
         int32 m_currentBasePoints;                          // cache SpellEntry::CalculateSimpleValue and use for set custom base points
+        int32 m_initialAbsorbAmount;                        // snapshot of starting absorb amount for absorb shields
         int32 m_periodicTimer;                              // Timer for periodic auras
         uint32 m_periodicTick;                              // Tick count pass (including current if use in tick code) from aura apply, used for some tick count dependent aura effects
 
