@@ -7628,6 +7628,16 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     // Break stealth on target
     if (GetSpellProto()->Custom & SPELL_CUSTOM_AURA_APPLY_BREAKS_STEALTH)
         m_target->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH, this);
+
+    // Enlighten: when Enlighten is cast on the target cast the dummy back to the caster
+    if (GetId() == 51476)
+    {
+        if (Unit* casterUnit = GetCaster())
+        {
+            // Cast from the Enlighten target to the priest, preserving the target as the aura's caster GUID.
+            m_target->CastSpell(casterUnit, 51475, true, nullptr, nullptr, m_target->GetObjectGuid());
+        }
+    }
 }
 
 void SpellAuraHolder::_RemoveSpellAuraHolder()
@@ -7636,6 +7646,13 @@ void SpellAuraHolder::_RemoveSpellAuraHolder()
     // except same aura replace case
     if (m_removeMode != AURA_REMOVE_BY_STACK)
         CleanupTriggeredSpells();
+
+    // Enlighten cleanup: when removing Enlighten clean up the dummy too
+    if (GetId() == 51476)
+    {
+        if (Unit* priest = GetCaster())
+            priest->RemoveAurasDueToSpell(51475);
+    }
 
     for (auto const& aura : m_auras)
     {
@@ -7861,6 +7878,10 @@ bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder const* ref) co
 
 bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
 {
+    // Respect hidden clientside flag regardless of duration/passive state.
+    if (m_spellProto->HasAttribute(SPELL_ATTR_HIDDEN_CLIENTSIDE))
+        return false;
+
     // Custom spells cannot be displayed on aura bar.
     if (m_spellProto->IsCustomSpell())
         return false;

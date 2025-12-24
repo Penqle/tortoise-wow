@@ -29,6 +29,7 @@
 #include "Totem.h"
 #include "Creature.h"
 #include "Formulas.h"
+#include "ObjectAccessor.h"
 #include "CreatureAI.h"
 #include "ScriptMgr.h"
 #include "Util.h"
@@ -1035,6 +1036,41 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, int3
                     target = this;
                     triggered_spell_id = 26170;
                     break;
+                }
+                // Enlighten Dummy 
+                case 51475:
+                {
+                    Unit* priest = this;
+                    Unit* tutored = nullptr;
+                    if (triggeredByAura)
+                        tutored = ObjectAccessor::GetUnit(*priest, triggeredByAura->GetCasterGuid());
+                    if (!tutored)
+                        tutored = priest;
+                        
+                    // Calculate damage to deal to the player
+                    float percent = 0.0f;
+                    if (SpellEntry const* dmgSpell = sSpellMgr.GetSpellEntry(51474))
+                        percent = (dmgSpell->EffectBasePoints[EFFECT_INDEX_0] + 1) / 100.0f;
+
+                    // Fall back to 50% hp for obvious missing spell_template entry for 51474
+                    if (percent <= 0.0f)
+                        percent = 0.50f;
+
+                    int32 damage = std::max<int32>(1, static_cast<int32>(tutored->GetMaxHealth() * percent));
+                    priest->SpellNonMeleeDamageLog(tutored, 51474, damage);
+
+                    // Check which buff to apply based on target
+                    if (tutored->GetObjectGuid() == priest->GetObjectGuid())
+                    {
+                        priest->CastSpell(priest, 51473, true, nullptr, triggeredByAura);
+                    }
+                    else
+                    {
+                        priest->CastSpell(priest, 51472, true, nullptr, triggeredByAura);
+                        priest->CastSpell(tutored, 51472, true, nullptr, triggeredByAura);
+                    }
+
+                    return SPELL_AURA_PROC_OK;
                 }
                 // Greater Heal (Vestments of Faith (Priest Tier 3) - 4 pieces bonus)
                 case 28809:

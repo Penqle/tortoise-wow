@@ -33,3 +33,21 @@ INSERT INTO spell_proc_event
 )
 VALUES
 (51470, 0, 6, 1048576, 0, 0, 0, 0, 0, 0, 0);
+
+-- Enlighten proc event
+INSERT INTO spell_proc_event
+(
+    entry,
+    SchoolMask,
+    SpellFamilyName,
+    SpellFamilyMask0,
+    SpellFamilyMask1,
+    SpellFamilyMask2,
+    procFlags,
+    procEx,
+    ppmRate,
+    CustomChance,
+    Cooldown
+)
+VALUES
+(51475, 0, 6, 1215299712, 0, 0, 0, 0, 0, 0, 0);
