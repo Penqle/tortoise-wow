@@ -1,5 +1,5 @@
--- Aessina's Bloom
-REPLACE INTO spell_proc_event
+-- Searing Light proc event
+INSERT INTO spell_proc_event
 (
     entry,
     SchoolMask,
@@ -14,5 +14,4 @@ REPLACE INTO spell_proc_event
     Cooldown
 )
 VALUES
-(51446, 0, 7, 32, 0, 0, 16384, 524288, 0, 0, 0),
-(51447, 0, 7, 32, 0, 0, 16384, 524288, 0, 0, 0);
+(51466, 0, 6, 1215299712, 0, 0, 327680, 2, 0, 0, 0);
