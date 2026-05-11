@@ -45,8 +45,7 @@
         in
         pkgs.stdenv.mkDerivation {
           pname = "tortoise-wow";
-          version = "unstable-2025-05-07";
-
+          version = "unstable-${self.shortRev}";
           src = ./.;
 
           inherit nativeBuildInputs buildInputs;
@@ -412,7 +411,7 @@
                 Restart = "always";
               };
             };
-            # MANGOSD MUST NOT BE IN CONSOLE MODE 
+            # MANGOSD MUST NOT BE IN CONSOLE MODE Console.Enable = 0 
             systemd.services.tortoise-wow-mangosd = {
               after = [ "tortoise-wow-realmd.service" ];
               wantedBy = [ "multi-user.target" ];
