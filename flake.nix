@@ -350,42 +350,54 @@
               enable = true;
               package = lib.mkDefault pkgs.mariadb;
             };
-            # Needs new db init for turtle. Below is vmangos example
-            # systemd.services.tortoise-wow-db-init = {
-            #   description = "Tortoise-WoW Database Initialization";
-            #   after = [ "mysql.service" ];
-            #   requires = [ "mysql.service" ];
-            #   wantedBy = [ "multi-user.target" ];
-            #   unitConfig.ConditionPathExists = "!${cfg.dataPath}/.db-initialized";
-            #   serviceConfig = {
-            #     Type = "oneshot";
-            #     RemainAfterExit = true;
-            #     ExecStart = pkgs.writeShellScript "tortoise-wow-db-init" ''
-            #       set -e
-            #       PATH=${pkgs.mariadb}/bin:/run/current-system/sw/bin
-            #       ${pkgs.mariadb}/bin/mariadb -u root <<EOF
-            #       CREATE DATABASE IF NOT EXISTS \`realmd\`;
-            #       CREATE DATABASE IF NOT EXISTS \`mangos\`;
-            #       CREATE DATABASE IF NOT EXISTS \`characters\`;
-            #       CREATE DATABASE IF NOT EXISTS \`logs\`;
-            #       CREATE USER IF NOT EXISTS '${cfg.db_username}'@'localhost' IDENTIFIED BY '${cfg.db_password}';
-            #       GRANT ALL PRIVILEGES ON \`realmd\`.* TO '${cfg.db_username}'@'localhost';
-            #       GRANT ALL PRIVILEGES ON \`mangos\`.* TO '${cfg.db_username}'@'localhost';
-            #       GRANT ALL PRIVILEGES ON \`characters\`.* TO '${cfg.db_username}'@'localhost';
-            #       GRANT ALL PRIVILEGES ON \`logs\`.* TO '${cfg.db_username}'@'localhost';
-            #       FLUSH PRIVILEGES;
-            #       EOF
-            #
-            #       ${pkgs.mariadb}/bin/mariadb -u ${cfg.db_username} -p${cfg.db_password} realmd     < ${cfg.dataPath}/sql/base/realmd.sql
-            #       ${pkgs.mariadb}/bin/mariadb -u ${cfg.db_username} -p${cfg.db_password} characters < ${cfg.dataPath}/sql/base/characters.sql
-            #       ${pkgs.mariadb}/bin/mariadb -u ${cfg.db_username} -p${cfg.db_password} mangos     < ${cfg.dataPath}/sql/base/mangos.sql
-            #
-            #       chown -R tortoise-wow ${cfg.dataPath}
-            #       touch ${cfg.dataPath}/.db-initialized
-            #     '';
-            #   };
-            # };
+            systemd.services.tortoise-wow-db-init = {
+              description = "Tortoise-WoW Database Initialization";
+              after = [ "mysql.service" ];
+              requires = [ "mysql.service" ];
+              wantedBy = [ "multi-user.target" ];
+              unitConfig.ConditionPathExists = "!${cfg.dataPath}/.db-initialized";
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                User = "root";
+                ExecStart = pkgs.writeShellScript "tortoise-wow-db-init" ''
+                  set -e
+                  MYSQL="${pkgs.mariadb}/bin/mariadb"
 
+                  echo "=== Step 1: Creating databases and users ==="
+                  $MYSQL <<SQL
+                    CREATE DATABASE IF NOT EXISTS \`tw_world\`;
+                    CREATE DATABASE IF NOT EXISTS \`tw_char\`;
+                    CREATE DATABASE IF NOT EXISTS \`tw_logon\`;
+                    CREATE DATABASE IF NOT EXISTS \`tw_logs\`;
+                    CREATE USER IF NOT EXISTS '${cfg.db_username}'@'localhost' IDENTIFIED BY '${cfg.db_password}';
+                    GRANT ALL PRIVILEGES ON \`tw_world\`.* TO '${cfg.db_username}'@'localhost';
+                    GRANT ALL PRIVILEGES ON \`tw_char\`.*  TO '${cfg.db_username}'@'localhost';
+                    GRANT ALL PRIVILEGES ON \`tw_logon\`.* TO '${cfg.db_username}'@'localhost';
+                    GRANT ALL PRIVILEGES ON \`tw_logs\`.*  TO '${cfg.db_username}'@'localhost';
+                    FLUSH PRIVILEGES;
+                  SQL
+
+                  echo "=== Step 2: Applying base world tables ==="
+                  for f in ${cfg.dataPath}/sql/base/tw_world_*.sql; do
+                    [ -e "$f" ] || continue
+                    echo "  -> $f"
+                    $MYSQL -f tw_world < "$f"
+                  done
+
+                  echo "=== Step 3: Adding realm entry ==="
+                  $MYSQL tw_logon <<SQL
+                    INSERT INTO realmlist (name, address, port, icon, realmflags, timezone, allowedSecurityLevel, population, realmbuilds)
+                    VALUES ('${cfg.realmName}', '${cfg.address}', 8085, 0, 0, 1, 0, 0, '5875')
+                    ON DUPLICATE KEY UPDATE address=VALUES(address), port=VALUES(port);
+                  SQL
+
+                  chown -R tortoise-wow:tortoise-wow ${cfg.dataPath}
+                  touch ${cfg.dataPath}/.db-initialized
+                  echo "=== Done! ==="
+                '';
+              };
+            };
             systemd.services.tortoise-wow-realmd = {
               after = [
                 "network.target"
@@ -400,7 +412,7 @@
                 Restart = "always";
               };
             };
-            # BUGGED, needs tty, stdin for mangosd console to not reboot each time. Solved for docker, not systemd (yet)
+            # MANGOSD MUST NOT BE IN CONSOLE MODE 
             systemd.services.tortoise-wow-mangosd = {
               after = [ "tortoise-wow-realmd.service" ];
               wantedBy = [ "multi-user.target" ];
