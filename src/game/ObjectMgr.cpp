@@ -9522,11 +9522,12 @@ void ObjectMgr::LoadShop()
 			}
 
             CachedEntry.resize(1024);
-			int32 FormatResult = std::snprintf(CachedEntry.data(), 1024, "Entries:%u=%s=%u=%s=%u=%u=%u=%.02f=%.02f=%.02f=%.02f=%.02f",
+            int32 FormatResult = std::snprintf(CachedEntry.data(), 1024, "Entries:%u=%u=%s=%u=%s=%u=%u=%u=%.02f=%.02f=%.02f=%.02f=%u=%s=%u",
                 Entry.Category,
-				ItemName.c_str(),
+                0, // TODO: subcategory
+                ItemName.c_str(),
                 Entry.Price,
-				pProto->Description.c_str(),
+                pProto->Description.c_str(),
                 Entry.Item,
                 Entry.ModelID,
                 Entry.ItemDisplayID,
@@ -9534,7 +9535,9 @@ void ObjectMgr::LoadShop()
                 Entry.Position.y,
                 Entry.Position.z,
                 Entry.Rotation,
-                Entry.Scale);
+                0, // TODO: holiday
+                "", // TODO: colors
+                0); // TODO: gender
 
             MANGOS_ASSERT(FormatResult > 0);
             if (FormatResult > 1022)

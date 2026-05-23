@@ -230,6 +230,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "trigger",        SEC_OBSERVER, false, &ChatHandler::HandleGoTriggerCommand,           "", nullptr },
         { "xyz",            SEC_OBSERVER, false, &ChatHandler::HandleGoXYZCommand,               "", nullptr },
         { "corpse",         SEC_DEVELOPER, false, &ChatHandler::HandleGoCorpseCommand, "Teleports the user to their corpse.", nullptr },
+        { "graveyard",      SEC_OBSERVER, false, &ChatHandler::HandleGoGraveyardCommand,         "", nullptr },
         { "forward",        SEC_OBSERVER, false, &ChatHandler::HandleGoForwardCommand,           "", nullptr },
         { "up",             SEC_OBSERVER, false, &ChatHandler::HandleGoUpCommand,                "", nullptr },
         { "",               SEC_DEVELOPER, false, &ChatHandler::HandleGoCommand,                  "", nullptr },

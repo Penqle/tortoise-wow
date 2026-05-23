@@ -230,6 +230,9 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
     recv_data >> gender >> skin >> face;
     recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
 
+    uint32 challengeMask;
+    recv_data >> challengeMask;
+
     WorldPacket data(SMSG_CHAR_CREATE, 1);                  // returned with diff.values in all cases
 
     Team team = Player::TeamForRace(race_);
@@ -388,6 +391,10 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
         pNewChar->SetCinematic(1);                          // not show intro
 
     pNewChar->SetAtLoginFlag(AT_LOGIN_FIRST);               // First login
+
+    // Challenge spells are given on first login and not on character creation
+    if (challengeMask)
+        pNewChar->SetPlayerVariable(PlayerVariables::PendingChallengeMask, std::to_string(challengeMask));
 
     // Player created, save it now
     if (!pNewChar->SaveToDB(false, true, false))
@@ -829,6 +836,36 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     {
         pCurrChar->ContinueTaxiFlight();
         pCurrChar->LoadPet();
+    }
+
+    auto maskVar = pCurrChar->GetPlayerVariable(PlayerVariables::PendingChallengeMask);
+    if (maskVar && *maskVar != "0")
+    {
+        uint32 challengeMask = std::stoul(*maskVar);
+
+        static constexpr uint32 challengeSpells[] = {
+            SPELL_HARDCORE,         // bit 0
+            SPELL_SLOW_AND_STEADY,  // bit 1
+            SPELL_WAR_MODE,         // bit 2
+            SPELL_VARGANT_MODE,     // bit 3
+            SPELL_CRAFTMASTER,      // bit 4
+            SPELL_LUNATIC,          // bit 5
+            SPELL_BOARING_MODE,     // bit 6
+            SPELL_EXHAUSTION_MODE,  // bit 7
+            SPELL_BREWMASTER,       // bit 8
+            SPELL_HEROIC,           // bit 9
+        };
+
+        for (uint32 i = 0; i < (sizeof(challengeSpells) / sizeof(challengeSpells[0])); ++i)
+        {
+            if (challengeMask & (1u << i))
+                pCurrChar->LearnSpell(challengeSpells[i], false);
+        }
+
+        if (challengeMask & 0x1) // Hardcore
+            pCurrChar->SetupHardcoreMode();
+
+        pCurrChar->SetPlayerVariable(PlayerVariables::PendingChallengeMask, "0");
     }
 
     // Set FFA PvP for non GM in non-rest mode

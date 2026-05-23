@@ -8308,6 +8308,33 @@ bool ChatHandler::HandleGoCorpseCommand(char*)
     return true;
 }
 
+// teleports to a grave yard.
+bool ChatHandler::HandleGoGraveyardCommand(char* args)
+{
+    Player* pPlayer = m_session->GetPlayer();
+
+    uint32 graveyardId;
+    if (!ExtractUInt32(&args, graveyardId))
+        return false;
+
+    WorldSafeLocsEntry const* graveyard = sWorldSafeLocsStore.LookupEntry(graveyardId);
+    if (!graveyard)
+    {
+        PSendSysMessage("Graveyard (WorldSafeLocs ID %u) not found.", graveyardId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (graveyard->x == 0.0f && graveyard->y == 0.0f && graveyard->z == 0.0f)
+    {
+        PSendSysMessage(LANG_INVALID_TARGET_COORD, graveyard->x, graveyard->y, graveyard->map_id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    return HandleGoHelper(pPlayer, graveyard->map_id, graveyard->x, graveyard->y, &graveyard->z);
+}
+
 //teleport at coordinates, including Z
 bool ChatHandler::HandleGoXYZCommand(char* args)
 {
