@@ -1,0 +1,15 @@
+-- ==============================================
+-- FILE: fix_hunter_trueshot_aura_aspect_conflict.sql
+-- Fix: 猎人强击光环 (Trueshot Aura, 19506) 和 Strider Presence (36531)
+--      被错误归类为守护 (SPELL_ASPECT)，导致与所有猎人守护互斥。
+--      根源：C++ 代码根据 activeIconID=122 判断是否为守护，
+--      但强击光环作为团队 RAP 增益不应被视为守护。
+--
+-- 同时修复 C++ 源码：SpellEntry.cpp GetSpellSpecific() 增加豁免
+-- ==============================================
+
+-- 注意：此问题的核心修复在 C++ 代码中 (SpellEntry.cpp)
+-- 以下 SQL 仅为已废弃法术提供整洁（可选）
+-- Deprecated spells 不再被使用
+-- Trueshot Aura Rank 2 (20905), Rank 3 (20906) 已废弃
+-- Trueshot Aura Percent Bonus (51520/51521/51522) 已废弃

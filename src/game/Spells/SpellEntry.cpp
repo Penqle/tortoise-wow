@@ -101,7 +101,11 @@ SpellSpecific Spells::GetSpellSpecific(uint32 spellId)
                 return SPELL_STING;
 
             // only hunter aspects have this (one have generic family), if exclude Auto Shot
-            if (spellInfo->activeIconID == 122 && spellInfo->Id != 75)
+            // and non-aspect spells that share the activeIconID for client display
+            if (spellInfo->activeIconID == 122 && spellInfo->Id != 75
+                && spellInfo->Id != 19506      // Trueshot Aura - party RAP buff, not an aspect
+                && spellInfo->Id != 36531      // Strider Presence - pet party buff, not an aspect
+                )
                 return SPELL_ASPECT;
 
             break;
