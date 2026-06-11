@@ -377,7 +377,14 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
 
     //automatically update weapon damage after attack power modification
     if (ranged)
+    {
         UpdateDamagePhysical(RANGED_ATTACK);
+
+        // Trigger pet attack power recalculation when owner's ranged attack power changes
+        // (covers Spirit Bond and similar effects)
+        if (Pet* pet = GetPet())
+            pet->UpdateAttackPowerAndDamage(false);
+    }
     else
     {
         UpdateDamagePhysical(BASE_ATTACK);
@@ -991,6 +998,20 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
     AttackPowerModIndex unitMod = MELEE_AP_MODS;
 
     float baseAttackPower = (GetEntry() == 416) ? GetStat(STAT_STRENGTH) - 10.0f : 2 * GetStat(STAT_STRENGTH) - 20.0f;
+
+    // Spirit Bond: pet gains melee attack power from owner's ranged attack power
+    if (getPetType() == HUNTER_PET)
+    {
+        if (Unit* owner = GetOwner())
+        {
+            Unit::AuraList const& spiritBondAuras = owner->GetAurasByType(SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT);
+            for (const auto aura : spiritBondAuras)
+            {
+                float pct = aura->GetModifier()->m_amount / 100.0f;
+                baseAttackPower += owner->GetTotalAttackPowerValue(RANGED_ATTACK) * pct;
+            }
+        }
+    }
 
     // attack power mods are split into positive and negative field
     float attackPowerModPositive = GetAttackPowerModifierValue(unitMod, AP_MOD_POSITIVE_FLAT);

@@ -4870,7 +4870,24 @@ uint32 WorldObject::SpellDamageBonusDone(Unit* pVictim, SpellEntry const* spellP
     // Pets just add their bonus damage to their spell damage
     // note that their spell damage is just gain of their own auras
     if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->IsPet())
-        DoneAdvertisedBenefit += ((Pet*)this)->GetBonusDamage();
+    {
+        Pet* pet = (Pet*)this;
+        DoneAdvertisedBenefit += pet->GetBonusDamage();
+
+        // Spirit Bond: pet gains spell power from owner's ranged attack power
+        if (pet->getPetType() == HUNTER_PET)
+        {
+            if (Unit* owner = pet->GetOwner())
+            {
+                Unit::AuraList const& spiritBondAuras = owner->GetAurasByType(SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT);
+                for (const auto aura : spiritBondAuras)
+                {
+                    float pct = aura->GetModifier()->m_amount / 100.0f;
+                    DoneAdvertisedBenefit += int32(owner->GetTotalAttackPowerValue(RANGED_ATTACK) * pct);
+                }
+            }
+        }
+    }
 
     // apply ap bonus and benefit affected by spell power implicit coeffs and spell level penalties
     DoneTotal = SpellBonusWithCoeffs(spellProto, effectIndex, DoneTotal, DoneAdvertisedBenefit, 0, damagetype, true, this, spell);

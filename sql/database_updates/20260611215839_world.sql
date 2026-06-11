@@ -1,0 +1,23 @@
+-- ==============================================
+-- FILE: 20260611215839_world.sql
+-- Fix: 灵魂联结 Spirit Bond (Spell 19578/20895)
+--      宠物继承远程攻击强度效果不生效
+-- ==============================================
+--
+-- 问题分析：
+-- effect2 = 133 (SPELL_EFFECT_APPLY_AREA_AURA_OWNER)
+-- effect3 = 133 (SPELL_EFFECT_APPLY_AREA_AURA_OWNER)
+-- 该效果类型用于区域光环，自施法时会强制将 auraname 设为
+-- SPELL_AURA_NONE，导致 auras 205/206 从未被施加到猎人身上，
+-- C++ 代码无法读取到 aura 数据。
+--
+-- 修复：改为 6 (SPELL_EFFECT_APPLY_AURA)，aura 直接施加到猎人身上。
+-- 配套 C++ 修复已在 commit 011417b1 中实现。
+--
+-- C++ 修改：
+--   SpellAuras.h/cpp — auras 205/206 handler 实现
+--   StatSystem.cpp — Pet::UpdateAttackPowerAndDamage +
+--                    Player::UpdateAttackPowerAndDamage 触发宠物更新
+--   Object.cpp — SpellDamageBonusDone 法术伤害加成
+
+UPDATE spell_template SET effect2 = 6, effect3 = 6 WHERE entry IN (19578, 20895);

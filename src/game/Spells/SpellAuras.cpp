@@ -271,8 +271,8 @@ pAuraHandler AuraHandler[TOTAL_AURAS] =
     &Aura::HandleNoImmediateEffect,                         //202 SPELL_AURA_MOD_PET_STAT_FROM_OWNER_PCT
     &Aura::HandleNoImmediateEffect,                         //203 SPELL_AURA_MOD_PET_ARMOR_FROM_OWNER_PCT
     &Aura::HandleNoImmediateEffect,                         //204 SPELL_AURA_MOD_PET_RESISTANCE_AND_DODGE_FROM_OWNER_PCT
-    &Aura::HandleNoImmediateEffect,                         //205 SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT
-    &Aura::HandleNoImmediateEffect,                         //206 SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Aura::HandleAuraPetAttackPowerFromRangedAP,            //205 SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Aura::HandleAuraPetSpellPowerFromRangedAP,             //206 SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT
     &Aura::HandleNoImmediateEffect,                         //207 SPELL_AURA_MOD_ATTACK_AND_SPELL_RANGE
     &Aura::HandleNoImmediateEffect,                         //208 SPELL_AURA_MOD_NO_REAGENT_USE_CHANCE
     &Aura::HandleNoImmediateEffect,                         //209 SPELL_AURA_MOD_MECHANIC_DURATION_TAKEN_PCT
@@ -5780,6 +5780,58 @@ void Aura::HandleAuraModRangedAttackPowerPercent(bool apply, bool /*Real*/)
 
     // UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER = multiplier - 1
     GetTarget()->HandleAttackPowerModifier(RANGED_AP_MODS, AP_MOD_PCT, m_modifier.m_amount, apply);
+}
+
+void Aura::HandleAuraModAttackPowerOfPartyFlat(bool apply, bool /*Real*/)
+{
+    if (apply)
+    {
+        if (Unit* caster = GetCaster())
+            if (Player* modOwner = caster->GetSpellModOwner())
+                modOwner->ApplySpellMod(GetSpellProto()->Id, SPELLMOD_ATTACK_POWER, m_modifier.m_amount);
+    }
+
+    // Applies flat attack power to BOTH melee and ranged (party aura)
+    GetTarget()->HandleAttackPowerModifier(MELEE_AP_MODS, IsPositive() ? AP_MOD_POSITIVE_FLAT : AP_MOD_NEGATIVE_FLAT, m_modifier.m_amount, apply);
+    GetTarget()->HandleAttackPowerModifier(RANGED_AP_MODS, IsPositive() ? AP_MOD_POSITIVE_FLAT : AP_MOD_NEGATIVE_FLAT, m_modifier.m_amount, apply);
+}
+
+void Aura::HandleAuraModAttackPowerOfPartyPct(bool apply, bool /*Real*/)
+{
+    if (apply)
+    {
+        if (Unit* caster = GetCaster())
+            if (Player* modOwner = caster->GetSpellModOwner())
+                modOwner->ApplySpellMod(GetSpellProto()->Id, SPELLMOD_ATTACK_POWER, m_modifier.m_amount);
+    }
+
+    // Applies percent attack power to BOTH melee and ranged (party aura)
+    GetTarget()->HandleAttackPowerModifier(MELEE_AP_MODS, AP_MOD_PCT, m_modifier.m_amount, apply);
+    GetTarget()->HandleAttackPowerModifier(RANGED_AP_MODS, AP_MOD_PCT, m_modifier.m_amount, apply);
+}
+
+void Aura::HandleAuraPetAttackPowerFromRangedAP(bool apply, bool /*Real*/)
+{
+    // Spirit Bond: pet gains melee attack power from owner's ranged attack power
+    // Trigger pet stat recalculation when the aura is applied/removed
+    if (Unit* target = GetTarget())
+    {
+        if (Pet* pet = target->GetPet())
+            pet->UpdateAttackPowerAndDamage(false);
+    }
+}
+
+void Aura::HandleAuraPetSpellPowerFromRangedAP(bool apply, bool /*Real*/)
+{
+    // Spirit Bond: pet gains spell power from owner's ranged attack power
+    // Trigger pet bonus damage recalculation when the aura is applied/removed
+    if (Unit* target = GetTarget())
+    {
+        if (Pet* pet = target->GetPet())
+        {
+            pet->UpdateAttackPowerAndDamage(false);
+        }
+    }
 }
 
 /********************************/
