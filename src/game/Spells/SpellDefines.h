@@ -529,7 +529,7 @@ enum AuraState
     AURA_STATE_BERSERKING                   = 3,            // C   |
     AURA_STATE_FROZEN                       = 4,            //     | frozen target (but not used for any spells in 1.12.1 at client side)
     AURA_STATE_JUDGEMENT                    = 5,            // C   |
-    //AURA_STATE_UNKNOWN6                   = 6,            //     | not used
+    AURA_STATE_HUNTER_KILL_COMMAND          = 6,            // C   | 猎人杀戮命令触发状态
     AURA_STATE_HUNTER_PARRY                 = 7,            // C   |
     AURA_STATE_ROGUE_ATTACK_FROM_STEALTH    = 8,            // C   | FIX ME: not implemented yet!
     // Custom aura states - not based on spell data:

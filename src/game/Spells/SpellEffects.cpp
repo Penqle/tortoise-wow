@@ -6985,6 +6985,42 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             }
             break;
         }
+        case SPELLFAMILY_HUNTER:
+        {
+            switch (m_spellInfo->Id)
+            {
+                case 41827: // 杀戮命令 Kill Command
+                {
+                    Unit* caster = dynamic_cast<Unit*>(m_caster);
+                    if (!caster || !caster->IsPlayer() || caster->GetClass() != CLASS_HUNTER)
+                        break;
+
+                    Player* playerCaster = static_cast<Player*>(caster);
+                    Pet* pet = playerCaster->GetPet();
+                    if (!pet || !pet->IsAlive())
+                        break;
+
+                    // 从猎人侧获取目标：优先选中目标，兜底仇恨目标
+                    Unit* target = playerCaster->GetSelectedUnit();
+                    if (!target || !target->IsAlive())
+                        target = caster->GetVictim();
+                    if (!target || !target->IsAlive() || !caster->IsValidAttackTarget(target))
+                        break;
+
+                    // 计算宠物近战AP的80%作为基础伤害
+                    float petMeleeAP = static_cast<float>(pet->GetTotalAttackPowerValue(BASE_ATTACK));
+                    int32 damage = static_cast<int32>(petMeleeAP * 0.8f);
+
+                    // 宠物施放伤害法术，原始施法者记为猎人，保证仇恨归属正确
+                    pet->CastCustomSpell(target, 41828, &damage, nullptr, nullptr, true, nullptr, nullptr, true, caster->GetObjectGuid());
+
+                    // 消耗触发状态
+                    caster->ModifyAuraState(AURA_STATE_HUNTER_KILL_COMMAND, false);
+                    break;
+                }
+            }
+            break;
+        }
         case SPELLFAMILY_SHAMAN:
         {
             switch(m_spellInfo->Id)
