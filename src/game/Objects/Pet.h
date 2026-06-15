@@ -35,7 +35,7 @@ enum PetType
     MAX_PET_TYPE = 4
 };
 
-#define MAX_PET_STABLES 2
+#define MAX_PET_STABLES 4
 
 // stored in character_pet.slot
 enum PetSaveMode

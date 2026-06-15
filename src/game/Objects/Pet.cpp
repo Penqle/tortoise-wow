@@ -509,7 +509,7 @@ void Pet::SavePetToDB(PetSaveMode mode)
 
         // stable and not in slot saves
         if ( (mode != PET_SAVE_AS_CURRENT && getPetType() != HUNTER_PET) ||
-              mode == PET_SAVE_FIRST_STABLE_SLOT || mode == PET_SAVE_LAST_STABLE_SLOT )
+              mode >= PET_SAVE_FIRST_STABLE_SLOT && mode <= PET_SAVE_LAST_STABLE_SLOT )
             RemoveAllAuras();
 
         //save pet's data as one single transaction
@@ -1163,7 +1163,7 @@ void Pet::Unsummon(PetSaveMode mode, Unit* owner /*= nullptr*/)
                     }
                 }
             }
-            else if (mode == PET_SAVE_AS_DELETED || mode == PET_SAVE_FIRST_STABLE_SLOT || mode == PET_SAVE_LAST_STABLE_SLOT)
+            else if (mode == PET_SAVE_AS_DELETED || (mode >= PET_SAVE_FIRST_STABLE_SLOT && mode <= PET_SAVE_LAST_STABLE_SLOT))
             {
                 // Do not rez the pet in BG
                 p_owner->m_petEntry = 0;

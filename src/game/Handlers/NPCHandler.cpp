@@ -614,7 +614,7 @@ void WorldSession::SendStablePet(ObjectGuid guid)
                 data << uint32(it->level);              // level
                 data << it->name;                       // name
                 data << uint32(it->loyalty);            // loyalty
-                data << uint8(it->slot + 1);            // slot
+                data << uint8(2);                       // slot  客户端只识别2或3
                 ++num;
             }
         }
