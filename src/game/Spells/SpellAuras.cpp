@@ -266,6 +266,31 @@ pAuraHandler AuraHandler[TOTAL_AURAS] =
     &Aura::HandleNoImmediateEffect,                         //197 SPELL_AURA_MOD_PERIODIC_DAMAGE_PERCENT_TAKEN implemented in Unit::MeleeDamageBonusTaken and Unit::SpellDamageBonusTaken
     &Aura::HandleNoImmediateEffect,                         //198 SPELL_AURA_MOD_CRIT_DAMAGE_BONUS_TAKEN  implemented in WorldObject::SpellCriticalDamageBonus
     &Aura::HandleModHealingFromArmor,                       //199 SPELL_AURA_MOD_SPELL_HEALING_OF_ARMOR_PERCENT implemented in WorldObject::SpellBaseHealingBonusDone
+    &Aura::HandleNoImmediateEffect,                         //200 SPELL_AURA_TOTEMIC_ALIGNMENT_PCT
+    &Aura::HandleNoImmediateEffect,                         //201 SPELL_AURA_TOTEMIC_ALIGNMENT_THREAT_TRANSFER
+    &Aura::HandleNoImmediateEffect,                         //202 SPELL_AURA_MOD_PET_STAT_FROM_OWNER_PCT
+    &Aura::HandleNoImmediateEffect,                         //203 SPELL_AURA_MOD_PET_ARMOR_FROM_OWNER_PCT
+    &Aura::HandleNoImmediateEffect,                         //204 SPELL_AURA_MOD_PET_RESISTANCE_AND_DODGE_FROM_OWNER_PCT
+    &Aura::HandleNoImmediateEffect,                         //205 SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Aura::HandleNoImmediateEffect,                         //206 SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Aura::HandleNoImmediateEffect,                         //207 SPELL_AURA_MOD_ATTACK_AND_SPELL_RANGE
+    &Aura::HandleNoImmediateEffect,                         //208 SPELL_AURA_MOD_NO_REAGENT_USE_CHANCE
+    &Aura::HandleNoImmediateEffect,                         //209 SPELL_AURA_MOD_MECHANIC_DURATION_TAKEN_PCT
+    &Aura::HandleNoImmediateEffect,                         //210 SPELL_AURA_MOD_SELF_RESURRECT_RECOVERY_PCT
+    &Aura::HandleNoImmediateEffect,                         //211 SPELL_AURA_MOD_PET_HIT_AND_CRIT_CHANCE
+    &Aura::HandleNoImmediateEffect,                         //212 SPELL_AURA_SHIELDRENDER_TALISMAN
+    &Aura::HandleNoImmediateEffect,                         //213 SPELL_AURA_MOD_SPELL_POWER_FROM_INTELLECT_PCT
+    &Aura::HandleNoImmediateEffect,                         //214 SPELL_AURA_MOD_MANA_GAIN_PCT
+    &Aura::HandleNoImmediateEffect,                         //215 SPELL_AURA_MOD_PET_HIT_FROM_OWNER_SPELL_HIT_PCT
+    &Aura::HandleNoImmediateEffect,                         //216 SPELL_AURA_MOD_PET_CRIT_FROM_OWNER_SPELL_CRIT_PCT
+    &Aura::HandleNoImmediateEffect,                         //217 SPELL_AURA_MOD_ENERGY_TICK_INTERVAL_BY_AGILITY
+    &Aura::HandleNoImmediateEffect,                         //218 SPELL_AURA_TRIGGER_SPELL_ON_FULL_CHANNEL
+    &Aura::HandleUnused,                                    //219 SPELL_AURA_219_UNUSED
+    &Aura::HandleNoImmediateEffect,                         //220 SPELL_AURA_MOD_DAMAGE_TAKEN_FROM_PET_PCT
+    &Aura::HandleNoImmediateEffect,                         //221 SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_FLAT
+    &Aura::HandleNoImmediateEffect,                         //222 SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_PCT
+    &Aura::HandleNoImmediateEffect,                         //223 SPELL_AURA_MOD_EQUIPPED_ITEM_PROC_CHANCE_PCT
+    &Aura::HandleNoImmediateEffect,                         //224 SPELL_AURA_MOD_BLOCKED_DAMAGE_PERCENT_TAKEN
 };
 
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };

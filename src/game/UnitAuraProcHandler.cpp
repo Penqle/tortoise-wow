@@ -236,6 +236,31 @@ pAuraProcHandler AuraProcHandler[TOTAL_AURAS] =
     &Unit::HandleNULLProc,                                  //197 SPELL_AURA_MOD_PERIODIC_DAMAGE_PERCENT_TAKEN
     &Unit::HandleNULLProc,                                  //198 SPELL_AURA_MOD_CRIT_DAMAGE_BONUS_TAKEN
     &Unit::HandleNULLProc,                                  //199 SPELL_AURA_MOD_SPELL_HEALING_OF_ARMOR_PERCENT
+    &Unit::HandleNULLProc,                                  //200 SPELL_AURA_TOTEMIC_ALIGNMENT_PCT
+    &Unit::HandleNULLProc,                                  //201 SPELL_AURA_TOTEMIC_ALIGNMENT_THREAT_TRANSFER
+    &Unit::HandleNULLProc,                                  //202 SPELL_AURA_MOD_PET_STAT_FROM_OWNER_PCT
+    &Unit::HandleNULLProc,                                  //203 SPELL_AURA_MOD_PET_ARMOR_FROM_OWNER_PCT
+    &Unit::HandleNULLProc,                                  //204 SPELL_AURA_MOD_PET_RESISTANCE_AND_DODGE_FROM_OWNER_PCT
+    &Unit::HandleNULLProc,                                  //205 SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Unit::HandleNULLProc,                                  //206 SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT
+    &Unit::HandleNULLProc,                                  //207 SPELL_AURA_MOD_ATTACK_AND_SPELL_RANGE
+    &Unit::HandleNULLProc,                                  //208 SPELL_AURA_MOD_NO_REAGENT_USE_CHANCE
+    &Unit::HandleNULLProc,                                  //209 SPELL_AURA_MOD_MECHANIC_DURATION_TAKEN_PCT
+    &Unit::HandleNULLProc,                                  //210 SPELL_AURA_MOD_SELF_RESURRECT_RECOVERY_PCT
+    &Unit::HandleNULLProc,                                  //211 SPELL_AURA_MOD_PET_HIT_AND_CRIT_CHANCE
+    &Unit::HandleNULLProc,                                  //212 SPELL_AURA_SHIELDRENDER_TALISMAN
+    &Unit::HandleNULLProc,                                  //213 SPELL_AURA_MOD_SPELL_POWER_FROM_INTELLECT_PCT
+    &Unit::HandleNULLProc,                                  //214 SPELL_AURA_MOD_MANA_GAIN_PCT
+    &Unit::HandleNULLProc,                                  //215 SPELL_AURA_MOD_PET_HIT_FROM_OWNER_SPELL_HIT_PCT
+    &Unit::HandleNULLProc,                                  //216 SPELL_AURA_MOD_PET_CRIT_FROM_OWNER_SPELL_CRIT_PCT
+    &Unit::HandleNULLProc,                                  //217 SPELL_AURA_MOD_ENERGY_TICK_INTERVAL_BY_AGILITY
+    &Unit::HandleNULLProc,                                  //218 SPELL_AURA_TRIGGER_SPELL_ON_FULL_CHANNEL
+    &Unit::HandleNULLProc,                                  //219 SPELL_AURA_219_UNUSED
+    &Unit::HandleNULLProc,                                  //220 SPELL_AURA_MOD_DAMAGE_TAKEN_FROM_PET_PCT
+    &Unit::HandleNULLProc,                                  //221 SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_FLAT
+    &Unit::HandleNULLProc,                                  //222 SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_PCT
+    &Unit::HandleNULLProc,                                  //223 SPELL_AURA_MOD_EQUIPPED_ITEM_PROC_CHANCE_PCT
+    &Unit::HandleNULLProc,                                  //224 SPELL_AURA_MOD_BLOCKED_DAMAGE_PERCENT_TAKEN
 };
 
 // Fonctions Nostalrius

@@ -336,7 +336,32 @@ enum AuraType
     SPELL_AURA_MOD_PERIODIC_DAMAGE_PERCENT_TAKEN = 197, // Modifies periodic damage taken.
     SPELL_AURA_MOD_CRIT_DAMAGE_BONUS_TAKEN = 198, // Modifies critical damage taken.
     SPELL_AURA_MOD_SPELL_HEALING_OF_ARMOR_PERCENT = 199, // Converts a percentage of armor into bonus healing power.
-    TOTAL_AURAS=200
+    SPELL_AURA_TOTEMIC_ALIGNMENT_PCT = 200, // Hidden value used by Totemic Alignment.
+    SPELL_AURA_TOTEMIC_ALIGNMENT_THREAT_TRANSFER = 201, // Transfers a percentage of totem threat to the caster.
+    SPELL_AURA_MOD_PET_STAT_FROM_OWNER_PCT = 202, // Fel Intellect/Fel Stamina style owner stat inheritance.
+    SPELL_AURA_MOD_PET_ARMOR_FROM_OWNER_PCT = 203, // Thick Hide pet armor inheritance.
+    SPELL_AURA_MOD_PET_RESISTANCE_AND_DODGE_FROM_OWNER_PCT = 204, // Elusiveness pet resistance and dodge inheritance.
+    SPELL_AURA_MOD_PET_ATTACK_POWER_FROM_RANGED_ATTACK_POWER_PCT = 205, // Spirit Bond pet attack power inheritance.
+    SPELL_AURA_MOD_PET_SPELL_POWER_FROM_RANGED_ATTACK_POWER_PCT = 206, // Spirit Bond pet spell power inheritance.
+    SPELL_AURA_MOD_ATTACK_AND_SPELL_RANGE = 207, // Attack and spell range bonus.
+    SPELL_AURA_MOD_NO_REAGENT_USE_CHANCE = 208, // Chance to not consume reagents.
+    SPELL_AURA_MOD_MECHANIC_DURATION_TAKEN_PCT = 209, // Reduces durations of selected mechanics taken.
+    SPELL_AURA_MOD_SELF_RESURRECT_RECOVERY_PCT = 210, // Increases health and mana restored on self-resurrection.
+    SPELL_AURA_MOD_PET_HIT_AND_CRIT_CHANCE = 211, // Direct pet hit and crit bonus.
+    SPELL_AURA_SHIELDRENDER_TALISMAN = 212, // Custom Shieldrender Talisman aura.
+    SPELL_AURA_MOD_SPELL_POWER_FROM_INTELLECT_PCT = 213, // Converts intellect into spell power.
+    SPELL_AURA_MOD_MANA_GAIN_PCT = 214, // Modifies mana gain percentage.
+    SPELL_AURA_MOD_PET_HIT_FROM_OWNER_SPELL_HIT_PCT = 215, // Pet hit inherits from owner spell hit.
+    SPELL_AURA_MOD_PET_CRIT_FROM_OWNER_SPELL_CRIT_PCT = 216, // Pet crit inherits from owner spell crit.
+    SPELL_AURA_MOD_ENERGY_TICK_INTERVAL_BY_AGILITY = 217, // Changes energy tick timing from agility.
+    SPELL_AURA_TRIGGER_SPELL_ON_FULL_CHANNEL = 218, // Triggers a spell after a full channel completes.
+    SPELL_AURA_219_UNUSED = 219, // No local 1172/1181 DBC usage found.
+    SPELL_AURA_MOD_DAMAGE_TAKEN_FROM_PET_PCT = 220, // Increases damage taken from the caster'\''s pet.
+    SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_FLAT = 221, // Flat party attack power bonus.
+    SPELL_AURA_MOD_ATTACK_POWER_OF_PARTY_PCT = 222, // Percent party attack power bonus.
+    SPELL_AURA_MOD_EQUIPPED_ITEM_PROC_CHANCE_PCT = 223, // Increases equipped item proc chance.
+    SPELL_AURA_MOD_BLOCKED_DAMAGE_PERCENT_TAKEN = 224, // Modifies damage that remains after a block.
+    TOTAL_AURAS=225
 };
 
 enum AreaAuraType
