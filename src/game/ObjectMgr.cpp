@@ -5296,6 +5296,45 @@ void ObjectMgr::LoadGraveyardZones()
     while (result->NextRow());
 }
 
+// Fallback search: find the closest graveyard on the same map within a given radius,
+// ignoring zone boundaries entirely. Used when the player's current zone has no
+// graveyard registered for their team (e.g. a zone that only defines one faction's
+// graveyard and expects players to use a neighboring zone's).
+WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYardInRadius(float x, float y, float z, uint32 MapId, Team team, float radius)
+{
+    float const radius2 = radius * radius;
+    float bestDist2 = 0.0f;
+    WorldSafeLocsEntry const* best = nullptr;
+
+    for (GraveYardMap::const_iterator itr = m_GraveYardMap.begin(); itr != m_GraveYardMap.end(); ++itr)
+    {
+        GraveYardData const& data = itr->second;
+
+        // skip enemy faction graveyard, same rule as main search
+        if (data.team != TEAM_NONE && team != TEAM_NONE && data.team != team)
+            continue;
+
+        WorldSafeLocsEntry const* entry = sWorldSafeLocsStore.LookupEntry(data.safeLocId);
+        if (!entry)
+            continue;
+
+        if (entry->map_id != MapId)
+            continue;
+
+        float dist2 = (entry->x - x) * (entry->x - x) + (entry->y - y) * (entry->y - y) + (entry->z - z) * (entry->z - z);
+        if (dist2 > radius2)
+            continue;
+
+        if (!best || dist2 < bestDist2)
+        {
+            best = entry;
+            bestDist2 = dist2;
+        }
+    }
+
+    return best;
+}
+
 WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float z, uint32 MapId, Team team)
 {
     // search for zone associated closest graveyard
@@ -5311,7 +5350,12 @@ WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float
     GraveYardMapBounds bounds = m_GraveYardMap.equal_range(zoneId);
 
     if (bounds.first == bounds.second)
-        return nullptr;
+    {
+        const float FALLBACK_RADIUS = 3000.0f; // tune as needed
+        WorldSafeLocsEntry const* fallback = GetClosestGraveYardInRadius(x, y, z, MapId, team, FALLBACK_RADIUS);
+
+        return fallback;
+    }
 
     // at corpse map
     bool foundNear = false;
@@ -5360,8 +5404,7 @@ WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float
 
             // at entrance map calculate distance (2D);
             float dist2 = (entry->x - tempEntry->ghostEntranceX) * (entry->x - tempEntry->ghostEntranceX)
-                          + (entry->y - tempEntry->ghostEntranceY) * (entry->y - tempEntry->ghostEntranceY);
-            if (foundEntr)
+                          + (entry->y - tempEntry->ghostEntranceY) * (entry->y - tempEntry->ghostEntranceY);            if (foundEntr)
             {
                 if (dist2 < distEntr)
                 {
@@ -5403,7 +5446,12 @@ WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float
     if (entryEntr)
         return entryEntr;
 
-    return entryFar;
+    if (entryFar)
+        return entryFar;
+
+    // main zone had entries but none matched team/map — try radius fallback too
+    const float FALLBACK_RADIUS = 3000.0f; // tune as needed
+    return GetClosestGraveYardInRadius(x, y, z, MapId, team, FALLBACK_RADIUS);
 }
 
 GraveYardData const* ObjectMgr::FindGraveYardData(uint32 id, uint32 zoneId) const
