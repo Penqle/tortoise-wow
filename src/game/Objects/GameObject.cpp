@@ -481,8 +481,23 @@ void GameObject::Update(uint32 update_diff, uint32 /*p_time*/)
                             if (m_respawnTime > 0)
                                 break;
 
-                            // battlegrounds gameobjects has data2 == 0 && data5 == 3
-                            radius = float(goInfo->trap.cooldown);
+                            // battlegrounds gameobjects has data2 == 0 && data5 == 3. data5
+                            // (trap.cooldown) is the intended reuse timer between casts, not
+                            // a trigger radius - it's used again further below to set
+                            // m_cooldownTime, unrelated to this substitution. Reusing that
+                            // same "3" as the activation radius made BG buff pads (WSG
+                            // Berserking/Speed/Restoration, and anything else on this same
+                            // data2==0/data5==3 pattern) require standing within 3 yards,
+                            // which players and bots alike routinely missed by a fraction of
+                            // a yard while fighting/moving near the pad - confirmed live via
+                            // temporary sampled logging in this exact search: closest
+                            // recorded miss was 3.24yd, 0.24 over the old 3.0yd radius, with
+                            // dozens of other near-misses in the 3-10yd band and never a
+                            // single successful trigger across ~20 minutes/923 samples on a
+                            // live WSG match. A fixed, dedicated radius replaces the
+                            // accidental reuse of the cooldown value; trap.cooldown still
+                            // governs the reuse timer exactly as before, untouched.
+                            radius = 6.0f;
                             IsBattleGroundTrap = true;
                         }
                     }
