@@ -45,10 +45,10 @@ LogsDatabase.Info = "127.0.0.1;3306;mangos;mangos;tw_logs"
 # DB Auto-updater
 
 Database.AutoUpdate.Enabled = 1
-Database.AutoUpdate.Path = "../../sql/"
-Database.AutoUpdate.AuthUpdateName = "unused"
-Database.AutoUpdate.CharUpdateName = "unused"
-Database.AutoUpdate.WorldUpdateName = "database_updates"
+Database.AutoUpdate.Path = "../../sql/database_updates/"
+Database.AutoUpdate.AuthUpdateName = "auth"
+Database.AutoUpdate.CharUpdateName = "character"
+Database.AutoUpdate.WorldUpdateName = "world"
 
 # Database.AutoUpdate.SortByName. Controls the order in which SQL migration files are applied.  
 #   0 = Sort by file modification time ascending (oldest first); alphabetical name as tiebreaker. (Default)  
