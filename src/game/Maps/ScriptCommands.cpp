@@ -670,9 +670,36 @@ bool Map::ScriptCommand_CreateItem(const ScriptInfo& script, WorldObject* source
         return ShouldAbortScript(script);
     }
 
-    if (Item* pItem = pReceiver->StoreNewItemInInventorySlot(script.createItem.itemId, script.createItem.amount))
-        pReceiver->SendNewItem(pItem, script.createItem.amount, true, false);
+    uint32 const moneyCost = script.createItem.moneyCost;
+    if (moneyCost && pReceiver->GetMoney() < moneyCost)
+    {
+        pReceiver->SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, ToCreature(source), script.createItem.itemId, 0);
+        return ShouldAbortScript(script);
+    }
 
+    ItemPosCountVec dest;
+    InventoryResult const inventoryResult = pReceiver->CanStoreNewItem(
+        NULL_BAG, NULL_SLOT, dest, script.createItem.itemId, script.createItem.amount);
+    if (inventoryResult != EQUIP_ERR_OK)
+    {
+        pReceiver->SendEquipError(inventoryResult, nullptr, nullptr, script.createItem.itemId);
+        return ShouldAbortScript(script);
+    }
+
+    if (moneyCost)
+        pReceiver->ModifyMoney(-int32(moneyCost));
+
+    Item* pItem = pReceiver->StoreNewItem(
+        dest, script.createItem.itemId, true,
+        Item::GenerateItemRandomPropertyId(script.createItem.itemId));
+    if (!pItem)
+    {
+        if (moneyCost)
+            pReceiver->ModifyMoney(int32(moneyCost));
+        return ShouldAbortScript(script);
+    }
+
+    pReceiver->SendNewItem(pItem, script.createItem.amount, true, false);
     return false;
 }
 

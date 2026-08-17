@@ -143,6 +143,7 @@ enum eScriptCommand
     SCRIPT_COMMAND_CREATE_ITEM              = 17,           // source = Player (from provided source or target)
                                                             // datalong = item_id
                                                             // datalong2 = amount
+                                                            // datalong3 = optional money cost in copper
     SCRIPT_COMMAND_DESPAWN_CREATURE         = 18,           // source = Creature
                                                             // datalong = despawn_delay
                                                             // datalong2 = respawn_delay
@@ -669,6 +670,7 @@ struct ScriptInfo
         {
             uint32 itemId;                                  // datalong
             uint32 amount;                                  // datalong2
+            uint32 moneyCost;                               // datalong3; optional copper cost
         } createItem;
 
         struct                                              // SCRIPT_COMMAND_DESPAWN_CREATURE (18)
