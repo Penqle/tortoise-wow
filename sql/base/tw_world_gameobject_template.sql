@@ -10342,7 +10342,8 @@ INSERT INTO `gameobject_template` VALUES
 (2001000,5,21864,'SPELLS GiftWaterSpirit_Impact_Base.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2001001,5,21865,'SPELLS Goblin_Weather_Machine_Cloudy.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2001002,5,21866,'SPELLS Goblin_Weather_Machine_Lightning.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'');
-INSERT INTO `gameobject_template` VALUES (2001003,5,21867,'SPELLS Goblin_Weather_Machine_Rain.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
+INSERT INTO `gameobject_template` VALUES
+(2001003,5,21867,'SPELLS Goblin_Weather_Machine_Rain.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2001004,5,21868,'SPELLS Goblin_Weather_Machine_Snow.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2001005,5,21869,'SPELLS Goblin_Weather_Machine_Sunny.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2001006,5,21870,'SPELLS GoldArenaflag_spell.mdx',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
@@ -17514,7 +17515,8 @@ INSERT INTO `gameobject_template` VALUES (2001003,5,21867,'SPELLS Goblin_Weather
 (2008172,14,29066,'World wmo Lorderon Buildings ZulAman ZulAman_Pieces Zulaman_Pillar_B_Broken.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2008173,14,29067,'World wmo Lorderon Buildings ZulAman ZulAman_Pieces Zulaman_Wall_A_Double.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2008174,14,29068,'World wmo Lorderon CollidableDoodads ArathiHighlands Bridge ArathiStoneBridge01.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'');
-INSERT INTO `gameobject_template` VALUES (2008175,14,29069,'World wmo Lorderon CollidableDoodads ArathiHighlands Bridge ArathiStoneBridge02.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
+INSERT INTO `gameobject_template` VALUES
+(2008175,14,29069,'World wmo Lorderon CollidableDoodads ArathiHighlands Bridge ArathiStoneBridge02.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2008176,14,29070,'World wmo Lorderon CollidableDoodads ArathiHighlands Bridge ArathiStoneBridge03.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2008177,5,29071,'World wmo Lorderon CollidableDoodads ArathiHighlands DurnholdeDestroyedWalls DurnholdeDestroyedWall.',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
 (2008178,14,29072,'World wmo Lorderon CollidableDoodads ArathiHighlands Durnholde DurnholdeInnerWall.wmo',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,''),
