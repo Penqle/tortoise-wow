@@ -22,6 +22,7 @@ set (game_SRCS
     Camera.cpp
     Conditions.cpp
     CreatureGroups.cpp
+    CustomMerchantMgr.cpp
     DynamicVisibilityMgr.cpp
     DynamicVisibilityMgr.h
     DailyQuestHandler.cpp
@@ -226,6 +227,7 @@ set (game_SRCS
     Camera.h
     Conditions.h
     CreatureGroups.h
+    CustomMerchantMgr.h
     Formulas.h
     GuidObjectScaling.h
     GameEventMgr.h

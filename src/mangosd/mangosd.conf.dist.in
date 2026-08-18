@@ -685,6 +685,10 @@ StartHonorPoints = 0
 
 MinHonorKills = 1
 
+# WeeklyHonorCap. Max honor that can be credited each week. Rank points are still awarded after this cap.
+
+WeeklyHonorCap = 20000
+
 # MaintenanceDay. The day of the week is performed server maintenance.
 
 MaintenanceDay = 3

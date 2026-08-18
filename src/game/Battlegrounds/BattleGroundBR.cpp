@@ -206,8 +206,8 @@ void BattleGroundBR::EndBattleGround(Team winner)
     uint32 repGain = isBGWeekend ? 90 : 60;
     RewardReputationToTeam(1008, repGain, winner);
     RewardReputationToTeam(1008, repGain / 4, loser);
-    RewardHonorToTeam(isBGWeekend ? 400 : 200, winner);
-    RewardHonorToTeam(isBGWeekend ? 100 : 50, loser);
+    RewardHonorToTeam(isBGWeekend ? 40 : 20, winner);
+    RewardHonorToTeam(isBGWeekend ? 10 : 5, loser);
     
     for (const auto& bgPlayer : m_Players)
     {

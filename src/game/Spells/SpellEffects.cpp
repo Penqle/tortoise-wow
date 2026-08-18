@@ -64,6 +64,8 @@
 #include "InstanceData.h"
 #include "ScriptMgr.h"
 
+#include <cmath>
+
 using namespace Spells;
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS] =
@@ -2768,8 +2770,9 @@ void Spell::EffectAddHonor(SpellEffectIndex /*eff_idx*/)
 
     // honor-spells don't scale with level and won't be casted by an item
     // also we must use damage (spelldescription says +25 honor but damage is only 24)
-    ((Player*)unitTarget)->GetHonorMgr().Add(float(damage), QUEST);
-    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, ((Player*)unitTarget)->GetGUIDLow());
+    uint32 const honor = uint32(std::max(1.0f, std::ceil(float(damage) * 0.1f)));
+    ((Player*)unitTarget)->GetHonorMgr().Add(float(honor), QUEST);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points for player: %u", m_spellInfo->Id, honor, ((Player*)unitTarget)->GetGUIDLow());
 }
 
 void Spell::EffectSpawn(SpellEffectIndex /*eff_idx*/)

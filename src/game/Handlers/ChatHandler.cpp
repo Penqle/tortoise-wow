@@ -43,7 +43,9 @@
 #include "Anticheat.h"
 #include "AccountMgr.h"
 #include "Config/Config.h"
+#include "CustomMerchantMgr.h"
 #include "Database/DatabaseImpl.h"
+#include "HonorMgr.h"
 #include "Shop/ShopMgr.h"
 #include "GMTicketMgr.h"
 
@@ -1003,6 +1005,15 @@ bool WorldSession::HandleTurtleAddonMessages(uint32 lang, uint32 type, std::stri
 
     if (sLFTMgr.HandleAddonMessage(_player, type, msg))
         return true;
+
+    if (sCustomMerchantMgr.HandleAddonMessage(this, _player, type, msg))
+        return true;
+
+    if (type == CHAT_MSG_GUILD && msg == "TW_HONOR\tC2S_HONOR_REQUEST")
+    {
+        _player->GetHonorMgr().SendHonorCurrencyUpdate();
+        return true;
+    }
 
     //guild bank
     // no type == CHAT_MSG_GUILD on this, to protecc fraudulent messages

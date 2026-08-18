@@ -16548,13 +16548,14 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
 
     m_honorMgr.SetRankPoints(fields[38].GetFloat());
     m_honorMgr.SetHighestRank(fields[39].GetUInt32());
-    m_honorMgr.SetStanding(fields[40].GetUInt32());
+    m_honorMgr.SetStanding(0);
     m_honorMgr.SetLastWeekHK(fields[41].GetUInt32());
     m_honorMgr.SetLastWeekCP(fields[42].GetFloat());
     m_honorMgr.SetStoredHK(fields[43].GetUInt32());
     m_honorMgr.SetStoredDK(fields[44].GetUInt32());
 
     m_honorMgr.Load(holder->GetResult(PLAYER_LOGIN_QUERY_LOADHONORCP));
+    m_honorMgr.LoadCurrency(holder->GetResult(PLAYER_LOGIN_QUERY_LOADPVPCURRENCY));
     _LoadBoundInstances(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES));
     _LoadBGData(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGDATA));
 
@@ -23872,9 +23873,9 @@ void Player::RewardHonor(Unit* uVictim, uint32 groupSize)
         if (cVictim->IsRacialLeader())
         {
 			if (sWorld.IsPvPRealm())
-				m_honorMgr.Add(732.0, HONORABLE, cVictim);
+				m_honorMgr.Add(73.0, HONORABLE, cVictim);
 			else
-				m_honorMgr.Add(488.0, HONORABLE, cVictim);			
+				m_honorMgr.Add(49.0, HONORABLE, cVictim);
 
             return;
         }

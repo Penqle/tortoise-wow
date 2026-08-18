@@ -29,6 +29,7 @@
 #include "GuildMgr.h"
 #include "GuidObjectScaling.h"
 #include "HardcodedEvents.h"
+#include "HonorMgr.h"
 #include "InstanceData.h"
 #include "Item.h"
 #include "ItemEnchantmentMgr.h"
@@ -11566,7 +11567,13 @@ bool ChatHandler::HandleModifyHonorCommand(char* args)
         return false;
 
     // hack code
-    if (hasStringAbbr(field, "points"))
+    if (hasStringAbbr(field, "currency"))
+    {
+        target->GetHonorMgr().ModifySpendableHonor(amount);
+        PSendSysMessage("Honor currency of %s is now %u.", target->GetName(), target->GetHonorMgr().GetSpendableHonor());
+        return true;
+    }
+    else if (hasStringAbbr(field, "points"))
     {
         if (amount < 0 || amount > 255)
             return false;
