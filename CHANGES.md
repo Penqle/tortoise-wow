@@ -3,13 +3,12 @@
 In this file I will track changes I'm doing to the source code.
 
 ## Changes
----
 ### Quests
 #### (820) `What Do You Rely On?`
-<-- gameobject_template 1000045 -->
-<-- gameobject_template 4033 -->
-<-- gameobject_template 276 -->
-<-- quest_template 820 ->>
+<!-- gameobject_template 1000045 -->
+<!-- gameobject_template 4033 -->
+<!-- gameobject_template 276 -->
+<!-- quest_template 820 -->
 <details>
 <summary>What</summary>
 
@@ -67,6 +66,7 @@ There are some horses, I would like to make those lvl 60 rares.
 </details>
 
 #### (315) `The Perfect Stout`
+<!-- gameobject_template 276 -->
 <details>
 <summary>What</summary>
 
@@ -77,5 +77,4 @@ There are some horses, I would like to make those lvl 60 rares.
 ---
 ## TODO
 - Check gameobject_template 1000091
-
 
