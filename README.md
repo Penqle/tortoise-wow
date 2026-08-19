@@ -21,7 +21,6 @@ Additions will be added as the core code reaches feature completion
 
 #### Planned Additions
 
-- **[Playerbots][20]** - Currently implemented in a very basic fashion, not ready for use
 - **[Eluna][19]** - The WoW lua engine
 
 ## Operating Systems
@@ -76,5 +75,4 @@ See `CONTRIBUTING.md` for ways to get started.
 [14]: http://www.ubuntu.com/ "Ubuntu - The world's most popular free OS"
 [15]: http://windows.microsoft.com/ "Microsoft Windows"
 [19]: https://github.com/ElunaLuaEngine/Eluna
-[20]: https://github.com/ike3/mangosbot-bots
 [21]: http://github.com/memononen/recastnavigation "Recast - Navigation-mesh Toolset for Games"
