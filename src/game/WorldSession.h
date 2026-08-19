@@ -396,7 +396,7 @@ class WorldSession
 
         bool Update(PacketFilter& updater);
         /**
-         * @brief Returns true iif we can process packets (ie logged in Player, not a bot, etc ...)
+         * @brief Returns true if packets can be processed (ie the session has an open socket)
          */
         bool CanProcessPackets() const;
         void ProcessPackets(PacketFilter& updater);

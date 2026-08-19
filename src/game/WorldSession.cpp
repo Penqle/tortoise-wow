@@ -92,13 +92,9 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_
     _whisper_targets(id, sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_MAX), sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_BYPASS_LEVEL),
     sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_DECAY), this), sessionDbcLocaleRaw(locale)
 {
+    m_Address = remote_ip;
     if (sock)
-    {
-        m_Address = remote_ip;
         sock->AddReference();
-    }
-    else
-        m_Address = "<BOT>";
 
     m_lastUpdateTime = WorldTimer::getMSTime();
     _analyser = std::make_unique<AccountAnalyser>(this);

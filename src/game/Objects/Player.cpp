@@ -1920,7 +1920,7 @@ void Player::OnDisconnected()
             }, 1);
         }
 
-        // Update position after bot takes over
+        // Update position after disconnect
         // And remove movement flags, so he doesn't run into the void
         if (!GetMover()->HasUnitState(UNIT_STAT_FLEEING | UNIT_STAT_CONFUSED | UNIT_STAT_TAXI_FLIGHT))
         {
