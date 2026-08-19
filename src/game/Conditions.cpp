@@ -27,6 +27,7 @@
 #include "World.h"
 #include "BattleGround.h"
 #include "CreatureGroups.h"
+#include "Group.h"
 
 char const* conditionSourceToStr[] =
         {
@@ -112,6 +113,7 @@ uint8 const ConditionTargetsInternal[] =
         CONDITION_REQ_SOURCE_CREATURE,    //  58
         CONDITION_REQ_MAP_OR_WORLDOBJECT, //  59
         CONDITION_REQ_TARGET_UNIT,        //  60
+        CONDITION_REQ_TARGET_PLAYER,      //  61
 };
 
 // Starts from 4th element so that -3 will return first element.
@@ -667,6 +669,35 @@ bool inline ConditionEntry::Evaluate(WorldObject const* target, Map const* map, 
         case CONDITION_STAND_STATE:
         {
             return target->ToUnit()->GetStandState() == m_value1;
+        }
+        case CONDITION_LUNATIC:
+        {
+            Player const* pPlayer = target->ToPlayer();
+            if (!pPlayer->HasChallenge(CHALLENGE_LUNATIC))
+                return false;
+
+            if (m_value1 != 1)
+                return true;
+
+            Group const* pGroup = pPlayer->GetGroup();
+            if (!pGroup)
+                return true;
+
+            WorldObject const* pRewardSource = source ? source : target;
+            for (GroupReference* itr = const_cast<Group*>(pGroup)->GetFirstMember(); itr != nullptr; itr = itr->next())
+            {
+                Player const* pGroupMember = itr->getSource();
+                if (!pGroupMember)
+                    continue;
+
+                if (pRewardSource && (!pGroupMember->IsInWorld() || !pGroupMember->IsAtGroupRewardDistance(pRewardSource)))
+                    continue;
+
+                if (!pGroupMember->HasChallenge(CHALLENGE_LUNATIC))
+                    return false;
+            }
+
+            return true;
         }
     }
     return false;
@@ -1301,6 +1332,21 @@ bool ConditionEntry::IsValid()
             if (m_value1 >= MAX_UNIT_STAND_STATE)
             {
                 sLog.outErrorDb("CONDITION_STAND_STATE (entry %u, type %u) has invalid value1 %u, skipped", m_entry, m_condition, m_value1);
+                return false;
+            }
+            break;
+        }
+        case CONDITION_LUNATIC:
+        {
+            if (m_value1 < 0 || m_value1 > 1)
+            {
+                sLog.outErrorDb("CONDITION_LUNATIC (entry %u, type %u) has invalid argument %u (must be 0..1), skipped", m_entry, m_condition, m_value1);
+                return false;
+            }
+
+            if (m_value2 || m_value3 || m_value4)
+            {
+                sLog.outErrorDb("CONDITION_LUNATIC (entry %u, type %u) has unused data in value2, value3, or value4, skipped", m_entry, m_condition);
                 return false;
             }
             break;

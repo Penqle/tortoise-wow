@@ -3589,6 +3589,25 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 
     uint32 level = GetLevel();
 
+    if (IsHardcore() && InBattleGround())
+        return;
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (level >= 58)
+        {
+            AwardTitle(TITLE_HERO_OF_AZEROTH);
+            RemoveSpell(SPELL_HEROIC, false, false);
+            return;
+        }
+
+        if (victim)
+        {
+            if (victim->GetLevel() < level + 3)
+                return;
+        }
+    }
+
     if (HasChallenge(CHALLENGE_BOARING_MODE))
     {
         if (victim && victim->ToCreature()->GetCreatureInfo()->beast_family != CREATURE_FAMILY_BOAR)
@@ -3609,16 +3628,20 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     uint32 nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
     uint32 newXP = curXP + xp + rested_bonus_xp;
 
-    while (newXP >= nextLvlXP && level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+    uint32 maxLevel = HasChallenge(CHALLENGE_HEROIC) ? 58 : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+    while (newXP >= nextLvlXP && level < maxLevel)
     {
         newXP -= nextLvlXP;
 
-        if (level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+        if (level < maxLevel)
             GiveLevel(level + 1);
 
         level = GetLevel();
         nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
     }
+
+    if (maxLevel == 58 && level >= 58)
+        newXP = 0;
 
     SetUInt32Value(PLAYER_XP, newXP);
 }
@@ -3754,7 +3777,16 @@ void Player::GiveLevel(uint32 level)
         if (level == PLAYER_MAX_LEVEL)
         {
             AwardTitle(TITLE_SWINE_SLAYER);
-            // Todo: mail some swine mount.
+            MailBoaringModeRewards(level);
+        }
+    }
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (level >= 58)
+        {
+            AwardTitle(TITLE_HERO_OF_AZEROTH);
+            RemoveSpell(SPELL_HEROIC, false, false);
         }
     }
 
@@ -5815,14 +5847,8 @@ void Player::KillPlayer()
             {
                 MemberSlot* oldLeaderSlot = nullptr;
                 MemberSlot* newLeaderSlot = nullptr;
-                if (hardcoreGuild->GetSuitableNewLeader(newLeaderSlot, oldLeaderSlot))
+                if (hardcoreGuild->GetSuitableNewLeader(newLeaderSlot, oldLeaderSlot, true))
                     hardcoreGuild->SetNewLeader(newLeaderSlot, oldLeaderSlot);
-            }
-
-            if (hardcoreGuild->DelMember(GetObjectGuid()))
-            {
-                hardcoreGuild->Disband();
-                delete hardcoreGuild;
             }
         }
 
@@ -7654,6 +7680,13 @@ void Player::CheckAreaExploreAndOutdoor()
                     }
 
                 }
+
+                if (HasChallenge(CHALLENGE_HEROIC))
+                    xp = 0;
+
+                if (IsHardcore() && InBattleGround())
+                    xp = 0;
+
                 GiveXP(xp, nullptr);
             }
 
@@ -14429,6 +14462,14 @@ bool Player::SatisfyQuestChallenges(Quest const* quest, bool msg) const
             GetSession()->SendNotification("You are not Hardcore.");
         return false;
     }
+
+    if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAG_NOT_HARDCORE) && IsHardcore())
+    {
+        if (msg)
+            GetSession()->SendNotification("Hardcore characters cannot complete this quest.");
+        return false;
+    }
+
     return true;
 }
 
@@ -14539,6 +14580,9 @@ bool Player::CanCompleteRepeatableQuest(Quest const *pQuest) const
 
 bool Player::CanRewardQuest(Quest const *pQuest, bool msg) const
 {
+    if (!SatisfyQuestChallenges(pQuest, msg))
+        return false;
+
     // Prevent packet-editing exploits
     // Players must meet prereqs for AutoComplete quests
     if (pQuest->IsAutoComplete())
@@ -14977,6 +15021,15 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, WorldObject* questE
 
     bool isTurtleMode = HasChallenge(CHALLENGE_SLOW_AND_STEADY);
     uint32 XP = q_status.m_rewarded ? 0 : uint32(pQuest->XPValue(this));
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (GetLevel() >= 58 || GetQuestLevelForPlayer(pQuest) < GetLevel() + 3)
+            XP = 0;
+    }
+
+    if (IsHardcore() && InBattleGround())
+        XP = 0;
 
     if (!isTurtleMode)
         XP *= sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST);
@@ -21738,6 +21791,8 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
     bool PvP = pVictim->IsCharmerOrOwnerPlayerOrPlayerItself();
 
     uint32 xp = PvP ? 0 : MaNGOS::XP::Gain(this, static_cast<Creature*>(pVictim));
+    if (IsHardcore() && InBattleGround())
+        xp = 0;
 
     // honor can be in PvP and !PvP (racial leader) cases
     RewardHonor(pVictim, 1);
@@ -24288,6 +24343,16 @@ void Player::MailVagrantModeRewards(uint32 level)
     ToMailItem->SaveToDB();
 
     MailDraft("A Wanderer's Best Friend!", "Congratulations to you, brave warrior who has reached level 60 in Vagrant Mode! As a gesture of gratitude, we give you a reliable companion, who will carry your belongings on your dangerous adventures. May your travels be successful and your fights triumphant!")
+        .AddItem(ToMailItem)
+        .SendMailTo(this, MailSender(MAIL_CREATURE, uint32(16547), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_COPIED, 0, 30 * DAY);
+}
+
+void Player::MailBoaringModeRewards(uint32 level)
+{
+    Item* ToMailItem = Item::CreateItem(40998, 1, this);
+    ToMailItem->SaveToDB();
+
+    MailDraft("Boar's Honor Pack", "Took you long enough! Here's your boar and sword.")
         .AddItem(ToMailItem)
         .SendMailTo(this, MailSender(MAIL_CREATURE, uint32(16547), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_COPIED, 0, 30 * DAY);
 }

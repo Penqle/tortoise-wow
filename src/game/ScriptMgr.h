@@ -1184,10 +1184,11 @@ enum CastFlags
     CF_ONLY_IN_MELEE = 0x040, // Only casts if the creature is in melee range of the target
     CF_NOT_IN_MELEE = 0x080, // Only casts if the creature is not in melee range of the target
     CF_TARGET_CASTING = 0x100, // Only casts if the target is currently casting a spell
-	CF_IGNORE_LOS = 0x200, // Ignore Line of Sight. Turtle Specific
+    CF_IGNORE_LOS = 0x200, // Ignore Line of Sight. Turtle Specific
+    CF_IGNORE_HARDCORE_TARGETS = 0x400, // Prevent charm/possess spells from targeting Hardcore players
 };
 
-#define ALL_CAST_FLAGS (CF_INTERRUPT_PREVIOUS | CF_TRIGGERED | CF_FORCE_CAST | CF_MAIN_RANGED_SPELL | CF_TARGET_UNREACHABLE | CF_AURA_NOT_PRESENT | CF_ONLY_IN_MELEE | CF_NOT_IN_MELEE | CF_TARGET_CASTING)
+#define ALL_CAST_FLAGS (CF_INTERRUPT_PREVIOUS | CF_TRIGGERED | CF_FORCE_CAST | CF_MAIN_RANGED_SPELL | CF_TARGET_UNREACHABLE | CF_AURA_NOT_PRESENT | CF_ONLY_IN_MELEE | CF_NOT_IN_MELEE | CF_TARGET_CASTING | CF_IGNORE_LOS | CF_IGNORE_HARDCORE_TARGETS)
 
 // Values used in target_type column
 enum ScriptTarget

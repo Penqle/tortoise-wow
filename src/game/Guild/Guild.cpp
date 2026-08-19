@@ -609,7 +609,7 @@ void Guild::SetNewLeader(MemberSlot* newLeaderSlot, MemberSlot* oldLeaderSlot)
     }
 }
 
-bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot)
+bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot, bool preferOldestOfficer)
 {
     newLeaderSlot = nullptr;
     oldLeaderSlot = nullptr;
@@ -628,7 +628,23 @@ bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLea
             newLeaderSlot = &(i->second);
     }
 
-    return newLeaderSlot != nullptr;;
+    if (preferOldestOfficer)
+    {
+        for (GuildEventLogEntry const& event : m_GuildEventLog)
+        {
+            if (event.EventType != GUILD_EVENT_LOG_INVITE_PLAYER || event.PlayerGuid2 == lowGuid)
+                continue;
+
+            MemberSlot* slot = GetMemberSlot(ObjectGuid(HIGHGUID_PLAYER, event.PlayerGuid2));
+            if (slot && slot->RankId == GR_OFFICER)
+            {
+                newLeaderSlot = slot;
+                break;
+            }
+        }
+    }
+
+    return newLeaderSlot != nullptr;
 }
 
 void Guild::BroadcastToGuild(WorldSession *session, std::string const& msg, uint32 language)
