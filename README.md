@@ -1,80 +1,83 @@
+# README
 
-# Tortoise-WoW
+This fork goal is to make game playable solo.
 
-This is an unofficial, community driven, restoration of the 1.18.1 patch of Turtle-WoW, with some additions for solo play.  
-This project is not to be used for profit or to misrepresent itself, or anyone using it, as the original creators  
-This project targets version 1.18.1 build 7272
+In this file I will track changes I'm doing to the source code.
 
-## Client Version
+## Changes
+### Quests
+#### (820) `What Do You Rely On?`
+<!-- gameobject_template 1000045 -->
+<!-- gameobject_template 4033 -->
+<!-- gameobject_template 276 -->
+<!-- quest_template 820 -->
+<details>
+<summary>What</summary>
 
-The client version targetted is patch 1.18.1, build 7272  
-Any client that does not match this version or build will likely have a myriad of issues
+- `Shimmerweed Bush` (1000045)
+ - `displayId` changed from 4033 to 358
+ - `flags` changed from 0 to 4
+ - gameobject 4000339 changed `id` to 4033
+ - gameobject 4002356 changed `id` to 4033, placement to `1623.69,-3072.96,76.7227`
+ - gameobject 4002357 changed `id` to 4033, placement to `1619.48,-3080.23,76.6076`
+ - gameobject 4002358 changed `id` to 4033, placement to `1620.17,-3082.49,76.0905`
+ - gameobject 4002361 changed `id` to 4033, placement to `1640.22,-3062.69,77.1696`
+ - gameobject 4002362 changed `id` to 4033, placement to `1639.81,-3065.3,76.8596`
+ - gameobject 4002432 changed `id` to 4033
+ - gameobject 4002516 changed `id` to 4033
+ - gameobject 4002517 changed `id` to 4033
+ - gameobject 4002518 changed `id` to 4033
+ - gameobject 4002534 changed `id` to 4033
+ - gameobject 4002535 changed `id` to 4033
+ - gameobject 4002536 changed `id` to 4033
+ - gameobject 4002545 changed `id` to 4033
+ - gameobject 4002546 changed `id` to 4033
+ - gameobject 4002885 changed `id` to 4033
+ - gameobject 4002886 changed `id` to 4033
+ - gameobject 4002887 changed `id` to 4033
+ - gameobject 4006783 changed `id` to 4033
+ - gameobject 4002432 changed `id` to 4033, placement to `1608.98,-3068.3,89.8856`
+- `Shimmerweed Basket` (276)
+ - gameobject 3999970 changed placement to `880.753,-4202.08,-14.1417`
+ - gameobject 3999971 deleted
+ - gameobject 3999972 deleted
+ - gameobject 3999973 deleted
+ - gameobject 3999974 deleted
+ - gameobject 3999975 deleted
+ - gameobject 3999976 changed placement to `864.338,-4201.06,-14.0579`
+ - gameobject 3999978 deleted
+ - gameobject 3999979 deleted
+ - gameobject 3999980 deleted
+ - gameobject 3999981 deleted
+- `Blackleaf Bush` (4033)
+ - added as a gameobject_template
+</details>
+<details>
+<summary>Why</summary>
 
-## Additions
-Additions will be added as the core code reaches feature completion
+To my liking the baskets should not be present in Kalimdor,
+same for bushes in Eastern Kingdoms.
+</details>
+<details>
+<summary>Misc</summary>
+There are some additional gameobjects under the building.
+Use `.go 1623.69 -3072.96 76.7227 0` to check.
+Those gameobjects could be adjasted.
 
-#### Current Additions
+There are some horses, I would like to make those lvl 60 rares.
+</details>
 
-- **Autoscale** - Rudimentary toggleable dungeon/raid auto scaling system, found in mangosd.conf
-- **Leech** - Basic toggleable leech system designed for solo play, found in mangosd.conf
-- **Additional Talent Points** - Mostly used for testing, found in tw_char.characters
+#### (315) `The Perfect Stout`
+<!-- gameobject_template 276 -->
+<details>
+<summary>What</summary>
 
-#### Planned Additions
+- `Shimmerweed Basket` (276)
+ - `data1` changed from 797 to 276
+</details>
 
-- **[Playerbots][20]** - Currently implemented in a very basic fashion, not ready for use
-- **[Eluna][19]** - The WoW lua engine
+---
+## TODO
+- Check gameobject_template 1000091
+- Add quest to make cooking recipe (5482) available for Horde.
 
-## Operating Systems
-
-* **[Windows][15]**, 32 bit and 64 bit. Windows Server 2008 (or newer) or Windows 8 (or newer) is recommended.
-* **Linux**, 32 bit and 64 bit. [Ubuntu 22.04 LTS][14] is recommended. Other distributions with similar package versions will work, too.
-Of course, newer versions should work, too. In the case of Windows, matching
-server versions will work, too.
-
-## Dependencies
-
-* **[Git][1] / [Github for Windows][2]**: This version control software allows you to get the source files in the first place.
-* **[MySQL][3]** / **[MariaDB][4]**: These databases are used to store content and user data.
-* **[ACE][5]**: aka Adaptive Communication Environment, provides us with a solid cross-platform framework for abstracting operating system specific details.
-* **[Recast][21]**: In order to create navigation data from the client's map files, Recast is used to do the dirty work. It provides functions for rendering, pathing, etc.
-* **[G3D][6]**: This engine provides the basic framework for handling 3D data and is used to handle basic map data.
-* **[Stormlib][7]**: Provides an abstraction layer for reading from the client's data files.
-* **[Zlib][8]/[Zlib for Windows][9]** provides compression algorithms used in both MPQ archive handling and the client/server protocol.
-* **[Bzip2][10]/[Bzip2 for Windows][11]** provides compression algorithms used in MPQ archives.
-* **[OpenSSL][12]/[OpenSSL for Windows][13]** provides encryption algorithms used when authenticating clients.
-
-To build this project follow any MaNGOS/MaNGOS Zero build guide, with the addition of ACE  
-
-## Database Setup
-
-1. Manually import sql/create_databases.sql
-2. Manually import all sql scripts in the sql/base folder
-3. Run mangosd to automatically import and track updates  
-
-This will be streamlined once the core is more up to date
-
-## Contributing
-
-Contributions are welcome, but I may be slow to review and merge PRs
-
-See `CONTRIBUTING.md` for ways to get started.
-
-
-[1]: http://git-scm.com/ "Git - Distributed version control system"
-[2]: http://windows.github.com/ "github - windows client"
-[3]: https://dev.mysql.com/downloads/ "MySQL - The world's most popular open source database"
-[4]: https://mariadb.org/download/ "MariaDB - An enhanced, drop-in replacement for MySQL"
-[5]: http://www.dre.vanderbilt.edu/~schmidt/ACE.html "ACE - The ADAPTIVE Communication Environment"
-[6]: http://sourceforge.net/projects/g3d/ "G3D - G3D Innovation Engine"
-[7]: http://zezula.net/en/mpq/stormlib.html "Stormlib - A library for reading data from MPQ archives"
-[8]: http://www.zlib.net/ "Zlib"
-[9]: http://gnuwin32.sourceforge.net/packages/zlib.htm "Zlib for Windows"
-[10]: http://www.bzip.org/ "Bzip2"
-[11]: http://gnuwin32.sourceforge.net/packages/bzip2.htm "Bzip2 for Windows"
-[12]: http://www.openssl.org/ "OpenSSL - The Open Source toolkit for SSL/TLS"
-[13]: http://slproweb.com/products/Win32OpenSSL.html "OpenSSL for Windows"
-[14]: http://www.ubuntu.com/ "Ubuntu - The world's most popular free OS"
-[15]: http://windows.microsoft.com/ "Microsoft Windows"
-[19]: https://github.com/ElunaLuaEngine/Eluna
-[20]: https://github.com/ike3/mangosbot-bots
-[21]: http://github.com/memononen/recastnavigation "Recast - Navigation-mesh Toolset for Games"
