@@ -3628,6 +3628,11 @@ SpellCastResult Creature::TryToCast(Unit* pTarget, const SpellEntry* pSpellInfo,
     if ((uiCastFlags & CF_AURA_NOT_PRESENT) && pTarget->HasAura(pSpellInfo->Id))
         return SPELL_FAILED_AURA_BOUNCED;
 
+    if ((uiCastFlags & CF_IGNORE_HARDCORE_TARGETS) && pSpellInfo->IsCharmSpell())
+        if (Player* playerTarget = pTarget->ToPlayer())
+            if (playerTarget->IsHardcore())
+                return SPELL_FAILED_BAD_TARGETS;
+
     if (GetMotionMaster()->GetCurrentMovementGeneratorType() == TIMED_FLEEING_MOTION_TYPE)
         return SPELL_FAILED_FLEEING;
 

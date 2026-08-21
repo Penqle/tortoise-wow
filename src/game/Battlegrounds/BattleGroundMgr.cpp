@@ -482,7 +482,7 @@ bool BattleGroundQueue::InviteGroupToBG(GroupQueueInfo * ginfo, BattleGround * b
             BGQueueRemoveEvent* removeEvent = new BGQueueRemoveEvent(plr->GetObjectGuid(), ginfo->IsInvitedToBGInstanceGUID, bgTypeId, bgQueueTypeId, ginfo->RemoveInviteTime);
             plr->m_Events.AddEvent(removeEvent, plr->m_Events.CalculateTime(INVITE_ACCEPT_WAIT_TIME));
 
-            if (bgTypeId == BATTLEGROUND_BR)
+            if (bgTypeId == BATTLEGROUND_BR && !plr->IsHardcore())
             {
                 plr->m_Events.AddLambdaEventAtOffset([plr, bgTypeId]
                 {

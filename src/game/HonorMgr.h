@@ -7,30 +7,6 @@
 
 #include <unordered_map>
 
-struct HonorScores
-{
-    float FX[15];
-    float FY[15];
-    float BRK[14];
-};
-
-struct HonorStanding
-{
-    HonorStanding()
-        : guid(0), cp(0.0f) {}
-
-    uint32 guid;
-    float  cp;
-
-    // create the standing order
-    bool operator < (const HonorStanding& hs) const
-    {
-        return cp > hs.cp;
-    }
-};
-
-typedef std::vector<HonorStanding> HonorStandingList;
-
 struct WeeklyScore
 {
     WeeklyScore() : level(0), account(0), hk(0), dk(0), cp(0.0f), oldRp(0.0f), newRp(0.0f), earning(0.0f), standing(0), highestRank(0) {}
@@ -59,22 +35,14 @@ class HonorMaintenancer
         void DoMaintenance();
 
         void LoadWeeklyScores();
-        void LoadStandingLists();
-        void DistributeRankPoints(Team team);
-        void InactiveDecayRankPoints();
+        void DecayRankPoints();
         void SetCityRanks();
         void FlushRankPoints();
         void CreateCalculationReport();
 
         void FlushWeeklyQuests();
 
-        float GetStandingCPByPosition(HonorStandingList& standingList, uint32 position);
-        uint32 GetStandingPositionByGUID(uint32 guid, Team team);
-        HonorStandingList& GetStandingListByTeam(Team team);
-        HonorScores GenerateScores(HonorStandingList& standingList);
-        float CalculateRpEarning(float cp, HonorScores sc);
         float CalculateRpDecay(float rpEarning, const WeeklyScore& wk);
-        float MaximumRpAtLevel(uint8 level);
 
         void CheckMaintenanceDay();
         uint32 GetLastMaintenanceDay() const { return m_lastMaintenanceDay; }
@@ -86,9 +54,6 @@ class HonorMaintenancer
         void SetMaintenanceDays(uint32 last, uint32 next = 0);
 
     private:
-        HonorStandingList m_hordeStandingList;
-        HonorStandingList m_allianceStandingList;
-        HonorStandingList m_inactiveStandingList;
         WeeklyScoresHash m_weeklyScores;
 
         uint32 m_lastMaintenanceDay;
@@ -144,12 +109,15 @@ typedef std::list<HonorCP> HonorCPMap;
 class HonorMgr
 {
     public:
-        explicit HonorMgr(Player* owner) : m_owner(owner) {}
+        explicit HonorMgr(Player* owner) : m_spendableHonor(0), m_conquestPoints(0), m_weeklySpendableHonor(0), m_currencyWeekBeginDay(0), m_owner(owner) {}
         ~HonorMgr() {}
 
         void Save();
         void SaveStoredData();
         void Load(QueryResult* result);
+        void LoadCurrency(QueryResult* result);
+        void SaveCurrency();
+        void SendHonorCurrencyUpdate() const;
 
         bool Add(float CP, uint8 type, Unit* source = nullptr);
         void Update();
@@ -174,6 +142,7 @@ class HonorMgr
         
         static float DishonorableKillPoints(uint8 level);
         static float HonorableKillPoints(Player* killer, Player* victim, uint32 groupsize);
+        static float MaximumRpAtLevel(uint8 level);
 
         HonorRankInfo GetRank() const { return m_rank; }
         uint8 GetCurrentHonorRank() const { return m_rank.rank; }
@@ -205,8 +174,18 @@ class HonorMgr
         HonorCPMap& GetHonorCP() { return m_honorCP; }
 
         void SendPVPCredit(Unit* victim, float honor);
+        uint32 GetSpendableHonor() const { return m_spendableHonor; }
+        uint32 GetConquestPoints() const { return m_conquestPoints; }
+        uint32 GetWeeklySpendableHonor() const { return m_weeklySpendableHonor; }
+        uint32 AddSpendableHonor(uint32 amount);
+        uint32 ModifySpendableHonor(int32 amount);
+        bool SpendSpendableHonor(uint32 amount);
+        bool AddConquestPoints(uint32 amount, bool grantRankPoints = true);
+        bool SpendConquestPoints(uint32 amount);
 
     private:
+        void ResetCurrencyWeekIfNeeded();
+
         HonorCPMap m_honorCP;
         float m_lastWeekCP;
         float m_rankPoints;
@@ -218,6 +197,10 @@ class HonorMgr
         HonorRankInfo m_rank;
         HonorRankInfo m_highestRank;
         uint32 m_standing;
+        uint32 m_spendableHonor;
+        uint32 m_conquestPoints;
+        uint32 m_weeklySpendableHonor;
+        uint32 m_currencyWeekBeginDay;
         static uint32 m_mostHkYesterdayGuid;
         static uint32 m_mostDkYesterdayGuid;
 

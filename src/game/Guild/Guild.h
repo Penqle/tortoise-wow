@@ -341,7 +341,7 @@ class Guild
         void   DisplayGuildEventLog(WorldSession *session);
         void   LogGuildEvent(uint8 EventType, ObjectGuid playerGuid1, ObjectGuid playerGuid2 = ObjectGuid(), uint8 newRank = 0);
         ObjectGuid GetGuildInviter(ObjectGuid playerGuid) const;
-        bool GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot);
+        bool GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot, bool preferOldestOfficer = false);
         void SetNewLeader(ObjectGuid newLeaderGuid);
         void SetNewLeader(MemberSlot* newLeaderSlot, MemberSlot* oldLeaderSlot);
 

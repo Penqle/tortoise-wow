@@ -901,13 +901,26 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
     if (!pPlayer->IsGameMaster())
     {
         bool const bLevelCheck = pPlayer->GetLevel() < pTeleTrigger->requiredLevel && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_LEVEL);
+        static constexpr uint32 AllowedLunaticMaps[] = { 36, 43, 389, 822 };
+        bool bLunaticLevelOverrideMaps = false;
+        for (uint32 mapId : AllowedLunaticMaps)
+        {
+            if (pTargetMap->id == mapId)
+            {
+                bLunaticLevelOverrideMaps = true;
+                break;
+            }
+        }
+
+        bool const bLunaticLevelOverride = bLunaticLevelOverrideMaps && pPlayer->HasChallenge(CHALLENGE_LUNATIC);
+        bool const bBlockedByLevel = bLevelCheck && !bLunaticLevelOverride;
         bool const bConditionCheck = pTeleTrigger->requiredCondition && !IsConditionSatisfied(pTeleTrigger->requiredCondition, pPlayer, pPlayer->GetMap(), pPlayer, CONDITION_FROM_AREATRIGGER);
 
-        if (bLevelCheck || bConditionCheck)
+        if (bBlockedByLevel || bConditionCheck)
         {
             if (pTeleTrigger->message.empty())
             {
-                if (bLevelCheck)
+                if (bBlockedByLevel)
                     SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED), pTeleTrigger->requiredLevel);
             }
             else

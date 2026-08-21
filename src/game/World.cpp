@@ -26,6 +26,7 @@
 #include "World.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
+#include "CustomMerchantMgr.h"
 #include "Platform/Define.h"
 #include "SystemConfig.h"
 #include "Log.h"
@@ -1072,6 +1073,7 @@ void World::LoadConfigSettingsFromFile(bool reload)
     setConfigPos(CONFIG_UINT32_MAX_HONOR_POINTS, "MaxHonorPoints", 75000);
     setConfigMinMax(CONFIG_UINT32_START_HONOR_POINTS, "StartHonorPoints", 0, 0, getConfig(CONFIG_UINT32_MAX_HONOR_POINTS));
     setConfigMin(CONFIG_UINT32_MIN_HONOR_KILLS, "MinHonorKills", MIN_HONOR_KILLS, 1);
+    setConfig(CONFIG_UINT32_WEEKLY_HONOR_CAP, "WeeklyHonorCap", 20000);
     setConfigMinMax(CONFIG_UINT32_MAINTENANCE_DAY, "MaintenanceDay", 4, 0, 6);
     setConfig(CONFIG_BOOL_AUTO_HONOR_RESTART, "AutoHonorRestart", true);
     setConfig(CONFIG_BOOL_ALL_TAXI_PATHS, "AllFlightPaths", false);
@@ -2108,6 +2110,8 @@ void LoadPlayerEggLoot();
     sObjectMgr.LoadVendorTemplates();                       // must be after load ItemTemplate
     sLog.outString("Loading vendors...");
     sObjectMgr.LoadVendors();                               // must be after load CreatureTemplate, VendorTemplate, and ItemTemplate
+    sLog.outString("Loading custom merchants...");
+    sCustomMerchantMgr.Load();
     sLog.outString("Loading trainer templates...");
     sObjectMgr.LoadTrainerTemplates();                      // must be after load CreatureTemplate
     sLog.outString("Loading trainers...");
