@@ -41,6 +41,7 @@ class Config
 
     bool SetSource(const char *file);
     bool Reload();
+    bool LoadModulesConfigs();
 
     std::string GetStringDefault(const char* name, const char* def);
     bool GetBoolDefault(const char* name, const bool def = false);
@@ -62,6 +63,9 @@ class Config
 
         std::string mFilename;
         ACE_Configuration_Heap* mConf;
+
+        std::vector<std::string> GetModuleConfigFiles() const;
+        std::string GetConfigDirectory() const;
 
         using LockType = std::mutex;
         using GuardType = std::unique_lock<LockType>;

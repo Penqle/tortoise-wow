@@ -893,7 +893,7 @@ class WorldSession
         void HandleQuestPushResult(WorldPacket& recvPacket);
 
         bool CheckChatMessageValidity(std::string&, uint32, uint32);
-        bool ProcessChatMessageAfterSecurityCheck(std::string&, uint32, uint32);
+        bool ProcessChatMessageAfterSecurityCheck(std::string&, uint32&, uint32&);
         static bool IsLanguageAllowedForChatType(uint32 lang, uint32 msgType);
         void SendPlayerNotFoundNotice(std::string const& name);
         void SendWrongFactionNotice();

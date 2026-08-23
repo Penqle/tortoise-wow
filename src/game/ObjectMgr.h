@@ -316,6 +316,7 @@ typedef robin_hood::unordered_map<uint32,ItemLocale> ItemLocaleMap;
 typedef robin_hood::unordered_map<uint32,QuestLocale> QuestLocaleMap;
 typedef robin_hood::unordered_map<uint32,PageTextLocale> PageTextLocaleMap;
 typedef robin_hood::unordered_map<int32,MangosStringLocale> MangosStringLocaleMap;
+typedef robin_hood::unordered_map<std::string, MangosStringLocaleMap> ModuleStringLocaleMap;
 typedef robin_hood::unordered_map<uint32,QuestGreetingLocale> QuestGreetingLocaleMap;
 typedef robin_hood::unordered_map<uint32,GossipMenuItemsLocale> GossipMenuItemsLocaleMap;
 typedef robin_hood::unordered_map<uint32,PointOfInterestLocale> PointOfInterestLocaleMap;
@@ -948,6 +949,7 @@ class ObjectMgr
 
         bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value, bool extra_content);
         bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",MIN_MANGOS_STRING_ID,MAX_MANGOS_STRING_ID, false); }
+        bool LoadModuleStrings();
         void LoadBroadcastTexts();
         void LoadBroadcastTextLocales();
         bool LoadQuestGreetings();
@@ -1255,6 +1257,8 @@ class ObjectMgr
 
         const char *GetMangosString(int32 entry, int locale_idx) const;
         const char *GetMangosStringForDBCLocale(int32 entry) const { return GetMangosString(entry,DBCLocaleIndex); }
+        const char* GetModuleString(std::string const& module, uint32 id, int locale_idx) const;
+        const char* GetModuleString(char const* module, uint32 id, int locale_idx) const { return GetModuleString(std::string(module ? module : ""), id, locale_idx); }
         int32 GetDBCLocaleIndex() const { return DBCLocaleIndex; }
         void SetDBCLocaleIndex(uint32 lang) { DBCLocaleIndex = GetIndexForLocale(LocaleConstant(lang)); }
 
@@ -1775,6 +1779,7 @@ class ObjectMgr
         NpcTextMap m_NpcTextMap;
         PageTextLocaleMap m_PageTextLocaleMap;
         MangosStringLocaleMap m_MangosStringLocaleMap;
+        ModuleStringLocaleMap m_ModuleStringLocaleMap;
         BroadcastTextLocaleMap m_BroadcastTextLocaleMap;
         QuestGreetingLocaleMap m_QuestGreetingLocaleMap[QUESTGIVER_TYPE_MAX];
         TrainerGreetingLocaleMap m_TrainerGreetingLocaleMap;

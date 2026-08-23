@@ -28,6 +28,7 @@
 #include "BattleGround.h"
 #include "CreatureGroups.h"
 #include "Group.h"
+#include "ScriptObjects.h"
 
 char const* conditionSourceToStr[] =
         {
@@ -1430,7 +1431,18 @@ bool ConditionEntry::CanBeUsedWithoutPlayer(uint32 entry)
 bool IsConditionSatisfied(uint32 conditionId, WorldObject const* target, Map const* map, WorldObject const* source, ConditionSource conditionSourceType)
 {
     if (ConditionEntry const* condition = sConditionStorage.LookupEntry<ConditionEntry>(conditionId))
-        return condition->Meets(target, map, source, conditionSourceType);
+    {
+        bool result = condition->Meets(target, map, source, conditionSourceType);
+        if (result)
+        {
+            result = !ScriptRegistry<ConditionScript>::ForEachWithReturn([&](ConditionScript* script)
+            {
+                return !script->OnConditionCheck(conditionId, const_cast<WorldObject*>(source), const_cast<WorldObject*>(target));
+            });
+        }
+
+        return result;
+    }
 
     return false;
 }

@@ -27,6 +27,7 @@
 #include "Common.h"
 #include "World.h"
 #include "WorldRunnable.h"
+#include "ScriptObjects.h"
 #include "Timer.h"
 #include "ObjectAccessor.h"
 #include "MapManager.h"
@@ -117,6 +118,10 @@ void WorldRunnable::operator()()
 
     sLog.outString("Stopping network threads...");
     sWorldSocketMgr->StopNetwork();
+    ScriptRegistry<ServerScript>::ForEachEnabledHook(SERVERHOOK_ON_NETWORK_STOP, [](ServerScript* script)
+    {
+        script->OnNetworkStop();
+    });
 
     sLog.outString("Unloading all maps...");
     sMapMgr.UnloadAll(); // unload all grids (including locked in memory)

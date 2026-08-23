@@ -43,6 +43,7 @@ class WorldSocket : public MangosSocket<WorldSession, WorldSocket, AuthCrypt>
     friend class ReactorRunnable< WorldSocket >;
     protected:
         int OnSocketOpen();
+        void OnSocketClose();
         int SendStartupPacket();
 
         int ProcessIncoming (WorldPacket* new_pct);

@@ -41,6 +41,7 @@
 #include "BattleGroundMgr.h"
 #include "MapManager.h"
 #include "SocialMgr.h"
+#include "ScriptObjects.h"
 
 #include "PlayerBotMgr.h"
 #include "Anticheat/Anticheat.h"
@@ -167,6 +168,14 @@ char const* WorldSession::GetPlayerName() const
 /// Send a packet to the client
 void WorldSession::SendPacket(WorldPacket const* packet)
 {
+    bool handledByScript = ScriptRegistry<ServerScript>::ForEachEnabledHookWithReturn(SERVERHOOK_CAN_PACKET_SEND, [&](ServerScript* script)
+    {
+        return !script->CanPacketSend(this, *packet);
+    });
+
+    if (handledByScript)
+        return;
+
     // There is a maximum size packet.
     if (packet->size() > 0x8000)
     {
@@ -445,11 +454,21 @@ void WorldSession::ProcessPackets(PacketFilter& updater)
             continue;
         }
 
-
-        ALL_SESSION_SCRIPTS(this, OnPacket(packet->GetOpcode()));
         OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
         try
         {
+            ALL_SESSION_SCRIPTS(this, OnPacket(packet->GetOpcode()));
+            bool handledByScript = ScriptRegistry<ServerScript>::ForEachEnabledHookWithReturn(SERVERHOOK_CAN_PACKET_RECEIVE, [&](ServerScript* script)
+            {
+                return !script->CanPacketReceive(this, *packet);
+            });
+
+            if (handledByScript)
+            {
+                delete packet;
+                continue;
+            }
+
             uint32 packetTime = WorldTimer::getMSTime();
             switch (opHandle.status)
             {
@@ -600,6 +619,10 @@ void WorldSession::LogoutPlayer(bool Save)
         bool inWorld = _player->IsInWorld() && _player->FindMap();
 
         sLog.out(LOG_CHAR, "[%s:%u@%s] Logout Character:[%s] (guid: %u)", GetUsername().c_str(), GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() , _player->GetGUIDLow());
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_BEFORE_LOGOUT, [&](PlayerScript* script)
+        {
+            script->OnBeforeLogout(_player);
+        });
         sDBLogger.LogCharAction({ _player->GetGUIDLow(), GetAccountId(), LogCharAction::ActionLogout, {} });
         if (ObjectGuid lootGuid = GetPlayer()->GetLootGuid())
             DoLootRelease(lootGuid);
@@ -767,11 +790,21 @@ void WorldSession::LogoutPlayer(bool Save)
 
         if (inWorld && !removedFromMap)
         {
+            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOGOUT, [&](PlayerScript* script)
+            {
+                script->OnLogout(_player);
+            });
+
             Map* _map = _player->GetMap();
             _map->Remove(_player, true);
         }
         else
         {
+            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOGOUT, [&](PlayerScript* script)
+            {
+                script->OnLogout(_player);
+            });
+
             _player->CleanupsBeforeDelete();
             Map::DeleteFromWorld(_player);
         }

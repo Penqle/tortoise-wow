@@ -29,6 +29,7 @@
 #include "Chat.h"
 #include "ObjectAccessor.h"
 #include "World.h"
+#include "ScriptObjects.h"
 
 void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 {
@@ -68,6 +69,11 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 
     pl->SendDuelCountdown(3000);
     plTarget->SendDuelCountdown(3000);
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_DUEL_START, [&](PlayerScript* script)
+    {
+        script->OnDuelStart(plTarget, pl);
+    });
 }
 
 void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)

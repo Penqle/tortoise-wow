@@ -30,6 +30,7 @@
 #include "WorldSocketMgr.h"
 #include "AddonHandler.h"
 #include "Anticheat/Anticheat.h"
+#include "ScriptObjects.h"
 
 
 #include "Opcodes.h"
@@ -456,7 +457,24 @@ int WorldSocket::HandlePing(WorldPacket& recvPacket)
 
 int WorldSocket::OnSocketOpen()
 {
-    return sWorldSocketMgr->OnSocketOpen(this);
+    int result = sWorldSocketMgr->OnSocketOpen(this);
+    if (result != -1)
+    {
+        ScriptRegistry<ServerScript>::ForEachEnabledHook(SERVERHOOK_ON_SOCKET_OPEN, [&](ServerScript* script)
+        {
+            script->OnSocketOpen(this);
+        });
+    }
+
+    return result;
+}
+
+void WorldSocket::OnSocketClose()
+{
+    ScriptRegistry<ServerScript>::ForEachEnabledHook(SERVERHOOK_ON_SOCKET_CLOSE, [&](ServerScript* script)
+    {
+        script->OnSocketClose(this);
+    });
 }
 
 int WorldSocket::SendStartupPacket()

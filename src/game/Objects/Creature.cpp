@@ -62,7 +62,6 @@
 #include "GuardMgr.h"
 #include "GuidObjectScaling.h"
 #include "PerfStats.h"
-#include "Autoscaling/AutoScaler.hpp"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
@@ -787,15 +786,6 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                 if (!IsLikePlayer())
                     SetTempPacified(5000);
 
-                // Scaling: apply to all dungeon/raid instances, linear vs. 40-player baseline
-                if (GetMap()->IsDungeon())
-                {
-                    uint32 playerCount = GetMap()->GetPlayersCountExceptGMs();
-                    uint32 maxCount = ((DungeonMap*)GetMap())->GetMaxPlayers();
-                    if (playerCount > 0)
-                        sAutoScaler->ScaleCreature(this, playerCount, maxCount, GetMap());
-                }
-                
                 GetMap()->Add(this);
 
                 if (uint16 poolid = sPoolMgr.IsPartOfAPool<Creature>(GetGUIDLow()))

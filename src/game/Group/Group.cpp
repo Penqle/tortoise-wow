@@ -39,6 +39,7 @@
 #include "LFGHandler.h"
 #include "Chat.h"
 #include "Logging/DatabaseLogger.hpp"
+#include "ScriptObjects.h"
 
 #include <array>
 
@@ -432,6 +433,11 @@ bool Group::AddMember(ObjectGuid guid, const char* name, uint8 joinMethod)
         }
     }
 
+    ScriptRegistry<GroupScript>::ForEach([&](GroupScript* script)
+    {
+        script->OnAddMember(this, guid);
+    });
+
     return true;
 }
 
@@ -505,6 +511,11 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 removeMethod)
             sLFGMgr.UpdateGroup(m_Id);
 
         SendUpdate();
+
+        ScriptRegistry<GroupScript>::ForEach([&](GroupScript* script)
+        {
+            script->OnRemoveMember(this, guid, removeMethod);
+        });
     }
     // if group before remove <= 2 disband it
     else
@@ -519,16 +530,27 @@ void Group::ChangeLeader(ObjectGuid guid)
     if (slot == m_memberSlots.end())
         return;
 
+    ObjectGuid oldLeaderGuid = m_leaderGuid;
     _setLeader(guid);
 
     WorldPacket data(SMSG_GROUP_SET_LEADER, slot->name.size() + 1);
     data << slot->name;
     BroadcastPacket(&data, true);
     SendUpdate();
+
+    ScriptRegistry<GroupScript>::ForEach([&](GroupScript* script)
+    {
+        script->OnChangeLeader(this, guid, oldLeaderGuid);
+    });
 }
 
 void Group::Disband(bool hideDestroy, ObjectGuid initiator)
 {
+    ScriptRegistry<GroupScript>::ForEach([&](GroupScript* script)
+    {
+        script->OnDisband(this);
+    });
+
     Player* player;
     Player* remainingPlayer = nullptr;
 

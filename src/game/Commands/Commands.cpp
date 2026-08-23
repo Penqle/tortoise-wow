@@ -240,6 +240,13 @@ bool ChatHandler::HandleReloadMangosStringCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleReloadModuleStringCommand(char* /*args*/)
+{
+    sObjectMgr.LoadModuleStrings();
+    SendSysMessage("DB tables `module_string` and `module_string_locale` reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadHousingCommand(char* /*args*/)
 {
     sObjectMgr.LoadGuildHouses();

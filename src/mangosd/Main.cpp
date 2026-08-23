@@ -26,8 +26,11 @@
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
+#include "DynamicModules.h"
 #include "Log.h"
 #include "Master.h"
+#include "ScriptLoader.h"
+#include "ScriptMgr.h"
 #include "SystemConfig.h"
 #include "revision.h"
 #include <openssl/opensslv.h>
@@ -150,6 +153,16 @@ extern int main(int argc, char **argv)
         Log::WaitBeforeContinueIfNeed();
         return 1;
     }
+
+    if (!sConfig.LoadModulesConfigs())
+    {
+        sLog.outError("Could not load module configuration files.");
+        Log::WaitBeforeContinueIfNeed();
+        return 1;
+    }
+
+    sScriptMgr.SetScriptLoader(AddScripts);
+    sScriptMgr.SetModulesLoader(AddConfiguredModulesScripts);
 
 #ifndef WIN32                                               // posix daemon commands need apply after config read
     switch (serviceDaemonMode)

@@ -18,6 +18,7 @@ namespace DBUpdater
     {
         std::string Hash;
         std::string Name;
+        std::string Module;
     };
 
     struct FileMigration : public Migration
@@ -39,12 +40,14 @@ namespace DBUpdater
 
         bool ExecuteUpdate(const FileMigration& fileData, DatabaseType* targetDatabase) const;
 
-        bool ProcessTargetUpdates(const fs::directory_entry& targetPath, DatabaseType* targetDatabase, bool region, bool sortByName) const;
+        bool ProcessTargetUpdates(const fs::directory_entry& targetPath, DatabaseType* targetDatabase, bool region, bool sortByName, std::string const& moduleName = "") const;
+        bool ProcessModuleUpdates(const fs::path& modulesPath, const std::string& targetFolder, DatabaseType* targetDatabase, bool sortByName) const;
 
-        std::unordered_map<std::string, FileMigration> LoadFileMigrations(const std::filesystem::directory_entry& targetPath) const;
+        std::unordered_map<std::string, FileMigration> LoadFileMigrations(const std::filesystem::directory_entry& targetPath, std::string const& moduleName = "") const;
         std::unordered_map<std::string, Migration> LoadDatabaseMigrations(DatabaseType* targetDatabase) const;
 
         bool CalculateFileHash(const std::string& fileName, std::string& hexResult, std::optional<std::reference_wrapper<std::vector<uint8>>> fileData) const;
+        std::string GetMigrationKey(std::string const& moduleName, std::string const& hash) const;
 
     };
 }

@@ -31,6 +31,7 @@
 #include "MapManager.h"
 #include "BattleGroundMgr.h"
 #include "MassMailMgr.h"
+#include "ScriptObjects.h"
 #include "SpellMgr.h"
 #include "Policies/SingletonImp.h"
 
@@ -94,6 +95,9 @@ void GameEventMgr::StartEvent(uint16 event_id, bool overwrite /*=false*/, bool r
         if (mGameEvent[event_id].end <= mGameEvent[event_id].start)
             mGameEvent[event_id].end = mGameEvent[event_id].start + mGameEvent[event_id].length;
     }
+
+    if (GameEventScript* script = ScriptRegistry<GameEventScript>::GetScriptById(event_id))
+        script->OnStart(event_id);
 }
 
 void GameEventMgr::StopEvent(uint16 event_id, bool overwrite)
@@ -110,6 +114,9 @@ void GameEventMgr::StopEvent(uint16 event_id, bool overwrite)
         if (mGameEvent[event_id].end <= mGameEvent[event_id].start)
             mGameEvent[event_id].end = mGameEvent[event_id].start + mGameEvent[event_id].length;
     }
+
+    if (GameEventScript* script = ScriptRegistry<GameEventScript>::GetScriptById(event_id))
+        script->OnStop(event_id);
 }
 
 void GameEventMgr::EnableEvent(uint16 event_id, bool enable, bool updateDB)
@@ -613,6 +620,9 @@ uint32 GameEventMgr::Update(ActiveEvents const* activeAtShutdown /*= nullptr*/)
         if (!mGameEvent[hEvent_iter->m_eventId].disabled)
         {
             hEvent_iter->Update();
+            if (GameEventScript* script = ScriptRegistry<GameEventScript>::GetScriptById(hEvent_iter->m_eventId))
+                script->OnUpdate(hEvent_iter->m_eventId);
+
             uint32 calcDelay = hEvent_iter->GetNextUpdateDelay();
             if (calcDelay < nextEventDelay)
                 nextEventDelay = calcDelay;
@@ -627,6 +637,9 @@ uint32 GameEventMgr::Update(ActiveEvents const* activeAtShutdown /*= nullptr*/)
         //sLog.outErrorDb("Checking event %u",itr);
         if (CheckOneGameEvent(itr, currenttime))
         {
+            if (GameEventScript* script = ScriptRegistry<GameEventScript>::GetScriptById(itr))
+                script->OnUpdate(itr);
+
             //DEBUG_LOG("GameEvent %u is active",itr->first);
             if (!IsActiveEvent(itr))
             {

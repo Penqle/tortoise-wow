@@ -41,6 +41,7 @@
 #include "Util.h"
 #include "Language.h"
 #include "Chat.h"
+#include "ScriptObjects.h"
 #include "Anticheat.h"
 #include "MasterPlayer.h"
 #include "PlayerBroadcaster.h"
@@ -419,6 +420,10 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
     BASIC_LOG("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
     sLog.out(LOG_CHAR, "[%s:%u@%s] Create Character:[%s] (guid: %u)", GetUsername().c_str(), GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
     sDBLogger.LogCharAction({ pNewChar->GetGUIDLow(), GetAccountId(), LogCharAction::ActionCreate, {} });
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CREATE, [&](PlayerScript* script)
+    {
+        script->OnCreate(pNewChar.get());
+    });
     sObjectMgr.IncreaseActivePlayersCount(team);
 }
 
@@ -482,6 +487,10 @@ void WorldSession::HandleCharDeleteOpcode(WorldPacket & recv_data)
         onlinePlayer->GetSession()->LogoutPlayer(true);
 
     Player::DeleteFromDB(guid, GetAccountId());
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_DELETE, [&](PlayerScript* script)
+    {
+        script->OnDelete(guid, GetAccountId());
+    });
 
     WorldPacket data(SMSG_CHAR_DELETE, 1);
     data << (uint8)CHAR_DELETE_SUCCESS;
@@ -1004,6 +1013,10 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
 
     ALL_SESSION_SCRIPTS(this, OnLogin(pCurrChar));
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOGIN, [&](PlayerScript* script)
+    {
+        script->OnLogin(pCurrChar);
+    });
 }
 
 void WorldSession::HandleSetFactionAtWarOpcode(WorldPacket & recv_data)

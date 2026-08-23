@@ -48,6 +48,7 @@
 #include "ItemEnchantmentMgr.h"
 #include "MapManager.h"
 #include "ScriptMgr.h"
+#include "ScriptObjects.h"
 #include "CreatureAIRegistry.h"
 #include "Policies/SingletonImp.h"
 #include "BattleGroundMgr.h"
@@ -194,6 +195,11 @@ World::~World()
 
 void World::Shutdown()
 {
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_SHUTDOWN, [](WorldScript* script)
+    {
+        script->OnShutdown();
+    });
+
 	sGuildMgr.SaveGuildBanks();
     sWorld.KickAll();                                       // save and kick all players
     sWorld.UpdateSessions(1);                               // real players unload required UpdateSessions call
@@ -590,6 +596,10 @@ void World::LoadConfigSettingsCommonPart(bool reload)
     ///- Read the player limit and the Message of the day from the config file
     SetPlayerLimit(sConfig.GetIntDefault("PlayerLimit", DEFAULT_PLAYER_LIMIT), true);
     SetMotd(sConfig.GetStringDefault("Motd", "Welcome to the Massive Network Game Object Server."));
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_MOTD_CHANGE, [&](WorldScript* script)
+    {
+        script->OnMotdChange(m_motd);
+    });
 
     if (reload)
         sMapMgr.SetGridCleanUpDelay(getConfig(CONFIG_UINT32_INTERVAL_GRIDCLEAN));
@@ -826,11 +836,22 @@ void World::LoadConfigSettingsCommonPart(bool reload)
 
 void World::LoadConfigSettings(bool reload)
 {
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_BEFORE_CONFIG_LOAD, [&](WorldScript* script)
+    {
+        script->OnBeforeConfigLoad(reload);
+    });
+
     if (reload)
     {
         if (!sConfig.Reload())
         {
             sLog.outError("World settings reload fail: can't read settings from %s.", sConfig.GetFilename().c_str());
+            return;
+        }
+
+        if (!sConfig.LoadModulesConfigs())
+        {
+            sLog.outError("World settings reload fail: can't read module settings for %s.", sConfig.GetFilename().c_str());
             return;
         }
     }
@@ -862,6 +883,11 @@ void World::LoadConfigSettings(bool reload)
     LoadConfigSettingsFromFile();
 
     LoadConfigSettingsCommonPart(reload);
+
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_AFTER_CONFIG_LOAD, [&](WorldScript* script)
+    {
+        script->OnAfterConfigLoad(reload);
+    });
 }
 
 bool World::LoadConfigSettingsFromDB(bool reload)
@@ -1041,16 +1067,6 @@ void World::LoadConfigSettingsFromFile(bool reload)
     setConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_ADD_FRIEND,          "AllowTwoSide.AddFriend", false);
 
     setConfig(CONFIG_FLOAT_MAX_FACTION_IMBALANCE, "MaxFactionImbalance", 0.1f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_5MAN_HP,  "ScalarMin5ManHP",  0.6f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_5MAN_DMG, "ScalarMin5ManDMG", 0.4f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_10MAN_HP,  "ScalarMin10ManHP",  0.6f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_10MAN_DMG, "ScalarMin10ManDMG", 0.4f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_20MAN_HP,  "ScalarMin20ManHP",  0.6f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_20MAN_DMG, "ScalarMin20ManDMG", 0.4f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_40MAN_HP,  "ScalarMin40ManHP",  0.6f);
-    setConfig(CONFIG_FLOAT_SCALAR_MIN_40MAN_DMG, "ScalarMin40ManDMG", 0.4f);
-
-    setConfig(CONFIG_BOOL_AUTOSCALER_ENABLE, "AutoScalerEnable", false);
 
     setConfig(CONFIG_UINT32_STRICT_PLAYER_NAMES,  "StrictPlayerNames",  0);
     setConfig(CONFIG_UINT32_STRICT_CHARTER_NAMES, "StrictCharterNames", 0);
@@ -1413,7 +1429,6 @@ void World::LoadConfigSettingsFromFile(bool reload)
     setConfig(CONFIG_UINT32_TRANSMOG_REQ_ITEM, "Transmog.ReqItemID", 0);
     setConfig(CONFIG_UINT32_TRANSMOG_REQ_ITEM_COUNT, "Transmog.ReqItemCount", 1);
     setConfig(CONFIG_FLOAT_TRANSMOG_REQ_MONEY_RATE, "Transmog.ReqMoneyRate", 0.0);
-    setConfig(CONFIG_FLOAT_LEECH_AMOUNT, "Leech.Amount", 0.10f);
     setConfig(CONFIG_BOOL_STATIC_OBJECT_LOS, "StaticObjectLOS", true);
     setConfig(CONFIG_BOOL_DUAL_SPEC, "DualSpec", false);
     
@@ -1470,7 +1485,6 @@ void World::LoadConfigSettingsFromFile(bool reload)
     setConfig(CONFIG_UINT32_AUTO_PDUMP_DELETE_AFTER_DAYS, "AutoPDump.DeleteAfterDays", 60);
 
     setConfig(CONFIG_BOOL_PERFORMANCE_ENABLE, "Perf.Enable", true);
-    setConfig(CONFIG_BOOL_LEECH_ENABLE, "Leech.Enable", false);
 
     setConfig(CONFIG_UINT32_PERFORMANCE_REPORT_INTERVAL, "Perf.ReportInterval", 600);
     setConfig(CONFIG_UINT32_MAX_GOLD_TRANSFERRED, "Transfer.MaxGold", 300000);
@@ -1893,6 +1907,13 @@ void LoadPlayerEggLoot();
         exit(1);
     }
 
+    sLog.outString("Loading module strings...");
+    if (!sObjectMgr.LoadModuleStrings())
+    {
+        Log::WaitBeforeContinueIfNeed();
+        exit(1);
+    }
+
     CheckEggExploit();
 
     ///- Loads existing IDs in the database.
@@ -2185,6 +2206,14 @@ void LoadPlayerEggLoot();
     sLog.outString("Loading creature EventAI events...");
     sEventAIMgr.LoadCreatureEventAI_Events();
     sScriptMgr.Initialize();
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_LOAD_CUSTOM_DATABASE_TABLE, [](WorldScript* script)
+    {
+        script->OnLoadCustomDatabaseTable();
+    });
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_BEFORE_WORLD_INITIALIZED, [](WorldScript* script)
+    {
+        script->OnBeforeWorldInitialized();
+    });
     sLog.outString("Loading aura removal handler...");
     sAuraRemovalMgr.LoadFromDB();
     sLog.outString("Loading daily quests handler...");
@@ -2411,6 +2440,10 @@ void World::DetectDBCLang()
     m_defaultDbcLocale = LocaleConstant(default_locale);
 
     sLog.outString("Using %s DBC locale as default.", localeNames[m_defaultDbcLocale]);
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
+    {
+        script->OnStartup();
+    });
     
 }
 
@@ -2457,6 +2490,11 @@ void TotalMoneyCallback(QueryResult* result, uint32 money)
 void World::Update(uint32 diff)
 {
     XScopeStatTimer ScopeStatTimer(sPerfMonitor.WorldTick);
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_UPDATE, [&](WorldScript* script)
+    {
+        script->OnUpdate(diff);
+    });
+
     ///- Update the different timers
     for (auto& timer : m_timers)
     {
@@ -3222,6 +3260,11 @@ void World::ShutdownServ(uint32 time, uint32 options, uint8 exitcode)
     if (m_stopEvent)
         return;
 
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_SHUTDOWN_INITIATE, [&](WorldScript* script)
+    {
+        script->OnShutdownInitiate(options, exitcode);
+    });
+
     m_ShutdownMask = options;
     m_ExitCode = exitcode;
 
@@ -3277,6 +3320,11 @@ void World::ShutdownCancel()
     // nothing cancel or too later
     if (!m_ShutdownTimer || m_stopEvent)
         return;
+
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_SHUTDOWN_CANCEL, [](WorldScript* script)
+    {
+        script->OnShutdownCancel();
+    });
 
     ServerMessageType msgid = (m_ShutdownMask & SHUTDOWN_MASK_RESTART) ? SERVER_MSG_RESTART_CANCELLED : SERVER_MSG_SHUTDOWN_CANCELLED;
 
@@ -3666,6 +3714,9 @@ void World::SetPlayerLimit(int32 limit, bool needUpdate)
     if (limit < -SEC_ADMINISTRATOR)
         limit = -SEC_ADMINISTRATOR;
 
+    bool const wasOpen = m_playerLimit >= 0;
+    bool const isOpen = limit >= 0;
+
     // lock update need
     bool db_update_need = needUpdate || (limit < 0) != (m_playerLimit < 0) || (limit < 0 && m_playerLimit < 0 && limit != m_playerLimit);
 
@@ -3674,6 +3725,14 @@ void World::SetPlayerLimit(int32 limit, bool needUpdate)
     if (db_update_need)
         LoginDatabase.PExecute("UPDATE realmlist SET allowedSecurityLevel = '%u' WHERE id = '%u'",
                                uint32(GetPlayerSecurityLimit()), realmID);
+
+    if (wasOpen != isOpen)
+    {
+        ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_OPEN_STATE_CHANGE, [&](WorldScript* script)
+        {
+            script->OnOpenStateChange(isOpen);
+        });
+    }
 }
 
 void World::UpdateMaxSessionCounters()
