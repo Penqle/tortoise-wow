@@ -243,11 +243,18 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
     info.facialHair = facialHair;
     info.outfitId = outfitId;
     info.challengeMask = challengeMask;
+    info.remoteAddress = GetRemoteAddress();
 
     CharacterCreateOutcome outcome = CharacterCreation::CreateCharacter(GetAccountId(), info);
 
     if (outcome.result == CHAR_CREATE_SUCCESS)
-        _charactersCount = std::min<uint32>(_charactersCount + 1, sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM));
+    {
+        uint32 limit = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM);
+        if (outcome.newCharactersCount)
+            _charactersCount = std::min(outcome.newCharactersCount, limit);
+        else
+            _charactersCount = std::min<uint32>(_charactersCount + 1, limit);
+    }
 
     if (outcome.result == CHAR_CREATE_FAILED)
     {

@@ -41,6 +41,7 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     CharacterCreateOutcome outcome;
     outcome.result = CHAR_CREATE_ERROR;
     outcome.guid.Clear();
+    outcome.newCharactersCount = 0;
 
     // Must be called from world thread. There is no explicit IsWorldThread()
     // helper, but all callers are world-thread packet or module logic; we
@@ -55,18 +56,12 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
 
     AccountTypes sec = sAccountMgr.GetSecurity(accountId);
 
-    // Account limits - use DB count (synchronous, bounded, not per-tick).
+    // Effective IP for logging/session; keep module calls generic with safe default.
+    std::string effectiveIP = info.remoteAddress.empty() ? std::string("127.0.0.1") : info.remoteAddress;
+
+    // Carry pre-create count for limit checks and later realmcharacters ownership.
+    // Captured early but limit checks are after name/race/class to preserve original ordering.
     uint32 charCount = sAccountMgr.GetCharactersCount(accountId);
-    if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
-    {
-        outcome.result = CHAR_CREATE_SERVER_LIMIT;
-        return outcome;
-    }
-    if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_ACCOUNT))
-    {
-        outcome.result = CHAR_CREATE_ACCOUNT_LIMIT;
-        return outcome;
-    }
 
     Team team = Player::TeamForRace(info.race);
     if (sec == SEC_PLAYER)
@@ -145,6 +140,19 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
         }
     }
 
+    // Restore original ordering: account limits after name/race/class checks
+    // so invalid name/race/class and anticheat are not hidden by limit errors.
+    if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
+    {
+        outcome.result = CHAR_CREATE_SERVER_LIMIT;
+        return outcome;
+    }
+    if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_ACCOUNT))
+    {
+        outcome.result = CHAR_CREATE_ACCOUNT_LIMIT;
+        return outcome;
+    }
+
     bool allowTwoSide = !sWorld.IsPvPRealm() || sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_ACCOUNTS) || sec > SEC_PLAYER;
     CinematicsSkipMode skipCinematics = CinematicsSkipMode(sWorld.getConfig(CONFIG_UINT32_SKIP_CINEMATICS));
     bool haveSameRace = false;
@@ -183,7 +191,9 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     // Transient session for Player::Create/SaveToDB. Not registered in World,
     // not a fake network session, purely a helper to satisfy Player's
     // session dependency (security, account id) on the world thread.
-    WorldSession dummySession(accountId, nullptr, sec, 0, LOCALE_enUS, "127.0.0.1", 0);
+    // OnCreate limitation: Player is not in world and session is transient;
+    // hooks must not assume FindSession/online/world presence (see header).
+    WorldSession dummySession(accountId, nullptr, sec, 0, LOCALE_enUS, effectiveIP, 0);
 
     std::unique_ptr<Player> pNewChar = std::make_unique<Player>(&dummySession);
     if (!pNewChar->Create(sObjectMgr.GeneratePlayerLowGuid(), name, info.race, info.class_, info.gender, info.skin, info.face, info.hairStyle, info.hairColor, info.facialHair))
@@ -213,17 +223,18 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     sObjectMgr.InsertPlayerInCache(pNewChar.get());
     sObjectMgr.UpdatePlayerCachedPosition(pNewChar.get());
 
-    uint32 newCount = sAccountMgr.GetCharactersCount(accountId);
-    if (newCount == 0) // fallback if query races or fails
-        newCount = charCount + 1;
+    // Avoid post-commit async recount lag: carry pre-create count + 1 deterministically
+    // within generic API ownership instead of re-querying CharacterDatabase.
+    uint32 newCount = charCount + 1;
     LoginDatabase.PExecute("REPLACE INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)", newCount, accountId, realmID);
 
     outcome.guid = pNewChar->GetObjectGuid();
     outcome.result = CHAR_CREATE_SUCCESS;
+    outcome.newCharactersCount = newCount;
 
-    // Mirror packet-path side effects without coupling to a live session.
+    // Preserve original packet-path creator IP in LOG_CHAR; module default is generic dummy.
     sLog.out(LOG_CHAR, "[%s:%u@%s] Create Character:[%s] (guid: %u) via synchronous materialization",
-             accName.c_str(), accountId, "127.0.0.1", name.c_str(), pNewChar->GetGUIDLow());
+             accName.c_str(), accountId, effectiveIP.c_str(), name.c_str(), pNewChar->GetGUIDLow());
     sDBLogger.LogCharAction({ pNewChar->GetGUIDLow(), accountId, LogCharAction::ActionCreate, {} });
     ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CREATE, [&](PlayerScript* script)
     {
