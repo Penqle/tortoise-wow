@@ -79,7 +79,7 @@ public:
 
         const PortalInfo* info = GetPortalInfo(go->GetEntry());
         if (!info)
-            return false; // intentionally unsupported — fail closed, no teleport
+            return true; // intentionally unsupported — consume/fail closed, no teleport, no default GO activation
 
         if (player->IsBeingTeleported())
             return true;

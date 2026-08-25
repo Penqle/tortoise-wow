@@ -1,0 +1,13 @@
+-- Fix custom_dungeon_portal GO type for script dispatch (reviewer blocker: GENERIC never reaches OnGossipHello).
+-- All 13 bound `custom_dungeon_portal` GOs were type 5 GENERIC, which HandleGameObjectUseOpcode discards
+-- before GameObject::Use / sScriptMgr.OnGameObjectUse, so the registered GameObjectScript never ran.
+-- Switch only the 10 authoritative portals with verified areatrigger_teleport destinations to native
+-- clickable GOOBER (type 10), the minimal type that routes via GameObject::Use -> OnGameObjectUse
+-- -> GameObjectScript::OnGossipHello (see SpellHandler.cpp CMSG_GAMEOBJ_USE and GameObject.cpp GOOBER case).
+-- GOOBER with flags 0 and lockId 0 is interactive via PlayerCanUse; the script consumes (returns true)
+-- before the default GOOBER activation path, so no state/anim side-effects.
+-- Unsupported entries (112920 Scarlet Citadel Entr, 112923/112924 Caverns Placeholders) stay type 5;
+-- if ever retargeted to GOOBER, the script now returns true to consume/fail-closed without default activation,
+-- preserving no invented coords / no fake success.
+-- Destinations/phase/level/condition/ghost/combat remain authoritative in areatrigger_teleport and the C++ PortalInfo table.
+UPDATE `gameobject_template` SET `type` = 10 WHERE `entry` IN (112911, 112912, 112915, 112916, 112917, 112918, 112940, 112941, 181580, 181581) AND `script_name` = 'custom_dungeon_portal';
