@@ -95,45 +95,8 @@ void LFTManager::HandleQueueLeave(Player* player)
 {
     if (!player)
         return;
-
-    ObjectGuid guid = player->GetObjectGuid();
-
-    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
-    {
-        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
-        {
-            CancelRolecheck(itr);
-            return;
-        }
-    }
-
-    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
-    if (offerItr != m_playerOffers.end())
-    {
-        CancelOffer(offerItr->second, true, guid, true);
-        TryMakeOffers();
-        return;
-    }
-
-    QueueMap::iterator queueItr = m_queue.find(guid);
-    if (queueItr == m_queue.end())
-        return;
-
-    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
-    std::vector<ObjectGuid> toRemove;
-    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
-    {
-        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
-        if (itrLeader == leaderGuid)
-            toRemove.push_back(itr->first);
-    }
-
-    for (ObjectGuid const& removeGuid : toRemove)
-    {
-        std::string name = m_queue[removeGuid].name;
-        m_queue.erase(removeGuid);
-        SendQueueLeft(removeGuid, name);
-    }
+    // Single owner for cancellation: addon and module both route through LeaveQueue.
+    LeaveQueue(player->GetObjectGuid());
 }
 
 void LFTManager::HandleGetQueueStatus(Player* player)
@@ -148,7 +111,13 @@ void LFTManager::HandleRolecheckResponse(Player* player, std::vector<std::string
 
     uint8 roleMask = ParseRoleMask(fields[1]) & AllowedRoleMask(player);
     if (!roleMask)
+    {
+        // Invalid role (e.g. shaman tank when module disallows it, or no overlap
+        // with class). Notify instead of silently waiting - otherwise the whole
+        // group rolecheck stalls until timeout.
+        Send(player, "S2C_QUEUE_ERROR;invalid");
         return;
+    }
 
     ObjectGuid guid = player->GetObjectGuid();
     for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
@@ -724,13 +693,18 @@ uint8 LFTManager::AllowedRoleMask(Player const* player) const
         case CLASS_PALADIN: classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
         case CLASS_PRIEST:  classMask = LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
         case CLASS_ROGUE:   classMask = LFT_ROLE_DAMAGE; break;
-        // No tank for shaman: no tank talent tree in 1.12 and no bot tank strategy.
-        case CLASS_SHAMAN:  classMask = LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
+        // Preserve prior human semantics for shaman (tank|healer|damage). No tank
+        // policy for bots should live in the module via GetAllowedRoles, not in
+        // the generic core class fallback, otherwise group rolechecks silently stall.
+        case CLASS_SHAMAN:  classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
         case CLASS_WARLOCK: classMask = LFT_ROLE_DAMAGE; break;
         case CLASS_WARRIOR: classMask = LFT_ROLE_TANK | LFT_ROLE_DAMAGE; break;
         default:            classMask = 0; break;
     }
 
+    // Generic hook: first enabled PlayerScript that returns true wins (first-answer).
+    // A 0 mask means "no opinion" and falls back to the class mask; a non-zero
+    // answer is intersected with the class mask.
     uint8 scriptMask = Script_GetAllowedRoles(player);
     if (scriptMask == 0)
         return classMask;
@@ -760,7 +734,10 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
 
 }
 
-// Generic module API. World-thread only. Reuses native validation/offers/groups.
+// Generic module API. World-thread only. Reuses native queue/rolecheck/offers/groups
+// and addon packet behavior (SendQueueJoined/SendQueueLeft/TryMakeOffers).
+// Validates instances and role (AllowedRoleMask); grouping constraints
+// (team/hardcore) are enforced natively at offer formation, not at enqueue.
 bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
 {
     if (!player || !player->IsInWorld())

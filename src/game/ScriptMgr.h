@@ -1917,7 +1917,10 @@ template<class TScript> typename ScriptRegistry<TScript>::EnabledHooksList Scrip
 template<class TScript> uint32 ScriptRegistry<TScript>::_scriptIdCounter = 0;
 
 // Generic query: roles a module will let this character fill (LFT_ROLE_* mask).
-// Returns class fallback when no module answers.
+// World-thread only, cold path. First enabled PlayerScript that returns true
+// answers the query (first-answer wins, later modules ignored). A 0 mask
+// (either no answer or an explicit 0) means "no opinion" and falls back to
+// the core class mask; a non-zero answer is intersected with the class mask.
 class Player;
 uint8 Script_GetAllowedRoles(Player const* player);
 

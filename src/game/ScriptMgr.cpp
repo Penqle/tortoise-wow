@@ -3129,7 +3129,10 @@ QuestInstance::QuestInstance(ObjectGuid InPlayerGuid, uint32 InQuestID)
 }
 
 // Generic module query: roles a module will let this character fill.
-// World-thread only, cold path (queue/group formation).
+// World-thread only, cold path (queue/group formation). First-answer wins:
+// the first enabled PlayerScript returning true provides the mask, later
+// scripts are ignored. A 0 mask is "no opinion" (fallback to class mask);
+// non-zero is intersected with the class mask by the caller.
 uint8 Script_GetAllowedRoles(Player const* player)
 {
     if (!player)

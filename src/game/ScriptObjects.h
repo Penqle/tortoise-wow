@@ -190,8 +190,11 @@ class PlayerScript : public ScriptObject
 
         // Roles the module will let this character fill, as an LFT_ROLE_* mask
         // (tank 1, healer 2, damage 4). Write into roles and return true to answer;
-        // return false to leave the question to the next module. Core intersects
-        // with its class mask and falls back to class when no module answers.
+        // return false to leave the question to the next module (first answer wins).
+        // A 0 mask is "no opinion" and falls back to the core class mask; core
+        // intersects a non-zero answer with its class mask. Use this to restrict
+        // bot roles (e.g. no shaman tank) without changing the generic class fallback
+        // for humans, otherwise group rolechecks stall silently.
         virtual bool GetAllowedRoles(Player const* /*player*/, uint8& /*roles*/) { return false; }
 };
 

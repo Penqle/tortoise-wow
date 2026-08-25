@@ -31,10 +31,15 @@ class LFTManager
         void OnPlayerLogout(ObjectGuid const& guid);
 
         // Generic module API: queue a live in-world player through native validation.
-        // World-thread only. Validates level/team/hardcore/role and owns queue/offers/groups.
+        // World-thread only. Validates instances and role (via AllowedRoleMask, i.e. class
+        // intersect module GetAllowedRoles) and owns queue/rolecheck/offers/groups.
+        // Grouping constraints (team/hardcore/level) are enforced natively at offer
+        // formation (TryMakeOffers/CanQueuedPlayersGroup), not at enqueue time.
         // Returns true if the player (and, if grouped and leader, the party) was queued or entered rolecheck.
         bool QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask);
-        // World-thread only. Removes from rolecheck/offer/queue and restores addon state.
+        // World-thread only. Single owner of cancellation - removes from
+        // rolecheck/offer/queue and restores addon state via S2C_QUEUE_LEFT.
+        // Both addon HandleQueueLeave and module calls route through here.
         bool LeaveQueue(Player* player);
         bool LeaveQueue(ObjectGuid const& guid);
         bool IsQueued(ObjectGuid const& guid) const;
