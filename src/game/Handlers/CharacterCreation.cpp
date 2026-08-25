@@ -59,9 +59,21 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     // Effective IP for logging/session; keep module calls generic with safe default.
     std::string effectiveIP = info.remoteAddress.empty() ? std::string("127.0.0.1") : info.remoteAddress;
 
-    // Carry pre-create count for limit checks and later realmcharacters ownership.
-    // Captured early but limit checks are after name/race/class to preserve original ordering.
-    uint32 charCount = sAccountMgr.GetCharactersCount(accountId);
+    // Character count with failure distinction: COUNT(*) returns a row with 0 when empty,
+    // so null QueryResult means DB error, not zero characters. Fail closed on error
+    // to avoid silently weakening per-realm/per-account limits.
+    uint32 charCount = 0;
+    bool charCountFailed = false;
+    if (QueryResult* cntRes = CharacterDatabase.PQuery("SELECT COUNT(guid) FROM characters WHERE account = '%u'", accountId))
+    {
+        charCount = (*cntRes)[0].GetUInt32();
+        delete cntRes;
+    }
+    else
+    {
+        sLog.outError("CharacterCreation::CreateCharacter: character count query failed for account %u", accountId);
+        charCountFailed = true;
+    }
 
     Team team = Player::TeamForRace(info.race);
     if (sec == SEC_PLAYER)
@@ -95,13 +107,6 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     if (raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
     {
         outcome.result = CHAR_CREATE_DISABLED;
-        return outcome;
-    }
-
-    PlayerInfo const* playerInfo = sObjectMgr.GetPlayerInfo(info.race, info.class_);
-    if (!playerInfo)
-    {
-        outcome.result = CHAR_CREATE_ERROR;
         return outcome;
     }
 
@@ -142,6 +147,12 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
 
     // Restore original ordering: account limits after name/race/class checks
     // so invalid name/race/class and anticheat are not hidden by limit errors.
+    // Distinguish DB failure from zero: fail closed on count query error.
+    if (charCountFailed)
+    {
+        outcome.result = CHAR_CREATE_ERROR;
+        return outcome;
+    }
     if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
     {
         outcome.result = CHAR_CREATE_SERVER_LIMIT;
@@ -180,6 +191,15 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
                 ++it;
             }
         }
+    }
+
+    // Align with original handler/Player::Create order: GetPlayerInfo and gender
+    // after name checks so malformed invalid-name retains CHAR_NAME_NO_NAME
+    // and PassiveAnticheat, not CHAR_CREATE_ERROR.
+    if (!sObjectMgr.GetPlayerInfo(info.race, info.class_))
+    {
+        outcome.result = CHAR_CREATE_ERROR;
+        return outcome;
     }
 
     if (info.gender != uint8(GENDER_MALE) && info.gender != uint8(GENDER_FEMALE))
@@ -232,7 +252,8 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     outcome.result = CHAR_CREATE_SUCCESS;
     outcome.newCharactersCount = newCount;
 
-    // Preserve original packet-path creator IP in LOG_CHAR; module default is generic dummy.
+    // Preserve original packet-path operational logging with effective IP (generic dummy for modules).
+    BASIC_LOG("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", accountId, effectiveIP.c_str(), name.c_str(), pNewChar->GetGUIDLow());
     sLog.out(LOG_CHAR, "[%s:%u@%s] Create Character:[%s] (guid: %u) via synchronous materialization",
              accName.c_str(), accountId, effectiveIP.c_str(), name.c_str(), pNewChar->GetGUIDLow());
     sDBLogger.LogCharAction({ pNewChar->GetGUIDLow(), accountId, LogCharAction::ActionCreate, {} });

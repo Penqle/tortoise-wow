@@ -50,6 +50,9 @@ namespace CharacterCreation
     // Synchronous, world-thread only. Reuses Player::Create / SaveToDB and the
     // exact validation path of HandleCharCreateOpcode. Must not be called from
     // a DB worker and must not use a fake registered WorldSession.
+    // Per-realm/per-account limit checks distinguish DB count failure (null
+    // QueryResult) from zero (row with 0) and fail closed with
+    // CHAR_CREATE_ERROR rather than silently weakening limits.
     // Transient-session OnCreate limitation: Player passed to
     // PlayerScript::OnCreate is not yet in world and the session is a
     // transient helper not registered in World nor tied to a network socket;
