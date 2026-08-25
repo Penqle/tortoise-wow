@@ -161,8 +161,8 @@ const uint32 BG_AB_TickPoints[6] = {0, 10, 10, 10, 10, 30};
 
 // Honor granted depending on player's level
 // Giperion Turtle: First values is a dummy values to respect bracket shifting
-const uint32 BG_AB_PerTickHonor[MAX_BATTLEGROUND_BRACKETS] = {10, 10, 10, 41, 68, 113, 189, 198}; 
-const uint32 BG_AB_WinMatchHonor[MAX_BATTLEGROUND_BRACKETS] = {10, 10, 10, 41, 68, 113, 189, 198};
+const uint32 BG_AB_PerTickHonor[MAX_BATTLEGROUND_BRACKETS] = {10, 1, 1, 4, 7, 11, 19, 20};
+const uint32 BG_AB_WinMatchHonor[MAX_BATTLEGROUND_BRACKETS] = {10, 1, 1, 4, 7, 11, 19, 20};
 
 // WorldSafeLocs ids for 5 nodes, and for ally, and horde starting location
 const uint32 BG_AB_GraveyardIds[7] = {119, 118, 117, 121, 120, 122, 123};

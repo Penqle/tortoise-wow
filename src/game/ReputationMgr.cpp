@@ -22,6 +22,7 @@
 #include "ReputationMgr.h"
 #include "DBCStores.h"
 #include "Player.h"
+#include "ScriptObjects.h"
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
 #include <numeric>
@@ -341,6 +342,11 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
 
         if (incremental)
             standing += faction.Standing + BaseRep;
+
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_REPUTATION_CHANGE, [&](PlayerScript* script)
+        {
+            script->OnReputationChange(m_player, factionEntry->ID, standing);
+        });
 
         if (standing > Reputation_Cap)
             standing = Reputation_Cap;

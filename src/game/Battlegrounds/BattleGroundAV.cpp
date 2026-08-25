@@ -1011,12 +1011,12 @@ void BattleGroundAV::EndBattleGround(Team winner)
     bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
     if (isBGWeekend)
     {
-        RewardHonorToTeam(1584, ALLIANCE);
-        RewardHonorToTeam(1584, HORDE);
+        RewardHonorToTeam(158, ALLIANCE);
+        RewardHonorToTeam(158, HORDE);
         if (winner == HORDE)
-            RewardHonorToTeam(396, HORDE);
+            RewardHonorToTeam(40, HORDE);
         if (winner == ALLIANCE)
-            RewardHonorToTeam(396, ALLIANCE);
+            RewardHonorToTeam(40, ALLIANCE);
     }
     BattleGround::EndBattleGround(winner);
 }

@@ -64,6 +64,7 @@
 #include "Database/DatabaseImpl.h"
 #include "Spell.h"
 #include "ScriptMgr.h"
+#include "ScriptObjects.h"
 #include "SocialMgr.h"
 #include "Mail.h"
 #include "WaypointMovementGenerator.h"
@@ -1568,6 +1569,11 @@ void Player::Update(uint32 update_diff, uint32 p_time)
     if (!IsInWorld())
         return;
 
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_BEFORE_UPDATE, [&](PlayerScript* script)
+    {
+        script->OnBeforeUpdate(this, update_diff);
+    });
+
     UpdateMirrorTimers(update_diff);
 
     //used to implement delayed far teleports
@@ -1893,6 +1899,11 @@ void Player::Update(uint32 update_diff, uint32 p_time)
                 m_hardcoreSaveItemsTimer -= update_diff;
         }
     }
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_UPDATE, [&](PlayerScript* script)
+    {
+        script->OnUpdate(this, update_diff);
+    });
 }
 
 void Player::OnDisconnected()
@@ -2563,6 +2574,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // don't let gm level > 1 either
     if (!InBattleGround() && mEntry->IsBattleGround())
         return false;
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_BEFORE_TELEPORT, [&](PlayerScript* script)
+    {
+        script->OnBeforeTeleport(this, mapid, x, y, z, orientation);
+    });
 
     DEBUG_LOG("Player %s will teleported to map %u", GetName(), mapid);
 
@@ -3575,6 +3591,14 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     if (xp < 1)
         return;
 
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_GIVE_EXP, [&](PlayerScript* script)
+    {
+        script->OnGiveXP(this, xp, victim);
+    });
+
+    if (xp < 1)
+        return;
+
     if (xp > 100000)
     {
         sLog.out(LOG_LEVELUP, "Character %s has attempted to get %u amount of experience.", GetName(), xp);
@@ -3585,6 +3609,25 @@ void Player::GiveXP(uint32 xp, Unit* victim)
         return;
 
     uint32 level = GetLevel();
+
+    if (IsHardcore() && InBattleGround())
+        return;
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (level >= 58)
+        {
+            AwardTitle(TITLE_HERO_OF_AZEROTH);
+            RemoveSpell(SPELL_HEROIC, false, false);
+            return;
+        }
+
+        if (victim)
+        {
+            if (victim->GetLevel() < level + 3)
+                return;
+        }
+    }
 
     if (HasChallenge(CHALLENGE_BOARING_MODE))
     {
@@ -3606,16 +3649,20 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     uint32 nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
     uint32 newXP = curXP + xp + rested_bonus_xp;
 
-    while (newXP >= nextLvlXP && level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+    uint32 maxLevel = HasChallenge(CHALLENGE_HEROIC) ? 58 : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+    while (newXP >= nextLvlXP && level < maxLevel)
     {
         newXP -= nextLvlXP;
 
-        if (level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+        if (level < maxLevel)
             GiveLevel(level + 1);
 
         level = GetLevel();
         nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
     }
+
+    if (maxLevel == 58 && level >= 58)
+        newXP = 0;
 
     SetUInt32Value(PLAYER_XP, newXP);
 }
@@ -3666,6 +3713,8 @@ void Player::GiveLevel(uint32 level)
 {
     if (level == GetLevel())
         return;
+
+    uint8 const oldLevel = GetLevel();
 
     uint32 numInstanceMembers = 0;
     uint32 numGroupMembers = 0;
@@ -3751,7 +3800,16 @@ void Player::GiveLevel(uint32 level)
         if (level == PLAYER_MAX_LEVEL)
         {
             AwardTitle(TITLE_SWINE_SLAYER);
-            // Todo: mail some swine mount.
+            MailBoaringModeRewards(level);
+        }
+    }
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (level >= 58)
+        {
+            AwardTitle(TITLE_HERO_OF_AZEROTH);
+            RemoveSpell(SPELL_HEROIC, false, false);
         }
     }
 
@@ -3874,6 +3932,10 @@ void Player::GiveLevel(uint32 level)
     m_Played_time[PLAYED_TIME_LEVEL] = 0;               // Level Played Time reset
     SetLevel(level);
     UpdateSkillsForLevel();
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LEVEL_CHANGED, [&](PlayerScript* script)
+    {
+        script->OnLevelChanged(this, oldLevel);
+    });
 
     // save base values (bonuses already included in stored stats
     for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -4484,6 +4546,10 @@ void Player::LearnSpell(uint32 spell_id, bool dependent, bool talent)
         WorldPacket data(SMSG_LEARNED_SPELL, 4);
         data << uint32(spell_id);
         GetSession()->SendPacket(&data);
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LEARN_SPELL, [&](PlayerScript* script)
+        {
+            script->OnLearnSpell(this, spell_id);
+        });
     }
 
     // learn all disabled higher ranks (recursive) - skip for talent spells
@@ -4551,6 +4617,10 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
     }
 
     RemoveAurasDueToSpell(spell_id);
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_FORGOT_SPELL, [&](PlayerScript* script)
+    {
+        script->OnForgotSpell(this, spell_id);
+    });
 
     // remove pet auras
     if (PetAura const* petSpell = sSpellMgr.GetPetAura(spell_id))
@@ -4971,6 +5041,11 @@ bool Player::ResetTalents(bool no_cost)
 
     //FIXME: Remove pet before or after unlearn spells? for now after unlearn to allow removing of talent related, pet affecting auras
     RemovePet(PET_SAVE_REAGENTS);
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_TALENTS_RESET, [&](PlayerScript* script)
+    {
+        script->OnTalentsReset(this, no_cost);
+    });
 
     return true;
 }
@@ -5686,6 +5761,11 @@ void Player::BuildPlayerRepop()
 
     // set and clear other
     SetByteValue(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND);
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_PLAYER_RELEASED_GHOST, [&](PlayerScript* script)
+    {
+        script->OnPlayerReleasedGhost(this);
+    });
 }
 
 void Player::ResurrectPlayer(float restore_percent, bool applySickness, bool forceHc)
@@ -5806,14 +5886,8 @@ void Player::KillPlayer()
             {
                 MemberSlot* oldLeaderSlot = nullptr;
                 MemberSlot* newLeaderSlot = nullptr;
-                if (hardcoreGuild->GetSuitableNewLeader(newLeaderSlot, oldLeaderSlot))
+                if (hardcoreGuild->GetSuitableNewLeader(newLeaderSlot, oldLeaderSlot, true))
                     hardcoreGuild->SetNewLeader(newLeaderSlot, oldLeaderSlot);
-            }
-
-            if (hardcoreGuild->DelMember(GetObjectGuid()))
-            {
-                hardcoreGuild->Disband();
-                delete hardcoreGuild;
             }
         }
 
@@ -7645,6 +7719,13 @@ void Player::CheckAreaExploreAndOutdoor()
                     }
 
                 }
+
+                if (HasChallenge(CHALLENGE_HEROIC))
+                    xp = 0;
+
+                if (IsHardcore() && InBattleGround())
+                    xp = 0;
+
                 GiveXP(xp, nullptr);
             }
 
@@ -7995,6 +8076,7 @@ void Player::SetTransport(Transport* t)
 
 void Player::UpdateArea(uint32 newArea)
 {
+    uint32 oldArea = m_areaUpdateId;
     m_areaUpdateId    = newArea;
 
     DismountCheck();
@@ -8017,6 +8099,14 @@ void Player::UpdateArea(uint32 newArea)
     }
 
     UpdateAreaDependentAuras();
+
+    if (oldArea != newArea)
+    {
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_UPDATE_AREA, [&](PlayerScript* script)
+        {
+            script->OnUpdateArea(this, oldArea, newArea);
+        });
+    }
 }
 
 void Player::UpdateZone(uint32 newZone, uint32 newArea)
@@ -8101,6 +8191,14 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
     UpdateZoneDependentAuras();
     SetZoneScript();
+
+    if (oldZoneId != newZone)
+    {
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_UPDATE_ZONE, [&](PlayerScript* script)
+        {
+            script->OnUpdateZone(this, newZone, newArea);
+        });
+    }
 }
 
 //If players are too far way of duel flag... then player loose the duel
@@ -8259,6 +8357,11 @@ void Player::DuelComplete(DuelCompleteType type)
     {
         pOpponent->m_disableGeneralDamage = true;
         pOpponent->m_Events.AddLambdaEventAtOffset([pOpponent]() { pOpponent->m_disableGeneralDamage = false; }, 2000);
+
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_DUEL_END, [&](PlayerScript* script)
+        {
+            script->OnDuelEnd(pOpponent, this, type);
+        });
 
         if (pOpponent->m_duel)
             pOpponent->m_duel->finished = true;;
@@ -14420,6 +14523,14 @@ bool Player::SatisfyQuestChallenges(Quest const* quest, bool msg) const
             GetSession()->SendNotification("You are not Hardcore.");
         return false;
     }
+
+    if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAG_NOT_HARDCORE) && IsHardcore())
+    {
+        if (msg)
+            GetSession()->SendNotification("Hardcore characters cannot complete this quest.");
+        return false;
+    }
+
     return true;
 }
 
@@ -14530,6 +14641,9 @@ bool Player::CanCompleteRepeatableQuest(Quest const *pQuest) const
 
 bool Player::CanRewardQuest(Quest const *pQuest, bool msg) const
 {
+    if (!SatisfyQuestChallenges(pQuest, msg))
+        return false;
+
     // Prevent packet-editing exploits
     // Players must meet prereqs for AutoComplete quests
     if (pQuest->IsAutoComplete())
@@ -14849,6 +14963,11 @@ void Player::CompleteQuest(uint32 quest_id)
 
         if (Quest const* qInfo = sObjectMgr.GetQuestTemplate(quest_id))
         {
+            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_PLAYER_COMPLETE_QUEST, [&](PlayerScript* script)
+            {
+                script->OnPlayerCompleteQuest(this, qInfo);
+            });
+
             if (qInfo->HasQuestFlag(QUEST_FLAGS_AUTO_REWARDED))
                 RewardQuest(qInfo, 0, this, false);
         }
@@ -14968,6 +15087,15 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, WorldObject* questE
 
     bool isTurtleMode = HasChallenge(CHALLENGE_SLOW_AND_STEADY);
     uint32 XP = q_status.m_rewarded ? 0 : uint32(pQuest->XPValue(this));
+
+    if (HasChallenge(CHALLENGE_HEROIC))
+    {
+        if (GetLevel() >= 58 || GetQuestLevelForPlayer(pQuest) < GetLevel() + 3)
+            XP = 0;
+    }
+
+    if (IsHardcore() && InBattleGround())
+        XP = 0;
 
     if (!isTurtleMode)
         XP *= sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST);
@@ -15808,7 +15936,20 @@ void Player::ItemRemovedQuestCheck(uint32 entry, uint32 count)
 void Player::KilledMonster(CreatureInfo const* cInfo, ObjectGuid guid)
 {
     if (cInfo->entry)
+    {
+        if (Map* map = FindMap())
+        {
+            if (Creature* creature = map->GetCreature(guid))
+            {
+                ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CREATURE_KILL, [&](PlayerScript* script)
+                {
+                    script->OnCreatureKill(this, creature);
+                });
+            }
+        }
+
         KilledMonsterCredit(cInfo->entry, guid);
+    }
 }
 
 void Player::KilledMonsterCredit(uint32 entry, ObjectGuid guid)
@@ -16023,7 +16164,22 @@ void Player::LogModifyMoney(int32 d, const char* type, ObjectGuid fromGuid, uint
     {
         sLog.out(LOG_MONEY_TRADES, "[%s] %s gets %ic (data: %u|%s)", type, GetShortDescription().c_str(), d, data, fromGuid.GetString().c_str());
     }
+
     ModifyMoney(d);
+}
+
+void Player::ModifyMoney(int32 d)
+{
+    int32 amount = d;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_MONEY_CHANGED, [&](PlayerScript* script)
+    {
+        script->OnMoneyChanged(this, amount);
+    });
+
+    if (amount < 0)
+        SetMoney(GetMoney() > uint32(-amount) ? GetMoney() + amount : 0);
+    else
+        SetMoney(GetMoney() < uint32(MAX_MONEY_AMOUNT - amount) ? GetMoney() + amount : MAX_MONEY_AMOUNT);
 }
 
 void Player::MoneyChanged(uint32 count)
@@ -16539,13 +16695,14 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder)
 
     m_honorMgr.SetRankPoints(fields[38].GetFloat());
     m_honorMgr.SetHighestRank(fields[39].GetUInt32());
-    m_honorMgr.SetStanding(fields[40].GetUInt32());
+    m_honorMgr.SetStanding(0);
     m_honorMgr.SetLastWeekHK(fields[41].GetUInt32());
     m_honorMgr.SetLastWeekCP(fields[42].GetFloat());
     m_honorMgr.SetStoredHK(fields[43].GetUInt32());
     m_honorMgr.SetStoredDK(fields[44].GetUInt32());
 
     m_honorMgr.Load(holder->GetResult(PLAYER_LOGIN_QUERY_LOADHONORCP));
+    m_honorMgr.LoadCurrency(holder->GetResult(PLAYER_LOGIN_QUERY_LOADPVPCURRENCY));
     _LoadBoundInstances(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES));
     _LoadBGData(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGDATA));
 
@@ -18256,6 +18413,14 @@ bool Player::SaveToDB(bool online, bool force, bool direct)
         data->uiLevel = GetLevel();
         data->uiZoneId = GetCachedZoneId();
         data->uiHardcoreStatus = GetHardcoreStatus();
+    }
+
+    if (saved)
+    {
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_SAVE, [&](PlayerScript* script)
+        {
+            script->OnSave(this);
+        });
     }
 
     return saved;
@@ -21722,6 +21887,8 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
     bool PvP = pVictim->IsCharmerOrOwnerPlayerOrPlayerItself();
 
     uint32 xp = PvP ? 0 : MaNGOS::XP::Gain(this, static_cast<Creature*>(pVictim));
+    if (IsHardcore() && InBattleGround())
+        xp = 0;
 
     // honor can be in PvP and !PvP (racial leader) cases
     RewardHonor(pVictim, 1);
@@ -21745,6 +21912,14 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
     }
     else
     {
+        if (Player* playerVictim = pVictim->ToPlayer())
+        {
+            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_PVP_KILL, [&](PlayerScript* script)
+            {
+                script->OnPVPKill(this, playerVictim);
+            });
+        }
+
         if (InGurubashiArena(false) && IsHonorOrXPTarget(pVictim))
         {
             ChatHandler(this).PSendSysMessage("|cffff8040Arena Spectator throws you a coin.|r");
@@ -22262,6 +22437,10 @@ void Player::AutoStoreLoot(Loot& loot, bool broadcast, uint8 bag, uint8 slot)
         SendNotifyLootItemRemoved(i);
         Item* pItem = StoreNewItem(dest, lootItem->itemid, true, lootItem->randomPropertyId);
         SendNewItem(pItem, lootItem->count, false, false, broadcast);
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOOT_ITEM, [&](PlayerScript* script)
+        {
+            script->OnLootItem(this, pItem, lootItem->count, GetLootGuid());
+        });
     }
 }
 
@@ -23857,9 +24036,9 @@ void Player::RewardHonor(Unit* uVictim, uint32 groupSize)
         if (cVictim->IsRacialLeader())
         {
 			if (sWorld.IsPvPRealm())
-				m_honorMgr.Add(732.0, HONORABLE, cVictim);
+				m_honorMgr.Add(73.0, HONORABLE, cVictim);
 			else
-				m_honorMgr.Add(488.0, HONORABLE, cVictim);			
+				m_honorMgr.Add(49.0, HONORABLE, cVictim);
 
             return;
         }
@@ -24272,6 +24451,16 @@ void Player::MailVagrantModeRewards(uint32 level)
     ToMailItem->SaveToDB();
 
     MailDraft("A Wanderer's Best Friend!", "Congratulations to you, brave warrior who has reached level 60 in Vagrant Mode! As a gesture of gratitude, we give you a reliable companion, who will carry your belongings on your dangerous adventures. May your travels be successful and your fights triumphant!")
+        .AddItem(ToMailItem)
+        .SendMailTo(this, MailSender(MAIL_CREATURE, uint32(16547), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_COPIED, 0, 30 * DAY);
+}
+
+void Player::MailBoaringModeRewards(uint32 level)
+{
+    Item* ToMailItem = Item::CreateItem(40998, 1, this);
+    ToMailItem->SaveToDB();
+
+    MailDraft("Boar's Honor Pack", "Took you long enough! Here's your boar and sword.")
         .AddItem(ToMailItem)
         .SendMailTo(this, MailSender(MAIL_CREATURE, uint32(16547), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_COPIED, 0, 30 * DAY);
 }

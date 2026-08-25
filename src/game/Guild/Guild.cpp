@@ -33,6 +33,7 @@
 #include "Language.h"
 #include "World.h"
 #include "Anticheat.h"
+#include "ScriptObjects.h"
 #include "Item.h"
 
 #define MAX_UNCOMPRESSED_PACKET_SIZE 0x8000 
@@ -165,7 +166,16 @@ bool Guild::Create(Player* leader, std::string gname)
     _InfernoBank = new GuildBank{ true };
     _InfernoBank->SetGuild(this);
 
-    return AddMember(m_LeaderGuid, (uint32)GR_GUILDMASTER) == GuildAddStatus::OK;
+    GuildAddStatus status = AddMember(m_LeaderGuid, (uint32)GR_GUILDMASTER);
+    if (status == GuildAddStatus::OK)
+    {
+        ScriptRegistry<GuildScript>::ForEach([&](GuildScript* script)
+        {
+            script->OnCreate(this, leader, m_Name);
+        });
+    }
+
+    return status == GuildAddStatus::OK;
 }
 
 void Guild::CreateDefaultGuildRanks(int locale_idx)
@@ -248,6 +258,17 @@ GuildAddStatus Guild::AddMember(ObjectGuid plGuid, uint32 plRank)
     }
 
     newmember.RankId  = plRank;
+    if (pl)
+    {
+        uint8 rank = uint8(newmember.RankId);
+        ScriptRegistry<GuildScript>::ForEach([&](GuildScript* script)
+        {
+            script->OnAddMember(this, pl, rank);
+        });
+
+        newmember.RankId = rank;
+    }
+
     newmember.OfficerNote = (std::string)"";
     newmember.PublicNote   = (std::string)"";
     newmember.LogoutTime = time(nullptr);
@@ -556,6 +577,14 @@ bool Guild::DelMember(ObjectGuid guid, bool isDisbanding)
     sGuildMgr.GuildMemberRemoved(lowguid);
 
     Player *player = sObjectMgr.GetPlayer(guid);
+    if (player)
+    {
+        ScriptRegistry<GuildScript>::ForEach([&](GuildScript* script)
+        {
+            script->OnRemoveMember(this, player, isDisbanding, false);
+        });
+    }
+
     // If player not online data in data field will be loaded from guild tabs no need to update it !!
     if (player)
     {
@@ -609,7 +638,7 @@ void Guild::SetNewLeader(MemberSlot* newLeaderSlot, MemberSlot* oldLeaderSlot)
     }
 }
 
-bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot)
+bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLeaderSlot, bool preferOldestOfficer)
 {
     newLeaderSlot = nullptr;
     oldLeaderSlot = nullptr;
@@ -628,7 +657,23 @@ bool Guild::GetSuitableNewLeader(MemberSlot*& newLeaderSlot, MemberSlot*& oldLea
             newLeaderSlot = &(i->second);
     }
 
-    return newLeaderSlot != nullptr;;
+    if (preferOldestOfficer)
+    {
+        for (GuildEventLogEntry const& event : m_GuildEventLog)
+        {
+            if (event.EventType != GUILD_EVENT_LOG_INVITE_PLAYER || event.PlayerGuid2 == lowGuid)
+                continue;
+
+            MemberSlot* slot = GetMemberSlot(ObjectGuid(HIGHGUID_PLAYER, event.PlayerGuid2));
+            if (slot && slot->RankId == GR_OFFICER)
+            {
+                newLeaderSlot = slot;
+                break;
+            }
+        }
+    }
+
+    return newLeaderSlot != nullptr;
 }
 
 void Guild::BroadcastToGuild(WorldSession *session, std::string const& msg, uint32 language)
@@ -850,6 +895,11 @@ void Guild::SetRankRights(uint32 rankId, uint32 rights)
  */
 void Guild::Disband()
 {
+    ScriptRegistry<GuildScript>::ForEach([&](GuildScript* script)
+    {
+        script->OnDisband(this);
+    });
+
     BroadcastEvent(GE_DISBANDED);
 
     while (!members.empty())

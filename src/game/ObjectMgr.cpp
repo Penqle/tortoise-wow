@@ -29,6 +29,7 @@
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectGuid.h"
+#include "ScriptObjects.h"
 #include "ScriptMgr.h"
 #include "SpellMgr.h"
 #include "UpdateMask.h"
@@ -7439,6 +7440,135 @@ const char *ObjectMgr::GetBroadcastText(uint32 id, int locale_index, uint8 gende
     return "<error>";
 }
 
+bool ObjectMgr::LoadModuleStrings()
+{
+    m_ModuleStringLocaleMap.clear();
+
+    std::unique_ptr<QueryResult> tableResult(WorldDatabase.PQuery("SHOW TABLES LIKE 'module_string'"));
+    if (!tableResult)
+    {
+        sLog.outInfo("Table `module_string` not found, module strings not loaded.");
+        return true;
+    }
+
+    std::unique_ptr<QueryResult> result(WorldDatabase.Query("SELECT `module`, `id`, `content_default` FROM `module_string`"));
+    if (!result)
+    {
+        sLog.outInfo("Loaded 0 module strings.");
+        return true;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+        std::string module = fields[0].GetCppString();
+        uint32 id = fields[1].GetUInt32();
+
+        if (module.empty())
+        {
+            sLog.outErrorDb("Table `module_string` contains empty module name for id %u, ignored.", id);
+            continue;
+        }
+
+        if (!id)
+        {
+            sLog.outErrorDb("Table `module_string` contains reserved id 0 for module `%s`, ignored.", module.c_str());
+            continue;
+        }
+
+        MangosStringLocale& data = m_ModuleStringLocaleMap[module][id];
+        if (!data.Content.empty())
+        {
+            sLog.outErrorDb("Table `module_string` contains duplicate string `%s`:%u, ignored.", module.c_str(), id);
+            continue;
+        }
+
+        data.Content.resize(1);
+        data.Content[0] = fields[2].GetCppString();
+    }
+    while (result->NextRow());
+
+    if (sWorld.getConfig(CONFIG_BOOL_LOAD_LOCALES))
+    {
+        std::unique_ptr<QueryResult> localeTableResult(WorldDatabase.PQuery("SHOW TABLES LIKE 'module_string_locale'"));
+        if (localeTableResult)
+        {
+            std::unique_ptr<QueryResult> localeResult(WorldDatabase.Query("SELECT `module`, `id`, `locale`, `content` FROM `module_string_locale`"));
+            if (localeResult)
+            {
+                do
+                {
+                    Field* fields = localeResult->Fetch();
+                    std::string module = fields[0].GetCppString();
+                    uint32 id = fields[1].GetUInt32();
+                    uint32 locale = fields[2].GetUInt32();
+                    std::string content = fields[3].GetCppString();
+
+                    auto moduleItr = m_ModuleStringLocaleMap.find(module);
+                    if (moduleItr == m_ModuleStringLocaleMap.end())
+                    {
+                        sLog.outErrorDb("Table `module_string_locale` contains locale for nonexistent module string `%s`:%u, skipped.", module.c_str(), id);
+                        continue;
+                    }
+
+                    auto stringItr = moduleItr->second.find(id);
+                    if (stringItr == moduleItr->second.end())
+                    {
+                        sLog.outErrorDb("Table `module_string_locale` contains locale for nonexistent module string `%s`:%u, skipped.", module.c_str(), id);
+                        continue;
+                    }
+
+                    if (locale == LOCALE_enUS || locale >= MAX_LOCALE)
+                    {
+                        sLog.outErrorDb("Table `module_string_locale` contains invalid locale %u for module string `%s`:%u, skipped.", locale, module.c_str(), id);
+                        continue;
+                    }
+
+                    int idx = GetOrNewIndexForLocale(LocaleConstant(locale));
+                    if (idx >= 0)
+                    {
+                        MangosStringLocale& data = stringItr->second;
+                        if ((int32)data.Content.size() <= idx + 1)
+                            data.Content.resize(idx + 2);
+
+                        data.Content[idx + 1] = content;
+                    }
+                }
+                while (localeResult->NextRow());
+            }
+        }
+    }
+
+    size_t stringCount = 0;
+    for (ModuleStringLocaleMap::value_type const& modulePair : m_ModuleStringLocaleMap)
+        stringCount += modulePair.second.size();
+
+    sLog.outString("Loaded %u module string%s from %u module%s.", uint32(stringCount), stringCount == 1 ? "" : "s",
+        uint32(m_ModuleStringLocaleMap.size()), m_ModuleStringLocaleMap.size() == 1 ? "" : "s");
+    return true;
+}
+
+const char* ObjectMgr::GetModuleString(std::string const& module, uint32 id, int locale_idx) const
+{
+    ModuleStringLocaleMap::const_iterator moduleItr = m_ModuleStringLocaleMap.find(module);
+    if (moduleItr != m_ModuleStringLocaleMap.end())
+    {
+        MangosStringLocaleMap::const_iterator stringItr = moduleItr->second.find(id);
+        if (stringItr != moduleItr->second.end())
+        {
+            MangosStringLocale const& data = stringItr->second;
+            if ((int32)data.Content.size() > locale_idx + 1 && !data.Content[locale_idx + 1].empty())
+                return data.Content[locale_idx + 1].c_str();
+
+            if (!data.Content.empty())
+                return data.Content[0].c_str();
+        }
+    }
+
+    sLog.outErrorDb("Module string `%s`:%u not found in DB.", module.c_str(), id);
+    return "<error>";
+}
+
 bool ObjectMgr::LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value, bool extra_content)
 {
     int32 start_value = min_value;
@@ -9165,7 +9295,18 @@ void ObjectMgr::LoadConditions()
 bool ObjectMgr::IsConditionSatisfied(uint32 conditionId, WorldObject const* target, Map const* map, WorldObject const* source, ConditionSource conditionSourceType) const
 {
     if (const ConditionEntry* condition = sConditionStorage.LookupEntry<ConditionEntry>(conditionId))
-        return condition->Meets(target, map, source, conditionSourceType);
+    {
+        bool result = condition->Meets(target, map, source, conditionSourceType);
+        if (result)
+        {
+            result = !ScriptRegistry<ConditionScript>::ForEachWithReturn([&](ConditionScript* script)
+            {
+                return !script->OnConditionCheck(conditionId, const_cast<WorldObject*>(source), const_cast<WorldObject*>(target));
+            });
+        }
+
+        return result;
+    }
 
     return false;
 }

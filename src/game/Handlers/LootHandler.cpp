@@ -36,6 +36,7 @@
 #include "Util.h"
 #include "Anticheat.h"
 #include "Logging/DatabaseLogger.hpp"
+#include "ScriptObjects.h"
 
 void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
 {
@@ -279,6 +280,10 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
 
         player->SendNewItem(newitem, uint32(item->count), false, false, true);
         player->OnReceivedItem(newitem);
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOOT_ITEM, [&](PlayerScript* script)
+        {
+            script->OnLootItem(player, newitem, item->count, lguid);
+        });
     }
     else
         player->SendEquipError(msg, nullptr, nullptr, item->itemid);
@@ -371,6 +376,10 @@ void WorldSession::HandleLootMoneyOpcode(WorldPacket & /*recv_data*/)
             for (const auto i : playersNear)
             {
                 i->LootMoney(money_per_player, pLoot);
+                ScriptRegistry<LootScript>::ForEach([&](LootScript* script)
+                {
+                    script->OnLootMoney(i, money_per_player);
+                });
                 //Offset surely incorrect, but works
                 WorldPacket data(SMSG_LOOT_MONEY_NOTIFY, 4);
                 data << uint32(money_per_player);
@@ -378,7 +387,13 @@ void WorldSession::HandleLootMoneyOpcode(WorldPacket & /*recv_data*/)
             }
         }
         else
+        {
             player->LootMoney(pLoot->gold, pLoot);
+            ScriptRegistry<LootScript>::ForEach([&](LootScript* script)
+            {
+                script->OnLootMoney(player, pLoot->gold);
+            });
+        }
 
         pLoot->gold = 0;
 

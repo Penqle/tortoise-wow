@@ -28,6 +28,7 @@
 #include "Player.h"
 #include "Opcodes.h"
 #include "Database/DatabaseImpl.h"
+#include "ScriptObjects.h"
 
 TicketMgr sTicketMgr;
 
@@ -395,6 +396,11 @@ void TicketMgr::AddTicket(GmTicket&& ticket)
     if (!ticket.IsClosed())
         ++_openTicketCount;
     ticket.SaveToDB();
+
+    ScriptRegistry<TicketScript>::ForEach([&](TicketScript* script)
+    {
+        script->OnTicketCreate(id);
+    });
 }
 
 void TicketMgr::CloseTicket(uint32 ticketId, ObjectGuid source)
@@ -409,6 +415,11 @@ void TicketMgr::CloseTicket(uint32 ticketId, ObjectGuid source)
         if (itr != _openTickets.end())
             _openTickets.erase(itr);
         ticket->SaveToDB();
+
+        ScriptRegistry<TicketScript>::ForEach([&](TicketScript* script)
+        {
+            script->OnTicketClose(ticketId);
+        });
     }
 }
 

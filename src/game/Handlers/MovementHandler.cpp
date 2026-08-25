@@ -38,6 +38,7 @@
 #include "Geometry.h"
 #include "Anticheat/Movement/Movement.hpp"
 #include "SuspiciousStatisticMgr.h"
+#include "ScriptObjects.h"
 
 void WorldSession::HandleMoveWorldportAckOpcode(WorldPacket& /*recvData*/)
 {
@@ -213,6 +214,11 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     {
         GetPlayer()->SendHeartBeat(true);
     }
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_MAP_CHANGED, [&](PlayerScript* script)
+    {
+        script->OnMapChanged(GetPlayer());
+    });
 }
 
 void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recvData)
@@ -334,6 +340,14 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvData)
 	    sSuspiciousStatisticMgr.OnMovement(pPlayerMover, movementInfo);
     }
 #endif
+
+    if (pPlayerMover)
+    {
+        ScriptRegistry<MovementHandlerScript>::ForEach([&](MovementHandlerScript* script)
+        {
+            script->OnPlayerMove(pPlayerMover);
+        });
+    }
 
     // This is required for proper movement extrapolation
     if (opcode == MSG_MOVE_JUMP)
@@ -911,6 +925,11 @@ void WorldSession::HandleMoveNotActiveMoverOpcode(WorldPacket& recvData)
 #ifdef USE_ANTICHEAT
         sSuspiciousStatisticMgr.OnMovement(_player, movementInfo);
 #endif
+
+        ScriptRegistry<MovementHandlerScript>::ForEach([&](MovementHandlerScript* script)
+        {
+            script->OnPlayerMove(pPlayerMover);
+        });
     }
 
     HandleMoverRelocation(pMover, movementInfo);

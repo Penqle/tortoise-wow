@@ -1,38 +1,38 @@
 
 # Tortoise-WoW
 
-This is an unofficial, community driven, restoration of the 1.18.1 patch of Turtle-WoW, with some additions for solo play.  
-This project is not to be used for profit or to misrepresent itself, or anyone using it, as the original creators  
-This project targets version 1.18.1 build 7272
+This is an unofficial, community-driven restoration of the 1.18.1 patch of Turtle-WoW, with some additions to allow for customization.  
+Do not represent this project, or anyone using it, as the original creators.  
+This project targets version 1.18.1 build 7272.
+
+Portions of this project are ported from AzerothCore and VMaNGOS.
+See `AUTHORS.md` for specific contributions.
 
 ## Client Version
 
-The client version targetted is patch 1.18.1, build 7272  
-Any client that does not match this version or build will likely have a myriad of issues
+The client version targeted is patch 1.18.1, build 7272 with the 2026-04-12 hotfixes.  
+Any client that does not match this version or build will likely have a myriad of issues.
 
-## Additions
-Additions will be added as the core code reaches feature completion
+## Module System
 
-#### Current Additions
+Optional features can be added as modules under the `modules/` folder.
+A module is discovered when it has a `src/` directory, and can include its own C++ scripts, config templates, and database migrations.
 
-- **Autoscale** - Rudimentary toggleable dungeon/raid auto scaling system, found in mangosd.conf
-- **Leech** - Basic toggleable leech system designed for solo play, found in mangosd.conf
-- **Additional Talent Points** - Mostly used for testing, found in tw_char.characters
+Modules can be built statically, dynamically, or disabled with the `MODULES` CMake option.
+Each discovered module also gets its own `MODULE_<NAME>` cache option for overriding the global setting.  
+Most modules can be ported from AzerothCore with minimal effort.  
 
-#### Planned Additions
-
-- **[Eluna][19]** - The WoW lua engine
+See `modules/README.md` for module layout, build options, config loading, SQL migrations, and authoring notes.
 
 ## Operating Systems
 
 * **[Windows][15]**, 32 bit and 64 bit. Windows Server 2008 (or newer) or Windows 8 (or newer) is recommended.
 * **Linux**, 32 bit and 64 bit. [Ubuntu 22.04 LTS][14] is recommended. Other distributions with similar package versions will work, too.
-Of course, newer versions should work, too. In the case of Windows, matching
-server versions will work, too.
+Of course, newer versions should work, too. In the case of Windows, matching server versions will work, too.
 
 ## Dependencies
 
-* **[Git][1] / [Github for Windows][2]**: This version control software allows you to get the source files in the first place.
+* **[Git][1] / [GitHub for Windows][2]**: This version control software allows you to get the source files in the first place.
 * **[MySQL][3]** / **[MariaDB][4]**: These databases are used to store content and user data.
 * **[ACE][5]**: aka Adaptive Communication Environment, provides us with a solid cross-platform framework for abstracting operating system specific details.
 * **[Recast][21]**: In order to create navigation data from the client's map files, Recast is used to do the dirty work. It provides functions for rendering, pathing, etc.
@@ -42,19 +42,19 @@ server versions will work, too.
 * **[Bzip2][10]/[Bzip2 for Windows][11]** provides compression algorithms used in MPQ archives.
 * **[OpenSSL][12]/[OpenSSL for Windows][13]** provides encryption algorithms used when authenticating clients.
 
-To build this project follow any MaNGOS/MaNGOS Zero build guide, with the addition of ACE  
+To build this project, follow any MaNGOS/MaNGOS Zero build guide, with the addition of ACE.
 
 ## Database Setup
 
-1. Manually import sql/create_databases.sql
-2. Manually import all sql scripts in the sql/base folder
-3. Run mangosd to automatically import and track updates  
+1. Manually import `sql/create_databases.sql`
+2. Manually import all SQL scripts in the `sql/base` folder
+3. Run `mangosd` to automatically import and track updates  
 
-This will be streamlined once the core is more up to date
+This will be streamlined once the core is more up to date.
 
 ## Contributing
 
-Contributions are welcome, but I may be slow to review and merge PRs
+Contributions are welcome, but I may be slow to review and merge PRs.
 
 See `CONTRIBUTING.md` for ways to get started.
 
@@ -74,5 +74,5 @@ See `CONTRIBUTING.md` for ways to get started.
 [13]: http://slproweb.com/products/Win32OpenSSL.html "OpenSSL for Windows"
 [14]: http://www.ubuntu.com/ "Ubuntu - The world's most popular free OS"
 [15]: http://windows.microsoft.com/ "Microsoft Windows"
-[19]: https://github.com/ElunaLuaEngine/Eluna
+
 [21]: http://github.com/memononen/recastnavigation "Recast - Navigation-mesh Toolset for Games"

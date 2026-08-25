@@ -32,6 +32,7 @@
 #include "CharacterDatabaseCache.h"
 #include "AuraRemovalMgr.h"
 #include "PerfStats.h"
+#include "ScriptObjects.h"
 
 //numbers represent minutes * 100 while happy (you get 100 loyalty points per min while happy)
 uint32 const LevelUpLoyalty[6] =
@@ -96,6 +97,11 @@ void Pet::AddToWorld()
 
     Unit::AddToWorld();
 
+    ScriptRegistry<PetScript>::ForEach([&](PetScript* script)
+    {
+        script->OnPetAddToWorld(this);
+    });
+
     // Prevent stuck pets when zoning. Pets default to "follow" when added to world
     // so we'll reset flags and let the AI handle things
     if (GetCharmInfo() && GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
@@ -110,6 +116,14 @@ void Pet::AddToWorld()
 
 void Pet::RemoveFromWorld()
 {
+    if (IsInWorld())
+    {
+        ScriptRegistry<PetScript>::ForEach([&](PetScript* script)
+        {
+            script->OnPetRemoveFromWorld(this);
+        });
+    }
+
     ///- Remove the pet from the accessor
     if (IsInWorld())
         GetMap()->EraseObject<Pet>(GetObjectGuid());

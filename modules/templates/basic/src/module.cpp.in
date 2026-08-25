@@ -1,0 +1,24 @@
+#include "ScriptObjects.h"
+#include "Log.h"
+
+namespace
+{
+    class CLASS-NAMEWorldScript : public WorldScript
+    {
+    public:
+        CLASS-NAMEWorldScript()
+            : WorldScript("MODULE-NAME_world", { WORLDHOOK_ON_STARTUP })
+        {
+        }
+
+        void OnStartup() override
+        {
+            sLog.outString("[MODULE-NAME] module loaded.");
+        }
+    };
+}
+
+void AddLOADER-NAMEScripts()
+{
+    new CLASS-NAMEWorldScript();
+}

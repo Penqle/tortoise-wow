@@ -146,6 +146,7 @@ class MangosSocket : public WorldHandler
         /// @param new_pct received packet ,note that you need to delete it.
         int ProcessIncoming (WorldPacket* new_pct) { delete new_pct; return 0; }
         int OnSocketOpen() { return 0; }
+        void OnSocketClose() {}
 
         /// Called when we can read from the socket.
         virtual int handle_input (ACE_HANDLE = ACE_INVALID_HANDLE);

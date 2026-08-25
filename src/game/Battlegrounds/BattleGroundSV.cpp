@@ -81,7 +81,7 @@ void BattleGroundSV::Update(uint32 diff)
                     NodeOccupied(node, (teamIndex == 0) ? ALLIANCE : HORDE);
 
                     bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
-                    RewardHonorToTeam(isBGWeekend ? 70 : 35, (teamIndex == BG_TEAM_ALLIANCE) ? ALLIANCE : HORDE);
+                    RewardHonorToTeam(isBGWeekend ? 7 : 4, (teamIndex == BG_TEAM_ALLIANCE) ? ALLIANCE : HORDE);
 
                     UpdateNodeWorldState(node);
 
@@ -391,8 +391,8 @@ void BattleGroundSV::EndBattleGround(Team winner)
     // rewards
     bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
     RewardReputationToTeam(1007, isBGWeekend ? 150 : 75, winner);
-    RewardHonorToTeam(isBGWeekend ? 1500 : 750, winner);
-    RewardHonorToTeam(isBGWeekend ? 800 : 400, loser);
+    RewardHonorToTeam(isBGWeekend ? 150 : 75, winner);
+    RewardHonorToTeam(isBGWeekend ? 80 : 40, loser);
 
     BattleGround::EndBattleGround(winner);
 }

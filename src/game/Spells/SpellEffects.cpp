@@ -3,6 +3,7 @@
  * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos/zero>
  * Copyright (C) 2011-2016 Nostalrius <https://nostalrius.org>
  * Copyright (C) 2016-2017 Elysium Project <https://github.com/elysium-project>
+ * Copyright (C) vMaNGOS contributors <https://github.com/vmangos/core>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,11 +59,14 @@
 #include "GameEventMgr.h"
 #include "Chat.h"
 #include "CompanionManager.hpp"
+#include "ScriptObjects.h"
 #include "MountManager.hpp"
 #include "ToyManager.hpp"
 
 #include "InstanceData.h"
 #include "ScriptMgr.h"
+
+#include <cmath>
 
 using namespace Spells;
 
@@ -2768,8 +2772,9 @@ void Spell::EffectAddHonor(SpellEffectIndex /*eff_idx*/)
 
     // honor-spells don't scale with level and won't be casted by an item
     // also we must use damage (spelldescription says +25 honor but damage is only 24)
-    ((Player*)unitTarget)->GetHonorMgr().Add(float(damage), QUEST);
-    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, ((Player*)unitTarget)->GetGUIDLow());
+    uint32 const honor = uint32(std::max(1.0f, std::ceil(float(damage) * 0.1f)));
+    ((Player*)unitTarget)->GetHonorMgr().Add(float(honor), QUEST);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points for player: %u", m_spellInfo->Id, honor, ((Player*)unitTarget)->GetGUIDLow());
 }
 
 void Spell::EffectSpawn(SpellEffectIndex /*eff_idx*/)
@@ -4278,6 +4283,11 @@ void Spell::EffectDuel(SpellEffectIndex eff_idx)
 
     caster->SetGuidValue(PLAYER_DUEL_ARBITER, pGameObj->GetObjectGuid());
     target->SetGuidValue(PLAYER_DUEL_ARBITER, pGameObj->GetObjectGuid());
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_DUEL_REQUEST, [&](PlayerScript* script)
+    {
+        script->OnDuelRequest(target, caster);
+    });
 }
 
 void Spell::EffectStuck(SpellEffectIndex /*eff_idx*/)

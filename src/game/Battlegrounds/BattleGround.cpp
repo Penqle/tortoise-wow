@@ -668,6 +668,12 @@ void BattleGround::RewardExperienceToPlayers(Team winnerTeam) {
             factor /= 3;
         }
 
+        if (plr->HasChallenge(CHALLENGE_HEROIC) ||
+            plr->HasChallenge(CHALLENGE_VAGRANT_MODE) ||
+            plr->HasChallenge(CHALLENGE_CRAFTMASTER) ||
+            plr->IsHardcore())
+            continue;
+
         plr->GiveXP(static_cast<uint32>(sObjectMgr.GetXPForLevel(plr->GetLevel()) * factor), nullptr);
     }
 }

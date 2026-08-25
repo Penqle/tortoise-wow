@@ -29,6 +29,7 @@
 #include "CellImpl.h"
 #include "Corpse.h"
 #include "ObjectMgr.h"
+#include "ScriptObjects.h"
 #include "ZoneScriptMgr.h"
 #include "Map.h"
 #include "ThreadPool.h"
@@ -174,6 +175,10 @@ Map* MapManager::CreateMap(uint32 id, const WorldObject* obj)
             m->CreateInstanceData(true);
             m->SpawnActiveObjects();
             sZoneScriptMgr.MapLoaded(id, m);
+            ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+            {
+                script->OnCreateMap(m);
+            });
         }
     }
 
@@ -256,6 +261,10 @@ void MapManager::DeleteInstance(uint32 mapid, uint32 instanceId)
             i_maps.erase(iter);
 
             pMap->UnloadAll(true);
+            ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+            {
+                script->OnDestroyMap(pMap);
+            });
             delete pMap;
         }
     }
@@ -432,6 +441,10 @@ void MapManager::Update(uint32 diff)
         {
             sZoneScriptMgr.OnMapCrashed(pMap);
             pMap->UnloadAll(true);
+            ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+            {
+                script->OnDestroyMap(pMap);
+            });
             delete pMap;
 
             iter = i_maps.erase(iter);
@@ -475,11 +488,20 @@ void MapManager::UnloadAll()
 
     while (!i_maps.empty())
     {
-        delete i_maps.begin()->second;
+        Map* map = i_maps.begin()->second;
+        ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+        {
+            script->OnDestroyMap(map);
+        });
+        delete map;
         i_maps.erase(i_maps.begin());
     }
 
     TerrainManager::Instance().UnloadAll();
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_AFTER_UNLOAD_ALL_MAPS, [](WorldScript* script)
+    {
+        script->OnAfterUnloadAllMaps();
+    });
 }
 
 void MapManager::InitMaxInstanceId()
@@ -585,6 +607,10 @@ Map* MapManager::CreateTestMap(uint32 mapid, bool instanced, float posX, float p
         // non-instanceable maps always expected have saved state
         map->CreateInstanceData(true);
         sZoneScriptMgr.MapLoaded(mapid, map);
+        ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+        {
+            script->OnCreateMap(map);
+        });
         return map;
     }
 
@@ -608,12 +634,20 @@ Map* MapManager::CreateTestMap(uint32 mapid, bool instanced, float posX, float p
 
     //map->SpawnActiveObjects();
     i_maps[MapID(mapid, instanceId)] = map;
+    ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+    {
+        script->OnCreateMap(map);
+    });
     return map;
 }
 
 void MapManager::DeleteTestMap(Map* map)
 {
     i_maps.erase(MapID(map->GetId(), map->GetInstanceId()));
+    ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+    {
+        script->OnDestroyMap(map);
+    });
     delete map;
 }
 
@@ -635,6 +669,10 @@ DungeonMap* MapManager::CreateDungeonMap(uint32 id, uint32 InstanceId, DungeonPe
     bool load_data = save != nullptr;
     map->CreateInstanceData(load_data);
     map->SpawnActiveObjects();
+    ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+    {
+        script->OnCreateMap(map);
+    });
     return map;
 }
 
@@ -653,6 +691,10 @@ BattleGroundMap* MapManager::CreateBattleGroundMap(uint32 id, uint32 InstanceId,
     // BGs/Arenas not have saved instance data
     map->CreateInstanceData(false);
     map->SpawnActiveObjects();
+    ScriptRegistry<AllMapScript>::ForEach([&](AllMapScript* script)
+    {
+        script->OnCreateMap(map);
+    });
     return map;
 }
 

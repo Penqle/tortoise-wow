@@ -379,6 +379,8 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
         return;
     }
 
+    m_currentGossipGUID = guid;
+
     GetPlayer()->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_TALK); // Removes stealth, feign death ...
 
     if (!pCreature->HasExtraFlag(CREATURE_FLAG_EXTRA_NO_MOVEMENT_PAUSE))

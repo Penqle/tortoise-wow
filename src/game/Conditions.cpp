@@ -27,6 +27,8 @@
 #include "World.h"
 #include "BattleGround.h"
 #include "CreatureGroups.h"
+#include "Group.h"
+#include "ScriptObjects.h"
 
 char const* conditionSourceToStr[] =
         {
@@ -112,6 +114,7 @@ uint8 const ConditionTargetsInternal[] =
         CONDITION_REQ_SOURCE_CREATURE,    //  58
         CONDITION_REQ_MAP_OR_WORLDOBJECT, //  59
         CONDITION_REQ_TARGET_UNIT,        //  60
+        CONDITION_REQ_TARGET_PLAYER,      //  61
 };
 
 // Starts from 4th element so that -3 will return first element.
@@ -667,6 +670,35 @@ bool inline ConditionEntry::Evaluate(WorldObject const* target, Map const* map, 
         case CONDITION_STAND_STATE:
         {
             return target->ToUnit()->GetStandState() == m_value1;
+        }
+        case CONDITION_LUNATIC:
+        {
+            Player const* pPlayer = target->ToPlayer();
+            if (!pPlayer->HasChallenge(CHALLENGE_LUNATIC))
+                return false;
+
+            if (m_value1 != 1)
+                return true;
+
+            Group const* pGroup = pPlayer->GetGroup();
+            if (!pGroup)
+                return true;
+
+            WorldObject const* pRewardSource = source ? source : target;
+            for (GroupReference* itr = const_cast<Group*>(pGroup)->GetFirstMember(); itr != nullptr; itr = itr->next())
+            {
+                Player const* pGroupMember = itr->getSource();
+                if (!pGroupMember)
+                    continue;
+
+                if (pRewardSource && (!pGroupMember->IsInWorld() || !pGroupMember->IsAtGroupRewardDistance(pRewardSource)))
+                    continue;
+
+                if (!pGroupMember->HasChallenge(CHALLENGE_LUNATIC))
+                    return false;
+            }
+
+            return true;
         }
     }
     return false;
@@ -1305,6 +1337,21 @@ bool ConditionEntry::IsValid()
             }
             break;
         }
+        case CONDITION_LUNATIC:
+        {
+            if (m_value1 < 0 || m_value1 > 1)
+            {
+                sLog.outErrorDb("CONDITION_LUNATIC (entry %u, type %u) has invalid argument %u (must be 0..1), skipped", m_entry, m_condition, m_value1);
+                return false;
+            }
+
+            if (m_value2 || m_value3 || m_value4)
+            {
+                sLog.outErrorDb("CONDITION_LUNATIC (entry %u, type %u) has unused data in value2, value3, or value4, skipped", m_entry, m_condition);
+                return false;
+            }
+            break;
+        }
         case CONDITION_HAS_FLAG:
         {
             // Fix field id for older client builds.
@@ -1384,7 +1431,18 @@ bool ConditionEntry::CanBeUsedWithoutPlayer(uint32 entry)
 bool IsConditionSatisfied(uint32 conditionId, WorldObject const* target, Map const* map, WorldObject const* source, ConditionSource conditionSourceType)
 {
     if (ConditionEntry const* condition = sConditionStorage.LookupEntry<ConditionEntry>(conditionId))
-        return condition->Meets(target, map, source, conditionSourceType);
+    {
+        bool result = condition->Meets(target, map, source, conditionSourceType);
+        if (result)
+        {
+            result = !ScriptRegistry<ConditionScript>::ForEachWithReturn([&](ConditionScript* script)
+            {
+                return !script->OnConditionCheck(conditionId, const_cast<WorldObject*>(source), const_cast<WorldObject*>(target));
+            });
+        }
+
+        return result;
+    }
 
     return false;
 }

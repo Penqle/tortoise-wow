@@ -35,6 +35,7 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "Mail.h"
+#include "ScriptObjects.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -76,6 +77,10 @@ bool AuctionHouseObject::RemoveAuction(AuctionEntry* entry)
     if (AuctionsMap.erase(entry->Id) > 0)
     {
         sObjectMgr.FreeAuctionID(entry->Id);
+        ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+        {
+            script->OnAuctionRemove(this, entry);
+        });
         return true;
     }
     return false;
@@ -107,6 +112,11 @@ void AuctionHouseObject::AddAuction(AuctionEntry *ah)
     AuctionsMap[ah->Id] = ah;
     OrderedAuctionMap.emplace(std::pair<uint32, AuctionEntry*>(ah->buyout, ah));
     AccountAuctionMap.emplace(std::pair<uint32, AuctionEntry*>(ah->ownerAccount, ah));
+
+    ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+    {
+        script->OnAuctionAdd(this, ah);
+    });
 }
 
 AuctionHouseMgr::AuctionHouseMgr()
@@ -697,10 +707,21 @@ void AuctionHouseObject::Update()
         {
             ///- Either cancel the auction if there was no bidder
             if (entry->bidder == 0)
+            {
+                ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+                {
+                    script->OnAuctionExpire(this, entry);
+                });
                 sAuctionMgr.SendAuctionExpiredMail(entry);
+            }
             ///- Or perform the transaction
             else
             {
+                ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+                {
+                    script->OnAuctionSuccessful(this, entry);
+                });
+
                 PlayerTransactionData data;
                 data.type = "Bid";
                 data.parts[0].lowGuid = entry->owner;

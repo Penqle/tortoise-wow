@@ -30,6 +30,7 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "Log.h"
+#include "ScriptObjects.h"
 #include "Util.h"
 
 WeatherMgr sWeatherMgr;
@@ -252,6 +253,11 @@ void Weather::SetWeather(WeatherType type, float grade, Map const* _map, bool is
     m_type = type;
     m_grade = grade;
     SendWeatherForPlayersInZone(_map);
+
+    ScriptRegistry<WeatherScript>::ForEach([&](WeatherScript* script)
+    {
+        script->OnChange(this, uint32(GetWeatherState()), m_grade);
+    });
 }
 
 // Get the sound number associated with the current weather

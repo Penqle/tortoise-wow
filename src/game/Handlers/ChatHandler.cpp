@@ -34,6 +34,7 @@
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "Player.h"
+#include "ScriptObjects.h"
 #include "SpellAuras.h"
 #include "Language.h"
 #include "Util.h"
@@ -43,7 +44,9 @@
 #include "Anticheat.h"
 #include "AccountMgr.h"
 #include "Config/Config.h"
+#include "CustomMerchantMgr.h"
 #include "Database/DatabaseImpl.h"
+#include "HonorMgr.h"
 #include "Shop/ShopMgr.h"
 #include "GMTicketMgr.h"
 
@@ -77,10 +80,15 @@ bool WorldSession::CheckChatMessageValidity(std::string& msg, uint32 lang, uint3
     return true;
 }
 
-bool WorldSession::ProcessChatMessageAfterSecurityCheck(std::string& msg, uint32 lang, uint32 msgType)
+bool WorldSession::ProcessChatMessageAfterSecurityCheck(std::string& msg, uint32& lang, uint32& msgType)
 {
     if (!CheckChatMessageValidity(msg, lang, msgType))
         return false;
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_BEFORE_SEND_CHAT_MESSAGE, [&](PlayerScript* script)
+    {
+        script->OnBeforeSendChatMessage(GetPlayer(), msgType, lang, msg);
+    });
 
     ChatHandler handler(this);
 
@@ -855,6 +863,11 @@ void WorldSession::HandleEmoteOpcode(WorldPacket & recv_data)
     if (emote != EMOTE_ONESHOT_NONE && emote != EMOTE_ONESHOT_WAVE)
         return;
 
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_EMOTE, [&](PlayerScript* script)
+    {
+        script->OnEmote(GetPlayer(), emote);
+    });
+
     GetPlayer()->HandleEmoteCommand(emote);
 }
 
@@ -914,6 +927,11 @@ void WorldSession::HandleTextEmoteOpcode(WorldPacket & recv_data)
     recv_data >> textEmote;
     recv_data >> emoteNum;
     recv_data >> guid;
+
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_TEXT_EMOTE, [&](PlayerScript* script)
+    {
+        script->OnTextEmote(GetPlayer(), textEmote, emoteNum, guid);
+    });
 
     EmotesTextEntry const* em = sEmotesTextStore.LookupEntry(textEmote);
     if (!em)
@@ -1003,6 +1021,15 @@ bool WorldSession::HandleTurtleAddonMessages(uint32 lang, uint32 type, std::stri
 
     if (sLFTMgr.HandleAddonMessage(_player, type, msg))
         return true;
+
+    if (sCustomMerchantMgr.HandleAddonMessage(this, _player, type, msg))
+        return true;
+
+    if (type == CHAT_MSG_GUILD && msg == "TW_HONOR\tC2S_HONOR_REQUEST")
+    {
+        _player->GetHonorMgr().SendHonorCurrencyUpdate();
+        return true;
+    }
 
     //guild bank
     // no type == CHAT_MSG_GUILD on this, to protecc fraudulent messages

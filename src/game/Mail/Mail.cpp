@@ -44,6 +44,7 @@
 #include "Item.h"
 #include "AuctionHouseMgr.h"
 #include "MasterPlayer.h"
+#include "ScriptObjects.h"
 
 /**
  * Creates a new MailSender object.
@@ -285,6 +286,11 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, ObjectGuid sender_guid, Ob
  */
 void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked, uint32 deliver_delay, uint32 expire_delay, bool direct)
 {
+    ScriptRegistry<MailScript>::ForEach([&](MailScript* script)
+    {
+        script->OnBeforeMailDraftSendMailTo(this, receiver, sender);
+    });
+
     Player* pReceiver = receiver.GetPlayer();               // can be nullptr
     MasterPlayer* masterReceiver = sObjectAccessor.FindMasterPlayer(receiver.GetPlayerGuid());
 

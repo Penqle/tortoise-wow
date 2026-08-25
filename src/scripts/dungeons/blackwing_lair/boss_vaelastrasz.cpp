@@ -23,7 +23,6 @@ EndScriptData */
 
 #include "scriptPCH.h"
 #include "blackwing_lair.h"
-#include <Autoscaling/AutoScaler.hpp>
 
 enum
 {
@@ -93,10 +92,6 @@ struct boss_vaelAI : public ScriptedAI
 {
     boss_vaelAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        const auto dungeon_map = dynamic_cast<DungeonMap*>(pCreature->GetMap());
-        if (dungeon_map) {
-            sAutoScaler->Scale(dungeon_map);
-        }
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         if (m_pInstance)
             m_bIntroEvent = m_pInstance->GetData(TYPE_VAEL_EVENT) == DONE;

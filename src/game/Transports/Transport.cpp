@@ -33,6 +33,7 @@
 #include "Totem.h"
 #include "GameObjectModel.h"
 #include "ObjectAccessor.h"
+#include "ScriptObjects.h"
 
 Transport::Transport() : GameObject(),
     _transportInfo(nullptr), _isMoving(true), _pendingStop(false),
@@ -222,6 +223,14 @@ void Transport::AddPassenger(WorldObject* passenger)
             passenger->m_movementInfo.t_pos.o = passenger->GetOrientation();
             CalculatePassengerOffset(passenger->m_movementInfo.t_pos.x, passenger->m_movementInfo.t_pos.y, passenger->m_movementInfo.t_pos.z, &passenger->m_movementInfo.t_pos.o);
         }
+
+        if (Player* player = passenger->ToPlayer())
+        {
+            ScriptRegistry<TransportScript>::ForEach([&](TransportScript* script)
+            {
+                script->OnAddPassenger(this, player);
+            });
+        }
     }
 }
 
@@ -245,6 +254,14 @@ void Transport::RemovePassenger(WorldObject* passenger)
 
     if (erased)
     {
+        if (Player* player = passenger->ToPlayer())
+        {
+            ScriptRegistry<TransportScript>::ForEach([&](TransportScript* script)
+            {
+                script->OnRemovePassenger(this, player);
+            });
+        }
+
         passenger->SetTransport(nullptr);
         passenger->m_movementInfo.ClearTransportData();
         DEBUG_LOG("Object %s removed from transport %s.", passenger->GetName(), GetName());
@@ -254,6 +271,12 @@ void Transport::RemovePassenger(WorldObject* passenger)
 void Transport::UpdatePosition(float x, float y, float z, float o)
 {
     Relocate(x, y, z, o);
+
+    uint32 waypointId = _transportInfo && _currentFrame != GetKeyFrames().end() ? _currentFrame->Node->index : 0;
+    ScriptRegistry<TransportScript>::ForEach([&](TransportScript* script)
+    {
+        script->OnRelocate(this, waypointId, GetMapId(), x, y, z);
+    });
 
     Map* pOldMap = GetMap();
     for (auto const& pMap : m_maps)

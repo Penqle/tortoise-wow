@@ -29,6 +29,7 @@
 #include "GuildMgr.h"
 #include "GuidObjectScaling.h"
 #include "HardcodedEvents.h"
+#include "HonorMgr.h"
 #include "InstanceData.h"
 #include "Item.h"
 #include "ItemEnchantmentMgr.h"
@@ -236,6 +237,13 @@ bool ChatHandler::HandleReloadMangosStringCommand(char* /*args*/)
 {
     sObjectMgr.LoadMangosStrings();
     SendSysMessage("DB table `mangos_string` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadModuleStringCommand(char* /*args*/)
+{
+    sObjectMgr.LoadModuleStrings();
+    SendSysMessage("DB tables `module_string` and `module_string_locale` reloaded.");
     return true;
 }
 
@@ -11566,7 +11574,13 @@ bool ChatHandler::HandleModifyHonorCommand(char* args)
         return false;
 
     // hack code
-    if (hasStringAbbr(field, "points"))
+    if (hasStringAbbr(field, "currency"))
+    {
+        target->GetHonorMgr().ModifySpendableHonor(amount);
+        PSendSysMessage("Honor currency of %s is now %u.", target->GetName(), target->GetHonorMgr().GetSpendableHonor());
+        return true;
+    }
+    else if (hasStringAbbr(field, "points"))
     {
         if (amount < 0 || amount > 255)
             return false;

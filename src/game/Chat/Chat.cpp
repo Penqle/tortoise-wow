@@ -38,6 +38,9 @@
 #include "PoolManager.h"
 #include "GameEventMgr.h"
 #include "HardcodedEvents.h"
+#include "ScriptObjects.h"
+
+#include <vector>
 
 ChatCommand * ChatHandler::getCommandTable()
 {
@@ -579,6 +582,8 @@ ChatCommand * ChatHandler::getCommandTable()
         { "locales_quest",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLocalesQuestCommand,            "", nullptr },
         { "mail_loot_template",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesMailCommand,       "", nullptr },
         { "mangos_string",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadMangosStringCommand,            "", nullptr },
+        { "module_string",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadModuleStringCommand,            "", nullptr },
+        { "module_string_locale",        SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadModuleStringCommand,            "", nullptr },
         { "npc_gossip",                  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcGossipCommand,               "", nullptr },
         { "npc_text",                    SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcTextCommand,                 "", nullptr },
         { "npc_trainer",                 SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcTrainerCommand,              "", nullptr },
@@ -996,15 +1001,36 @@ ChatCommand * ChatHandler::getCommandTable()
         { nullptr,          0,                   false, nullptr,                                        "", nullptr }
     };
 
+    static std::vector<ChatCommand> scriptCommandTable;
+    static size_t loadedCommandScriptCount = 0;
     static bool loaded = false;
+    size_t const currentCommandScriptCount = ScriptRegistry<CommandScript>::ScriptPointerList.size();
 
-    if (!loaded)
+    if (!loaded || loadedCommandScriptCount != currentCommandScriptCount)
     {
         loaded = true;
-        FillFullCommandsName(commandTable, "");
+        loadedCommandScriptCount = currentCommandScriptCount;
+        scriptCommandTable.clear();
+
+        for (uint32 i = 0; commandTable[i].Name != nullptr; ++i)
+            scriptCommandTable.push_back(commandTable[i]);
+
+        ScriptRegistry<CommandScript>::ForEach([&](CommandScript* script)
+        {
+            std::vector<ChatCommand> commands = script->GetCommands();
+
+            for (ChatCommand& command : commands)
+            {
+                if (command.Name)
+                    scriptCommandTable.push_back(command);
+            }
+        });
+
+        scriptCommandTable.push_back({ nullptr, 0, false, nullptr, "", nullptr });
+        FillFullCommandsName(scriptCommandTable.data(), "");
     }
 
-    return commandTable;
+    return scriptCommandTable.data();
 }
 
 std::map<uint32 /*Permission Id*/, std::string /*Permission Name*/> ChatHandler::m_rbacPermissionNames;
@@ -1547,6 +1573,22 @@ bool IsCommandLogged(std::string& command)
 void ChatHandler::ExecuteCommand(const char* text)
 {
     std::string fullcmd = text;                             // original `text` can't be used. It content destroyed in command code processing.
+
+    char const* commandArgs = text;
+    std::string commandName;
+    while (*commandArgs && *commandArgs != ' ')
+        commandName += *commandArgs++;
+
+    while (*commandArgs == ' ')
+        ++commandArgs;
+
+    bool handledByScript = ScriptRegistry<AllCommandScript>::ForEachWithReturn([&](AllCommandScript* script)
+    {
+        return !script->CanExecuteCommand(this, commandName.c_str(), commandArgs);
+    });
+
+    if (handledByScript)
+        return;
 
     ChatCommand* command = nullptr;
     ChatCommand* parentCommand = nullptr;
@@ -3774,4 +3816,3 @@ const char *NullChatHandler::GetMangosString(int32 entry) const
 {
     return sObjectMgr.GetMangosStringForDBCLocale(entry);
 }
-

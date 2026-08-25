@@ -18,9 +18,11 @@
 set(EXECUTABLE_NAME mangosd)
 set (EXECUTABLE_SRCS 
 	CliRunnable.h
+	DynamicModules.h
 	Master.h
 	WorldRunnable.h
 	CliRunnable.cpp
+	DynamicModules.cpp
 	Main.cpp
 	Master.cpp
 	WorldRunnable.cpp
@@ -157,6 +159,7 @@ if(UNIX)
     ${OPENSSL_LIBRARIES}
     ${OPENSSL_EXTRA_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   )
 endif()
 
