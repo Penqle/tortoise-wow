@@ -736,8 +736,12 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
 
 // Generic module API. World-thread only. Reuses native queue/rolecheck/offers/groups
 // and addon packet behavior (SendQueueJoined/SendQueueLeft/TryMakeOffers).
-// Validates instances and role (AllowedRoleMask); grouping constraints
-// (team/hardcore) are enforced natively at offer formation, not at enqueue.
+// Validates instances and role (AllowedRoleMask); native grouping constraints are
+// team, hardcore and group formation (see CanQueuedPlayersGroup/CanPlayersGroup);
+// level is not compared by the core and remains caller/instance policy.
+// Grouped callers enter native rolecheck requiring per-member responses; the
+// leader's roleMask is only initial validation. Solo enqueues directly and is the
+// expected module use case.
 bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
 {
     if (!player || !player->IsInWorld())

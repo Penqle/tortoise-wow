@@ -33,9 +33,16 @@ class LFTManager
         // Generic module API: queue a live in-world player through native validation.
         // World-thread only. Validates instances and role (via AllowedRoleMask, i.e. class
         // intersect module GetAllowedRoles) and owns queue/rolecheck/offers/groups.
-        // Grouping constraints (team/hardcore/level) are enforced natively at offer
-        // formation (TryMakeOffers/CanQueuedPlayersGroup), not at enqueue time.
-        // Returns true if the player (and, if grouped and leader, the party) was queued or entered rolecheck.
+        // Native grouping constraints are team, hardcore and group formation (leader/party),
+        // enforced at offer formation (TryMakeOffers/CanQueuedPlayersGroup/CanPlayersGroup);
+        // level is not compared by the core and remains caller/instance policy even at offer time.
+        // Grouped callers enter native rolecheck: each party member must send a per-member
+        // rolecheck response (C2S_ROLECHECK_RESPONSE via HandleRolecheckResponse); the
+        // leader's roleMask is only initial validation (AllowedRoleMask) and does not assign
+        // members' roles. Solo queue (no group) enqueues directly and is the expected
+        // module use case.
+        // Returns true if the player (solo) was queued, or if grouped and leader the party
+        // entered rolecheck.
         bool QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask);
         // World-thread only. Single owner of cancellation - removes from
         // rolecheck/offer/queue and restores addon state via S2C_QUEUE_LEFT.
