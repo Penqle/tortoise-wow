@@ -897,15 +897,9 @@ class World
         const SessionMap& GetAllSessions() const { return m_sessions; }
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
-        // Headless sessions are character-GUID keyed and owned by World.
-        // They never enter the account-keyed network session map or the
-        // login queue; a module drives them through these generic accessors.
-        //
-        // Ownership: AddHeadlessSession takes ownership only on success
-        // (returns true). On failure the caller keeps the session and must
-        // delete it itself. After success, World deletes the session on
-        // RemoveHeadlessSession, CancelPendingHeadlessSession, reap in
-        // UpdateSessions, shutdown, or network reclaim of its character.
+        // Character-GUID keyed, World-owned headless sessions; never in the
+        // account-keyed m_sessions map. AddHeadlessSession keeps caller
+        // ownership on false; World deletes after true (removal/reap/shutdown).
         bool AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid);
         WorldSession* FindHeadlessSession(ObjectGuid characterGuid) const;
         bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;

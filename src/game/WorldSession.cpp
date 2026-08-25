@@ -102,9 +102,8 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_
     else
         m_Address = remote_ip;
 
-    // Start every session with the null implementation so that m_antiCheat is
-    // never a null pointer. InitAntiCheatSession swaps in the real one during
-    // a network login; headless sessions retain the null implementation.
+    // Start every session with the null implementation; network auth swaps in
+    // the real one. Headless sessions retain the null implementation.
     m_antiCheat = std::make_unique<NullSessionAnticheat>(this);
 
     m_lastUpdateTime = WorldTimer::getMSTime();
@@ -362,9 +361,7 @@ bool WorldSession::Update(PacketFilter& updater)
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     ProcessPackets(updater);
 
-    // A Headless session has no character-screen timeout and no network socket
-    // whose absence means disconnect. Its lifetime is owned by World's
-    // character-GUID registry; an explicit module logout removes it there.
+    // No idle kick and no socket-loss disconnect; lifetime is registry-owned.
     if (IsHeadless())
     {
         if (!_player && !m_playerLoading && m_headlessLoginRequested)
@@ -417,10 +414,8 @@ bool WorldSession::Update(PacketFilter& updater)
             m_Socket->RemoveReference();
             m_Socket = nullptr;
 
-        ///- Reset the online field in the account table only when this is the
-        ///- last remaining session of the account; any other active or pending
-        ///- session (network or headless) keeps the account marked online.
-        static SqlStatementID id;
+            ///- Reset the online field in the account table if client is disconnected
+            static SqlStatementID id;
             if (!sWorld.HasOtherSessionForAccount(GetAccountId(), this))
             {
                 SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");
@@ -749,10 +744,9 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
-        // The account stays online while ANY of its sessions remains active;
-        // only the last session to disappear (network or headless) clears it.
         static SqlStatementID id;
 
+        // Cleared only when this is the account's last session (any transport).
         if (!sWorld.HasOtherSessionForAccount(GetAccountId(), this))
         {
             SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");

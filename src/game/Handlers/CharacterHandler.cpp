@@ -151,9 +151,6 @@ public:
     {
         if (!holder) return;
         LoginQueryHolder* loginHolder = (LoginQueryHolder*)holder;
-        // Resolve the owning session through the registry matching the login
-        // transport: account-keyed for network sessions, character-GUID-keyed
-        // for headless ones.
         WorldSession *session = loginHolder->GetTransport() == SessionTransport::Headless
             ? sWorld.FindHeadlessSession(loginHolder->GetGuid())
             : sWorld.FindSession(loginHolder->GetAccountId());
@@ -612,15 +609,12 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             m_playerLoading = false;
             return;
         }
-        // If the current session is headless, a network client is taking the
-        // character back: drop it from World's headless registry and delete it
-        // after ownership transfers, so no stale entry is updated later.
+        // Network login reclaims the character: unregister and delete the old
+        // headless session.
         WorldSession* previousSession = pCurrChar->GetSession();
         if (previousSession->IsHeadless())
         {
             sWorld.ForgetHeadlessSession(previousSession);
-            // A headless session is deleted right away, so detach its master
-            // player first; the transfer below must not touch freed memory.
             if (MasterPlayer* prevMaster = previousSession->GetMasterPlayer())
             {
                 prevMaster->SetSession(nullptr);

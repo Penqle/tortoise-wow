@@ -1,9 +1,7 @@
 #pragma once
 
-// Generic transport capability for network-backed and synthetic sessions.
-// Native modules may drive normal logged-in characters through a session
-// that has no socket; the core knows *that* a session is headless, never
-// *why*. No gameplay system may branch on a module identity here.
+// Transport capability of a session: real network socket or module-driven
+// headless. The core never attaches module identity to it.
 enum class SessionTransport : unsigned char
 {
     Network,

@@ -309,10 +309,7 @@ void World::AddSession(WorldSession* s)
 
 bool World::AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid)
 {
-    // Ownership contract: the caller owns 'session' until this call succeeds.
-    // On success, World owns the session (queued as pending, promoted to the
-    // active registry, and deleted by World on removal/shutdown/reap). On any
-    // failure below, ownership stays with the caller, which must delete it.
+    // Caller owns 'session' unless true is returned; World owns it after.
     if (!session || !session->IsHeadless() || !characterGuid.IsPlayer())
         return false;
 
@@ -3605,9 +3602,7 @@ void World::UpdateSessions(uint32 diff)
     while (addSessQueue.next(sess))
         AddSession_(sess);
 
-    // Headless sessions are character-identity keyed and deliberately bypass
-    // the account-keyed network session/queue/population machinery. Promote
-    // queued registrations first, then update active ones.
+    // Promote queued registrations, then update active headless sessions.
     for (auto itr = m_pendingHeadlessSessions.begin(); itr != m_pendingHeadlessSessions.end(); )
     {
         if (m_headlessSessions.find(itr->first) != m_headlessSessions.end())
@@ -3664,8 +3659,6 @@ void World::UpdateSessions(uint32 diff)
         }
     }
 
-    // Update headless sessions; a false return reaps a session whose login
-    // was dispatched but never completed, or whose module asked it to go.
     for (auto itr = m_headlessSessions.begin(); itr != m_headlessSessions.end(); )
     {
         WorldSession* session = itr->second;

@@ -355,9 +355,6 @@ class WorldSession
         SessionTransport GetTransport() const { return m_transport; }
         bool IsHeadless() const { return m_transport == SessionTransport::Headless; }
         bool HasNetworkTransport() const { return m_transport == SessionTransport::Network && m_Socket != nullptr; }
-        // Bring a freshly constructed Headless session into a consistent
-        // pre-login state. Network sessions reach the same state through the
-        // auth handshake instead.
         void InitHeadlessSession();
         void SetFingerprintBanned() { m_fingerprintBanned = true; }
         bool IsFingerprintBanned() const { return m_fingerprintBanned; }
@@ -1022,7 +1019,7 @@ class WorldSession
         bool m_inQueue;                                     // session wait in auth.queue
         bool m_hadQueue = false;                            // true if the session was in a queue this session.
         bool m_playerLoading;                               // code processed in LoginPlayer
-        bool m_headlessLoginRequested = false;              // headless login dispatched, completion pending
+        bool m_headlessLoginRequested = false;
         bool m_playerLogout;                                // code processed in LogoutPlayer
         bool m_playerRecentlyLogout;
         bool m_playerSave;
