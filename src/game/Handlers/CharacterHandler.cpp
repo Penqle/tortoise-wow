@@ -24,6 +24,7 @@
 #include "WorldPacket.h"
 #include "SharedDefines.h"
 #include "WorldSession.h"
+#include "SessionTransport.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "World.h"
@@ -64,9 +65,10 @@ class LoginQueryHolder : public SqlQueryHolder
 private:
     uint32 m_accountId;
     ObjectGuid m_guid;
+    SessionTransport m_transport;
 public:
-    LoginQueryHolder(uint32 accountId, ObjectGuid guid)
-        : SqlQueryHolder(guid.GetCounter()), m_accountId(accountId), m_guid(guid) { }
+    LoginQueryHolder(uint32 accountId, ObjectGuid guid, SessionTransport transport = SessionTransport::Network)
+        : SqlQueryHolder(guid.GetCounter()), m_accountId(accountId), m_guid(guid), m_transport(transport) { }
     ~LoginQueryHolder()
     {
         // Queries should NOT be deleted by user
@@ -79,6 +81,10 @@ public:
     uint32 GetAccountId() const
     {
         return m_accountId;
+    }
+    SessionTransport GetTransport() const
+    {
+        return m_transport;
     }
     bool Initialize();
 };
@@ -144,7 +150,13 @@ public:
     void HandlePlayerLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
     {
         if (!holder) return;
-        WorldSession *session = sWorld.FindSession(((LoginQueryHolder*)holder)->GetAccountId());
+        LoginQueryHolder* loginHolder = (LoginQueryHolder*)holder;
+        // Resolve the owning session through the registry matching the login
+        // transport: account-keyed for network sessions, character-GUID-keyed
+        // for headless ones.
+        WorldSession *session = loginHolder->GetTransport() == SessionTransport::Headless
+            ? sWorld.FindHeadlessSession(loginHolder->GetGuid())
+            : sWorld.FindSession(loginHolder->GetAccountId());
         if (!session)
         {
             delete holder;
@@ -558,13 +570,16 @@ uint32 WorldSession::GetBasePriority() const
 void WorldSession::LoginPlayer(ObjectGuid loginPlayerGuid)
 {
     ASSERT(loginPlayerGuid.IsPlayer());
-    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid);
+    if (m_playerLoading)
+        return;
+    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid, GetTransport());
     if (!holder->Initialize())
     {
         delete holder;                                      // delete all unprocessed queries
         return;
     }
     m_playerLoading = true;
+    m_headlessLoginRequested = IsHeadless();
     CharacterDatabase.DelayQueryHolderUnsafe(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
 }
 
@@ -597,8 +612,26 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             m_playerLoading = false;
             return;
         }
-        pCurrChar->GetSession()->SetPlayer(nullptr);
+        // If the current session is headless, a network client is taking the
+        // character back: drop it from World's headless registry and delete it
+        // after ownership transfers, so no stale entry is updated later.
+        WorldSession* previousSession = pCurrChar->GetSession();
+        if (previousSession->IsHeadless())
+        {
+            sWorld.ForgetHeadlessSession(previousSession);
+            // A headless session is deleted right away, so detach its master
+            // player first; the transfer below must not touch freed memory.
+            if (MasterPlayer* prevMaster = previousSession->GetMasterPlayer())
+            {
+                prevMaster->SetSession(nullptr);
+                previousSession->SetMasterPlayer(nullptr);
+            }
+        }
+        previousSession->SetPlayer(nullptr);
         pCurrChar->SetSession(this);
+
+        if (previousSession->IsHeadless())
+            delete previousSession;
 
         // Need to attach packet bcaster to the new socket
         pCurrChar->m_broadcaster->ChangeSocket(GetSocket());
@@ -659,7 +692,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if (pCurrMasterPlayer)
     {
-        pCurrMasterPlayer->GetSession()->SetMasterPlayer(nullptr);
+        if (WorldSession* previousSession = pCurrMasterPlayer->GetSession())
+            previousSession->SetMasterPlayer(nullptr);
         pCurrMasterPlayer->SetSession(this);
         m_masterPlayer = pCurrMasterPlayer;
     }
@@ -934,6 +968,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     sDBLogger.LogCharAction({ pCurrChar->GetGUIDLow(), GetAccountId(), LogCharAction::ActionLogin, {} });
 
     m_playerLoading = false;
+    m_headlessLoginRequested = false;
     m_clientMoverGuid = pCurrChar->GetObjectGuid();
     delete holder;
     if (alreadyOnline)

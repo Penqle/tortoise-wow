@@ -255,6 +255,7 @@ set (game_SRCS
     SharedDefines.h
     SocialMgr.h
     TransmogMgr.h
+    SessionTransport.h
     UnitEvents.h
     Weather.h
     World.h

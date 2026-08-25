@@ -897,6 +897,16 @@ class World
         const SessionMap& GetAllSessions() const { return m_sessions; }
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
+        // Headless sessions are character-GUID keyed and owned by World.
+        // They never enter the account-keyed network session map or the
+        // login queue; a module drives them through these generic accessors.
+        bool AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid);
+        WorldSession* FindHeadlessSession(ObjectGuid characterGuid) const;
+        bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;
+        bool HasPendingHeadlessSession(ObjectGuid characterGuid) const;
+        bool CancelPendingHeadlessSession(ObjectGuid characterGuid);
+        bool RemoveHeadlessSession(ObjectGuid characterGuid, bool save = true);
+        bool ForgetHeadlessSession(WorldSession* session);
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
@@ -1300,6 +1310,8 @@ class World
         uint32 m_lastDiff = 0;
         SessionMap m_sessions;
         SessionSet m_disconnectedSessions;
+        std::map<ObjectGuid, WorldSession*> m_headlessSessions;
+        std::map<ObjectGuid, WorldSession*> m_pendingHeadlessSessions;
         robin_hood::unordered_map<uint32 /*accountId*/, time_t /*last logout*/> m_accountsLastLogout;
         bool CanSkipQueue(WorldSession const* session);
 

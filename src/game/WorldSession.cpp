@@ -48,6 +48,7 @@
 #include "Anticheat/Movement/Movement.hpp"
 #include "Language.h"
 #include "Auth/Sha1.h"
+#include "Auth/BigNumber.h"
 #include "ChannelMgr.h"
 #include "Chat.h"
 #include "Channel.h"
@@ -82,10 +83,10 @@ bool MapSessionFilter::Process(WorldPacket * packet)
 }
 
 /// WorldSession constructor
-WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp) :
+WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp, SessionTransport transport) :
     m_muteTime(mute_time), m_connected(true), m_disconnectTimer(0), m_who_recvd(false),
     m_ah_list_recvd(false), _scheduleBanLevel(0), m_lastMailOpenTime(0),
-    _accountFlags(0), m_idleTime(WorldTimer::getMSTime()), _player(nullptr), m_Socket(sock), _security(sec), _accountId(id), _logoutTime(0), m_inQueue(false),
+    _accountFlags(0), m_idleTime(WorldTimer::getMSTime()), _player(nullptr), m_Socket(sock), m_transport(transport), _security(sec), _accountId(id), _logoutTime(0), m_inQueue(false),
     m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_playerSave(false), m_sessionDbcLocale(sWorld.GetAvailableDbcLocale(locale)),
     m_sessionDbLocaleIndex(sObjectMgr.GetIndexForLocale(locale)), m_latency(0), m_tutorialState(TUTORIALDATA_UNCHANGED), m_cheatData(nullptr),
     m_bot(nullptr), m_lastReceivedPacketTime(0), m_clientOS(CLIENT_OS_UNKNOWN), m_clientPlatform(CLIENT_PLATFORM_UNKNOWN), _gameBuild(0),
@@ -100,10 +101,28 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_
         sock->AddReference();
     }
     else
-        m_Address = "<BOT>";
+        m_Address = remote_ip;
 
     m_lastUpdateTime = WorldTimer::getMSTime();
     _analyser = std::make_unique<AccountAnalyser>(this);
+}
+
+void WorldSession::InitHeadlessSession()
+{
+    MANGOS_ASSERT(IsHeadless());
+    m_connected = true;
+    m_disconnectTimer = 0;
+    m_playerLoading = false;
+    m_headlessLoginRequested = false;
+    m_playerLogout = false;
+    m_playerSave = false;
+    m_clientMoverGuid.Clear();
+
+    // Headless sessions skip the normal auth handshake; create a dummy
+    // anticheat session so movement/anticheat hooks stay valid, exactly as
+    // the built-in synthetic sessions do.
+    BigNumber dummyKey(0);
+    InitAntiCheatSession(&dummyKey);
 }
 
 /// WorldSession destructor
@@ -345,6 +364,17 @@ bool WorldSession::Update(PacketFilter& updater)
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     ProcessPackets(updater);
 
+    // A Headless session has no character-screen timeout and no network socket
+    // whose absence means disconnect. Its lifetime is owned by World's
+    // character-GUID registry; an explicit module logout removes it there.
+    if (IsHeadless())
+    {
+        if (!_player && !m_playerLoading && m_headlessLoginRequested)
+            return false;
+        m_lastUpdateTime = WorldTimer::getMSTime();
+        return true;
+    }
+
     if(CharacterScreenIdleKick(sessionUpdateTime))
         return false;
 
@@ -391,8 +421,11 @@ bool WorldSession::Update(PacketFilter& updater)
 
             ///- Reset the online field in the account table if client is disconnected
             static SqlStatementID id;
-            SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");
-            stmt.PExecute(uint32(0), GetAccountId());
+            if (!sWorld.HasOtherSessionForAccount(GetAccountId(), this))
+            {
+                SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");
+                stmt.PExecute(uint32(0), GetAccountId());
+            }
 
             // Character stays IG for 2 minutes
             return ForcePlayerLogoutDelay();
@@ -716,10 +749,16 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
+        // Headless sessions do not own the account-keyed online state, and a
+        // session logging out must not clear it while another session of the
+        // same account is still active.
         static SqlStatementID id;
 
-        SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");
-        stmt.PExecute(uint32(0), GetAccountId());
+        if (!IsHeadless() && !sWorld.HasOtherSessionForAccount(GetAccountId(), this))
+        {
+            SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET current_realm = ?, online = 0 WHERE id = ?");
+            stmt.PExecute(uint32(0), GetAccountId());
+        }
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members
         if (Guild* guild = sGuildMgr.GetGuildById(_player->GetGuildId()))

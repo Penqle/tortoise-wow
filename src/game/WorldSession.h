@@ -32,6 +32,7 @@
 #include "Item.h"
 #include "GossipDef.h"
 #include "MapNodes/AbstractPlayer.h"
+#include "SessionTransport.h"
 #include "WhisperTargetLimits.h"
 #include "Analysis/AccountAnalyser.hpp"
 
@@ -306,7 +307,7 @@ class WorldSession
 {
     friend class CharacterHandler;
     public:
-        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp);
+        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp, SessionTransport transport = SessionTransport::Network);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
@@ -351,6 +352,13 @@ class WorldSession
         void SetMasterPlayer(MasterPlayer *plr) { m_masterPlayer = plr; }
         void LoginPlayer(ObjectGuid playerGuid);
         WorldSocket* GetSocket() { return m_Socket; }
+        SessionTransport GetTransport() const { return m_transport; }
+        bool IsHeadless() const { return m_transport == SessionTransport::Headless; }
+        bool HasNetworkTransport() const { return m_transport == SessionTransport::Network && m_Socket != nullptr; }
+        // Bring a freshly constructed Headless session into a consistent
+        // pre-login state. Network sessions reach the same state through the
+        // auth handshake instead.
+        void InitHeadlessSession();
         void SetFingerprintBanned() { m_fingerprintBanned = true; }
         bool IsFingerprintBanned() const { return m_fingerprintBanned; }
 
@@ -997,6 +1005,7 @@ class WorldSession
         ObjectGuid m_clientMoverGuid;
         uint32 m_moveRejectTime;
         WorldSocket *m_Socket;
+        SessionTransport m_transport;
         std::string m_Address;
         uint32 m_BinaryAddress = 0;
 
@@ -1013,6 +1022,7 @@ class WorldSession
         bool m_inQueue;                                     // session wait in auth.queue
         bool m_hadQueue = false;                            // true if the session was in a queue this session.
         bool m_playerLoading;                               // code processed in LoginPlayer
+        bool m_headlessLoginRequested = false;              // headless login dispatched, completion pending
         bool m_playerLogout;                                // code processed in LogoutPlayer
         bool m_playerRecentlyLogout;
         bool m_playerSave;
