@@ -833,6 +833,35 @@ bool LFTManager::IsInOffer(ObjectGuid const& guid) const
     return m_playerOffers.find(guid) != m_playerOffers.end();
 }
 
+bool LFTManager::AcceptOffer(Player* player)
+{
+    if (!player)
+        return false;
+    return AcceptOffer(player->GetObjectGuid());
+}
+
+bool LFTManager::AcceptOffer(ObjectGuid const& guid)
+{
+    if (guid.IsEmpty())
+        return false;
+    Player* player = GetPlayer(guid);
+    if (!player)
+        return false;
+    if (!IsInOffer(guid))
+        return false;
+    // Reuse native handler: validates m_playerOffers/m_offers, updates accepted,
+    // broadcasts S2C_OFFER_UPDATE_COUNT, and completes the offer when full.
+    // Preserves timers, cancellation/requeue, packets, private state, addon behavior.
+    HandleOfferAccept(player);
+    return true;
+}
+
+uint32 LFTManager::GetOfferId(ObjectGuid const& guid) const
+{
+    std::map<ObjectGuid, uint32>::const_iterator itr = m_playerOffers.find(guid);
+    return itr != m_playerOffers.end() ? itr->second : 0;
+}
+
 size_t LFTManager::GetQueueSize() const
 {
     return m_queue.size();

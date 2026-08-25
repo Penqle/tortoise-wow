@@ -44,6 +44,18 @@ class LFTManager
         bool LeaveQueue(ObjectGuid const& guid);
         bool IsQueued(ObjectGuid const& guid) const;
         bool IsInOffer(ObjectGuid const& guid) const;
+        // World-thread only. Generic offer acceptance for machine-driven participants.
+        // Validates that the participant is live (in-world) and belongs to an offer,
+        // then reuses native HandleOfferAccept/CompleteOffer semantics (accepted-count,
+        // S2C_OFFER_UPDATE_COUNT, timers, cancellation/requeue, packets, private state).
+        // Core owns queue/offers/groups; addon behavior unchanged. Intended for
+        // module-owned Headless participants that cannot send C2S_OFFER_ACCEPT;
+        // callers must not auto-accept all humans or bypass role/group/faction checks
+        // (enforced at offer formation via CanQueuedPlayersGroup/AllowedRoleMask).
+        bool AcceptOffer(Player* player);
+        bool AcceptOffer(ObjectGuid const& guid);
+        // Minimal offer diagnostic. 0 if not in offer. Does not expose private maps.
+        uint32 GetOfferId(ObjectGuid const& guid) const;
         size_t GetQueueSize() const;
 
         struct QueuedInfo
