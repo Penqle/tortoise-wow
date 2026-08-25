@@ -410,6 +410,7 @@ world/undercity.cpp
 world/ungoro_crater.cpp
 world/western_plaguelands.cpp
 world/westfall.cpp
+world/custom_dungeon_portal.cpp
 world/wetlands.cpp
 world/winterspring.cpp
 world/stormwind_city.cpp

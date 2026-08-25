@@ -35,6 +35,7 @@ void AddSC_dreadsteed_ritual();
 void AddSC_npc_king_gordok();
 
 //world
+void AddSC_custom_dungeon_portal();
 void AddSC_areatrigger_scripts();
 void AddSC_dragons_of_nightmare();
 void AddSC_boss_lord_kazzak();
@@ -413,6 +414,7 @@ void AddScripts()
     AddSC_npc_king_gordok();
 
     //world
+    AddSC_custom_dungeon_portal();
     AddSC_areatrigger_scripts();
     AddSC_dragons_of_nightmare();
     AddSC_boss_lord_kazzak();
