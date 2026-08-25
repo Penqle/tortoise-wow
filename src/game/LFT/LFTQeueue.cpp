@@ -3,6 +3,7 @@
 #include "Group.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "ScriptMgr.h"
 #include "World.h"
 
 #include <algorithm>
@@ -11,13 +12,6 @@ namespace
 {
     static uint32 const LFT_ROLECHECK_TIMEOUT = 90 * IN_MILLISECONDS;
     static uint32 const LFT_OFFER_TIMEOUT = 90 * IN_MILLISECONDS;
-
-    enum LFTRoles
-    {
-        LFT_ROLE_TANK   = 0x01,
-        LFT_ROLE_HEALER = 0x02,
-        LFT_ROLE_DAMAGE = 0x04
-    };
 
     std::vector<std::string> SplitPreserveEmpty(std::string const& value, char delimiter)
     {
@@ -721,19 +715,27 @@ uint8 LFTManager::AllowedRoleMask(Player const* player) const
     if (!player)
         return 0;
 
+    uint8 classMask = 0;
     switch (player->GetClass())
     {
-        case CLASS_DRUID:   return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
-        case CLASS_HUNTER:  return LFT_ROLE_DAMAGE;
-        case CLASS_MAGE:    return LFT_ROLE_DAMAGE;
-        case CLASS_PALADIN: return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
-        case CLASS_PRIEST:  return LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
-        case CLASS_ROGUE:   return LFT_ROLE_DAMAGE;
-        case CLASS_SHAMAN:  return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
-        case CLASS_WARLOCK: return LFT_ROLE_DAMAGE;
-        case CLASS_WARRIOR: return LFT_ROLE_TANK | LFT_ROLE_DAMAGE;
-        default:            return 0;
+        case CLASS_DRUID:   classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
+        case CLASS_HUNTER:  classMask = LFT_ROLE_DAMAGE; break;
+        case CLASS_MAGE:    classMask = LFT_ROLE_DAMAGE; break;
+        case CLASS_PALADIN: classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
+        case CLASS_PRIEST:  classMask = LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
+        case CLASS_ROGUE:   classMask = LFT_ROLE_DAMAGE; break;
+        // No tank for shaman: no tank talent tree in 1.12 and no bot tank strategy.
+        case CLASS_SHAMAN:  classMask = LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
+        case CLASS_WARLOCK: classMask = LFT_ROLE_DAMAGE; break;
+        case CLASS_WARRIOR: classMask = LFT_ROLE_TANK | LFT_ROLE_DAMAGE; break;
+        default:            classMask = 0; break;
     }
+
+    uint8 scriptMask = Script_GetAllowedRoles(player);
+    if (scriptMask == 0)
+        return classMask;
+
+    return classMask & scriptMask;
 }
 
 void LFTManager::CleanupPlayer(ObjectGuid const& guid)
@@ -756,4 +758,127 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
         ++itr;
     }
 
+}
+
+// Generic module API. World-thread only. Reuses native validation/offers/groups.
+bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
+{
+    if (!player || !player->IsInWorld())
+        return false;
+
+    if (player->GetGroup() && player->GetGroup()->isRaidGroup())
+        return false;
+
+    if (player->GetGroup() && !player->GetGroup()->IsLeader(player->GetObjectGuid()))
+        return false;
+
+    std::vector<std::string> valid = GetSharedInstances(instances);
+    uint8 effective = roleMask & AllowedRoleMask(player);
+    if (valid.empty() || !effective)
+        return false;
+
+    ObjectGuid guid = player->GetObjectGuid();
+    CleanupPlayer(guid);
+
+    // Grouped players go through the native rolecheck so each member can pick a role.
+    // Solo bots (the common module case) enqueue directly without a roundtrip.
+    if (player->GetGroup())
+    {
+        StartRolecheck(player, valid);
+        return true;
+    }
+
+    EnqueuePlayer(player, guid, valid, effective);
+    TryMakeOffers();
+    return true;
+}
+
+bool LFTManager::LeaveQueue(Player* player)
+{
+    if (!player)
+        return false;
+    return LeaveQueue(player->GetObjectGuid());
+}
+
+bool LFTManager::LeaveQueue(ObjectGuid const& guid)
+{
+    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
+    {
+        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
+        {
+            CancelRolecheck(itr);
+            return true;
+        }
+    }
+
+    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
+    if (offerItr != m_playerOffers.end())
+    {
+        CancelOffer(offerItr->second, true, guid, true);
+        TryMakeOffers();
+        return true;
+    }
+
+    QueueMap::iterator queueItr = m_queue.find(guid);
+    if (queueItr == m_queue.end())
+        return false;
+
+    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
+    std::vector<ObjectGuid> toRemove;
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
+        if (itrLeader == leaderGuid)
+            toRemove.push_back(itr->first);
+    }
+
+    for (ObjectGuid const& removeGuid : toRemove)
+    {
+        QueueMap::iterator it = m_queue.find(removeGuid);
+        if (it != m_queue.end())
+        {
+            std::string name = it->second.name;
+            m_queue.erase(it);
+            SendQueueLeft(removeGuid, name);
+        }
+    }
+
+    return true;
+}
+
+bool LFTManager::IsQueued(ObjectGuid const& guid) const
+{
+    return m_queue.find(guid) != m_queue.end();
+}
+
+bool LFTManager::IsInOffer(ObjectGuid const& guid) const
+{
+    return m_playerOffers.find(guid) != m_playerOffers.end();
+}
+
+size_t LFTManager::GetQueueSize() const
+{
+    return m_queue.size();
+}
+
+std::vector<LFTManager::QueuedInfo> LFTManager::GetQueuedPlayers() const
+{
+    std::vector<QueuedInfo> out;
+    out.reserve(m_queue.size());
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        QueuedInfo info;
+        info.guid = itr->second.guid;
+        info.name = itr->second.name;
+        info.className = itr->second.className;
+        info.level = itr->second.level;
+        info.team = itr->second.team;
+        info.isHardcore = itr->second.isHardcore;
+        info.instances = itr->second.instances;
+        info.roleMask = itr->second.roleMask;
+        info.assignedRole = itr->second.assignedRole;
+        info.joinTime = itr->second.joinTime;
+        out.push_back(std::move(info));
+    }
+    return out;
 }

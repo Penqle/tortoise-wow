@@ -1916,6 +1916,11 @@ template<class TScript> typename ScriptRegistry<TScript>::AfterDatabaseLoadScrip
 template<class TScript> typename ScriptRegistry<TScript>::EnabledHooksList ScriptRegistry<TScript>::EnabledHooks;
 template<class TScript> uint32 ScriptRegistry<TScript>::_scriptIdCounter = 0;
 
+// Generic query: roles a module will let this character fill (LFT_ROLE_* mask).
+// Returns class fallback when no module answers.
+class Player;
+uint8 Script_GetAllowedRoles(Player const* player);
+
 uint32 GetAreaTriggerScriptId(uint32 triggerId);
 uint32 GetEventIdScriptId(uint32 eventId);
 uint32 GetScriptId(const char *name);

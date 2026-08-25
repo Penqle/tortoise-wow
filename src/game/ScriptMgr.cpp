@@ -3128,6 +3128,22 @@ QuestInstance::QuestInstance(ObjectGuid InPlayerGuid, uint32 InQuestID)
     }
 }
 
+// Generic module query: roles a module will let this character fill.
+// World-thread only, cold path (queue/group formation).
+uint8 Script_GetAllowedRoles(Player const* player)
+{
+    if (!player)
+        return 0;
+
+    uint8 roles = 0;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHookWithReturn(PLAYERHOOK_GET_ALLOWED_ROLES, [&](PlayerScript* script)
+    {
+        return script->GetAllowedRoles(player, roles);
+    });
+
+    return roles;
+}
+
 Player* QuestInstance::GetPlayer() const
 {
     return ObjectMgr::GetPlayer(PlayerGuid);

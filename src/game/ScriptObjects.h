@@ -140,6 +140,7 @@ enum PlayerHook
     PLAYERHOOK_ON_MAP_CHANGED,
     PLAYERHOOK_ON_BEFORE_TELEPORT,
     PLAYERHOOK_ON_LOOT_ITEM,
+    PLAYERHOOK_GET_ALLOWED_ROLES,
     PLAYERHOOK_END
 };
 
@@ -186,6 +187,12 @@ class PlayerScript : public ScriptObject
         virtual void OnMapChanged(Player* /*player*/) {}
         virtual void OnBeforeTeleport(Player* /*player*/, uint32 /*mapId*/, float /*x*/, float /*y*/, float /*z*/, float /*orientation*/) {}
         virtual void OnLootItem(Player* /*player*/, Item* /*item*/, uint32 /*count*/, ObjectGuid /*lootGuid*/) {}
+
+        // Roles the module will let this character fill, as an LFT_ROLE_* mask
+        // (tank 1, healer 2, damage 4). Write into roles and return true to answer;
+        // return false to leave the question to the next module. Core intersects
+        // with its class mask and falls back to class when no module answers.
+        virtual bool GetAllowedRoles(Player const* /*player*/, uint8& /*roles*/) { return false; }
 };
 
 class CreatureScript : public ScriptObject, public UpdatableScript<Creature>

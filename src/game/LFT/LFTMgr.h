@@ -13,6 +13,14 @@
 class Group;
 class Player;
 
+// Role masks shared by the queue's role-check and offer code.
+enum LFTRoles
+{
+    LFT_ROLE_TANK   = 0x01,
+    LFT_ROLE_HEALER = 0x02,
+    LFT_ROLE_DAMAGE = 0x04
+};
+
 class LFTManager
 {
     public:
@@ -21,6 +29,33 @@ class LFTManager
         bool HandleAddonMessage(Player* player, uint32 type, std::string const& rawMessage);
         void Update(uint32 diff);
         void OnPlayerLogout(ObjectGuid const& guid);
+
+        // Generic module API: queue a live in-world player through native validation.
+        // World-thread only. Validates level/team/hardcore/role and owns queue/offers/groups.
+        // Returns true if the player (and, if grouped and leader, the party) was queued or entered rolecheck.
+        bool QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask);
+        // World-thread only. Removes from rolecheck/offer/queue and restores addon state.
+        bool LeaveQueue(Player* player);
+        bool LeaveQueue(ObjectGuid const& guid);
+        bool IsQueued(ObjectGuid const& guid) const;
+        bool IsInOffer(ObjectGuid const& guid) const;
+        size_t GetQueueSize() const;
+
+        struct QueuedInfo
+        {
+            ObjectGuid guid;
+            std::string name;
+            std::string className;
+            uint32 level = 0;
+            uint32 team = 0;
+            bool isHardcore = false;
+            std::vector<std::string> instances;
+            uint8 roleMask = 0;
+            uint8 assignedRole = 0;
+            time_t joinTime = 0;
+        };
+        // World-thread only. Copy of current queue for module policy decisions.
+        std::vector<QueuedInfo> GetQueuedPlayers() const;
 
     private:
         struct ListingSignup
