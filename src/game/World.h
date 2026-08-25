@@ -900,6 +900,12 @@ class World
         // Headless sessions are character-GUID keyed and owned by World.
         // They never enter the account-keyed network session map or the
         // login queue; a module drives them through these generic accessors.
+        //
+        // Ownership: AddHeadlessSession takes ownership only on success
+        // (returns true). On failure the caller keeps the session and must
+        // delete it itself. After success, World deletes the session on
+        // RemoveHeadlessSession, CancelPendingHeadlessSession, reap in
+        // UpdateSessions, shutdown, or network reclaim of its character.
         bool AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid);
         WorldSession* FindHeadlessSession(ObjectGuid characterGuid) const;
         bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;

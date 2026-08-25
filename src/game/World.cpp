@@ -309,28 +309,23 @@ void World::AddSession(WorldSession* s)
 
 bool World::AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid)
 {
+    // Ownership contract: the caller owns 'session' until this call succeeds.
+    // On success, World owns the session (queued as pending, promoted to the
+    // active registry, and deleted by World on removal/shutdown/reap). On any
+    // failure below, ownership stays with the caller, which must delete it.
     if (!session || !session->IsHeadless() || !characterGuid.IsPlayer())
-    {
-        delete session;
         return false;
-    }
 
     if (Player* player = sObjectAccessor.FindPlayer(characterGuid))
     {
         WorldSession* current = player->GetSession();
         if (!current || !current->IsHeadless())
-        {
-            delete session;
             return false;
-        }
     }
 
     if (m_headlessSessions.find(characterGuid) != m_headlessSessions.end() ||
         m_pendingHeadlessSessions.find(characterGuid) != m_pendingHeadlessSessions.end())
-    {
-        delete session;
         return false;
-    }
 
     m_pendingHeadlessSessions.emplace(characterGuid, session);
     return true;
