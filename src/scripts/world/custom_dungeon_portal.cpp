@@ -4,10 +4,11 @@
  * See included DOCS/LICENSE.TXT
  *
  * Turtle custom dungeon portal handler — authoritative GameObjectScript for
- * `custom_dungeon_portal`. Destinations and conditions are verbatim from
- * `areatrigger_teleport` (the same table that drives instance areatriggers)
- * and from `map_template`/`instance_template`. No coordinates are invented,
- * no fake success is returned, and no bot-specific coupling is introduced.
+ * `custom_dungeon_portal`. Destinations, levels, conditions, phases and
+ * messages are obtained at use time from `areatrigger_teleport` via
+ * ObjectMgr (the same table that drives instance areatriggers). No
+ * coordinates are invented, no fake success is returned, and no
+ * bot-specific coupling is introduced.
  *
  * Supported entries are those with a proved areatrigger counterpart.
  * All other entries sharing the same script_name remain bound to this script
@@ -22,49 +23,41 @@
 #include "Database/SQLStorages.h"
 #include "Language.h"
 
-struct PortalInfo
+struct PortalTrigger
 {
     uint32 entry;
-    WorldLocation dest;
-    uint8 requiredLevel;
-    uint32 requiredCondition;
-    uint8 requiredPhase;
-    char const* message;
+    uint32 triggerId;
 };
 
-static const PortalInfo* GetPortalInfo(uint32 entry)
+static uint32 GetTriggerIdForEntry(uint32 entry)
 {
-    // Destinations/conditions are verbatim from
-    // sql/base/tw_world_areatrigger_teleport.sql (and its database_updates
-    // mirrors). The trigger IDs cited are the authoritative source — this
-    // file does not invent or offset coordinates.
-    static const PortalInfo infos[] =
+    // Compact GO-entry -> authoritative areatrigger_teleport ID mapping.
+    // All destination/level/condition/phase/message data is fetched from
+    // sObjectMgr.GetAreaTriggerTeleport(triggerId) at use time, so this file
+    // never duplicates coordinates or thresholds.
+    static const PortalTrigger kPortals[] =
     {
-        // Crescent Grove — trigger 5004/5005
-        { 112911, WorldLocation(802,  579.13f,    90.7f,    276.11f,  3.4f),    32, 0, 0, "You must be at least level 32 to enter." },
-        { 112912, WorldLocation(1,    1722.0f, -1272.6f,    163.26f,  5.8f),     0, 0, 0, "" },
-
-        // Black Morass — trigger 1632/1629
-        { 112915, WorldLocation(269, -2002.5f,  6575.3f,   -154.9f,   5.7f),    58, 0, 0, "You must be at least level 58 to enter." },
-        { 112916, WorldLocation(1,   -8756.8f, -4191.3f,   -209.4f,   5.5f),     0, 0, 0, "" },
-
-        // Stormwind Vault — trigger 107/109 (5002/5003 are same entrance)
-        { 112917, WorldLocation(35,    -0.91f,    40.57f,  -24.23f,  1.52f),   58, 0, 0, "You must be at least level 58 to enter." },
-        { 112918, WorldLocation(0,  -8679.12f,  639.337f,  95.819f,  2.29017f),  0, 0, 0, "" },
-
-        // Hateforge Quarry — trigger 5009/5013
-        { 112940, WorldLocation(808, -8173.9f, -3120.6f,   199.8f,   4.7f),    48, 0, 0, "You must be at least level 48 to enter." },
-        { 112941, WorldLocation(0,   -8169.2f, -3106.7f,   200.4f,   1.1f),     0, 0, 0, "" },
-
-        // Karazhan Crypt — trigger 5008/5011
-        { 181580, WorldLocation(800, -11068.1f, -1806.4f,   52.7f,   1.5f),    55, 0, 0, "You must be at least level 55 to enter." },
-        { 181581, WorldLocation(0,   -11068.9f, -1828.6f,   60.26f,  3.1f),     0, 0, 0, "" },
+        // Crescent Grove
+        { 112911, 5004 }, // entrance
+        { 112912, 5005 }, // exit
+        // Black Morass
+        { 112915, 1632 }, // entrance
+        { 112916, 1629 }, // exit
+        // Stormwind Vault (5002/5003 share same dest as 107)
+        { 112917, 107 },  // entrance
+        { 112918, 109 },  // exit
+        // Hateforge Quarry
+        { 112940, 5009 }, // entrance
+        { 112941, 5013 }, // exit
+        // Karazhan Crypt
+        { 181580, 5008 }, // entrance
+        { 181581, 5011 }, // exit
     };
 
-    for (auto const& info : infos)
-        if (info.entry == entry)
-            return &info;
-    return nullptr;
+    for (auto const& p : kPortals)
+        if (p.entry == entry)
+            return p.triggerId;
+    return 0;
 }
 
 class custom_dungeon_portal : public GameObjectScript
@@ -77,9 +70,13 @@ public:
         if (!player || !go)
             return false;
 
-        const PortalInfo* info = GetPortalInfo(go->GetEntry());
-        if (!info)
+        uint32 triggerId = GetTriggerIdForEntry(go->GetEntry());
+        if (!triggerId)
             return true; // intentionally unsupported — consume/fail closed, no teleport, no default GO activation
+
+        AreaTriggerTeleport const* at = sObjectMgr.GetAreaTriggerTeleport(triggerId);
+        if (!at)
+            return true; // authoritative store missing — fail closed, never invent coords
 
         if (player->IsBeingTeleported())
             return true;
@@ -87,14 +84,14 @@ public:
         // Reuse native areatrigger/instance semantics (see
         // WorldSession::HandleAreaTriggerOpcode in Handlers/MiscHandler.cpp).
 
-        MapEntry const* targetMap = sMapStorage.LookupEntry<MapEntry>(info->dest.mapId);
+        MapEntry const* targetMap = sMapStorage.LookupEntry<MapEntry>(at->destination.mapId);
         if (!targetMap)
             return true;
 
-        if (info->requiredPhase > sWorld.GetContentPhase())
+        if (at->requiredPhase > sWorld.GetContentPhase())
         {
             if (WorldSession* sess = player->GetSession())
-                sess->SendAreaTriggerMessage(sess->GetMangosString(LANG_INSTANCE_AVAILABLE_IN_PHASE), info->requiredPhase + 1);
+                sess->SendAreaTriggerMessage(sess->GetMangosString(LANG_INSTANCE_AVAILABLE_IN_PHASE), at->requiredPhase + 1);
             return true;
         }
 
@@ -130,13 +127,13 @@ public:
             // If destination map differs from corpse map, redirect to the
             // corpse's entrance trigger (same as areatrigger logic when
             // possible). Keep authoritative destination otherwise.
-            if (info->dest.mapId != corpseMapId)
+            if (at->destination.mapId != corpseMapId)
             {
                 if (AreaTriggerTeleport const* corpseAt = sObjectMgr.GetMapEntranceTrigger(corpseMapId))
                 {
                     // Use the corpse entrance only when it points into the
                     // same dungeon family; otherwise keep original dest.
-                    if (corpseAt->destination.mapId == info->dest.mapId)
+                    if (corpseAt->destination.mapId == at->destination.mapId)
                     {
                         player->TeleportTo(corpseAt->destination);
                         return true;
@@ -147,22 +144,22 @@ public:
 
         if (!player->IsGameMaster())
         {
-            bool levelCheck = player->GetLevel() < info->requiredLevel && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_LEVEL);
+            bool levelCheck = player->GetLevel() < at->requiredLevel && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_LEVEL);
             static constexpr uint32 AllowedLunaticMaps[] = { 36, 43, 389, 822 };
             bool isLunaticMap = false;
             for (uint32 mapId : AllowedLunaticMaps)
                 if (targetMap->id == int32(mapId)) { isLunaticMap = true; break; }
             bool blockedByLevel = levelCheck && !(isLunaticMap && player->HasChallenge(CHALLENGE_LUNATIC));
-            bool blockedByCondition = info->requiredCondition && !IsConditionSatisfied(info->requiredCondition, player, player->GetMap(), player, CONDITION_FROM_AREATRIGGER);
+            bool blockedByCondition = at->requiredCondition && !IsConditionSatisfied(at->requiredCondition, player, player->GetMap(), player, CONDITION_FROM_AREATRIGGER);
 
             if (blockedByLevel || blockedByCondition)
             {
                 if (WorldSession* sess = player->GetSession())
                 {
-                    if (info->message && *info->message)
-                        sess->SendAreaTriggerMessage(info->message);
+                    if (!at->message.empty())
+                        sess->SendAreaTriggerMessage(at->message.c_str());
                     else if (blockedByLevel)
-                        sess->SendAreaTriggerMessage(sess->GetMangosString(LANG_LEVEL_MINREQUIRED), info->requiredLevel);
+                        sess->SendAreaTriggerMessage(sess->GetMangosString(LANG_LEVEL_MINREQUIRED), at->requiredLevel);
                 }
                 return true;
             }
@@ -175,7 +172,7 @@ public:
             }
         }
 
-        player->TeleportTo(info->dest);
+        player->TeleportTo(at->destination);
         return true;
     }
 };
