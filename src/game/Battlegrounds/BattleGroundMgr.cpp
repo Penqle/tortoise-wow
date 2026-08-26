@@ -1886,6 +1886,95 @@ bool BattleGroundQueue::IsAllQueuesEmpty(BattleGroundBracketId bracket_id)
     return queueEmptyCount == BG_QUEUE_MAX;
 }
 
+// Generic read-only demand snapshot for modules (#42). Copy-only value DTO, no Player pointers.
+std::vector<BattleGroundQueue::QueuedParticipantInfo> BattleGroundQueue::GetQueuedParticipants(BattleGroundBracketId bracketId) const
+{
+    std::lock_guard<std::recursive_mutex> lock(m_Lock);
+    std::vector<QueuedParticipantInfo> out;
+
+    auto appendBracket = [&](BattleGroundBracketId bid)
+    {
+        for (uint32 qtype = 0; qtype < BG_QUEUE_GROUP_TYPES_COUNT; ++qtype)
+        {
+            for (GroupQueueInfo const* ginfo : m_QueuedGroups[bid][qtype])
+            {
+                if (!ginfo)
+                    continue;
+                for (auto const& kv : ginfo->Players)
+                {
+                    QueuedParticipantInfo info;
+                    info.guid = kv.first;
+                    info.team = ginfo->GroupTeam;
+                    info.bgTypeId = ginfo->BgTypeId;
+                    info.bracketId = ginfo->BracketId;
+                    info.joinTime = ginfo->JoinTime;
+                    info.invitedInstanceId = ginfo->IsInvitedToBGInstanceGUID;
+                    info.isInvited = ginfo->IsInvitedToBGInstanceGUID != 0;
+                    info.online = kv.second ? kv.second->online : false;
+                    out.push_back(info);
+                }
+            }
+        }
+    };
+
+    if (bracketId == BG_BRACKET_ID_NONE)
+    {
+        for (int bid = 0; bid < MAX_BATTLEGROUND_BRACKETS; ++bid)
+            appendBracket(BattleGroundBracketId(bid));
+    }
+    else if (bracketId >= 0 && bracketId < MAX_BATTLEGROUND_BRACKETS)
+    {
+        appendBracket(bracketId);
+    }
+
+    return out;
+}
+
+size_t BattleGroundQueue::GetQueuedParticipantCount(BattleGroundBracketId bracketId, Team team) const
+{
+    std::lock_guard<std::recursive_mutex> lock(m_Lock);
+    size_t count = 0;
+
+    auto countBracket = [&](BattleGroundBracketId bid)
+    {
+        for (uint32 qtype = 0; qtype < BG_QUEUE_GROUP_TYPES_COUNT; ++qtype)
+        {
+            for (GroupQueueInfo const* ginfo : m_QueuedGroups[bid][qtype])
+            {
+                if (!ginfo || ginfo->GroupTeam != team)
+                    continue;
+                count += ginfo->Players.size();
+            }
+        }
+    };
+
+    if (bracketId == BG_BRACKET_ID_NONE)
+    {
+        for (int bid = 0; bid < MAX_BATTLEGROUND_BRACKETS; ++bid)
+            countBracket(BattleGroundBracketId(bid));
+    }
+    else if (bracketId >= 0 && bracketId < MAX_BATTLEGROUND_BRACKETS)
+    {
+        countBracket(bracketId);
+    }
+
+    return count;
+}
+
+std::vector<BattleGroundQueue::QueuedParticipantInfo> BattleGroundMgr::GetQueuedParticipants(BattleGroundQueueTypeId queueTypeId, BattleGroundBracketId bracketId) const
+{
+    if (queueTypeId >= MAX_BATTLEGROUND_QUEUE_TYPES)
+        return {};
+    return m_BattleGroundQueues[queueTypeId].GetQueuedParticipants(bracketId);
+}
+
+size_t BattleGroundMgr::GetQueuedParticipantCount(BattleGroundQueueTypeId queueTypeId, BattleGroundBracketId bracketId, Team team) const
+{
+    if (queueTypeId >= MAX_BATTLEGROUND_QUEUE_TYPES)
+        return 0;
+    return m_BattleGroundQueues[queueTypeId].GetQueuedParticipantCount(bracketId, team);
+}
+
 void BattleGroundMgr::AddBattleGround(uint32 InstanceID, BattleGroundTypeId bgTypeId, BattleGround* BG)
 {
     std::lock_guard<std::mutex> guard(m_BattleGroundsMutex);
