@@ -104,8 +104,8 @@ class BattleGroundQueue
         bool PlayerLoggedIn(Player* player);
         bool IsAllQueuesEmpty(BattleGroundBracketId bracket_id);
 
-        // Generic read-only demand snapshot for modules (#42). Copy-only value DTO, no Player pointers,
-        // no private map exposure. Core retains locks/ownership; snapshot is a flat participant copy.
+        // Generic read-only demand snapshot for modules. Copy-only value DTO, no Player pointers,
+        // no private map exposure. Callers must run on the world thread, which owns queue mutation.
         struct QueuedParticipantInfo
         {
             ObjectGuid guid;
@@ -122,12 +122,11 @@ class BattleGroundQueue
             // and keeps the API generic and implementation-neutral.
         };
 
-        // Copy-only, thread-safe via internal lock; core retains ownership. If bracketId == BG_BRACKET_ID_NONE, all brackets.
+        // Copy-only world-thread snapshot; core retains ownership. If bracketId == BG_BRACKET_ID_NONE, all brackets.
         std::vector<QueuedParticipantInfo> GetQueuedParticipants(BattleGroundBracketId bracketId = BG_BRACKET_ID_NONE) const;
-        size_t GetQueuedParticipantCount(BattleGroundBracketId bracketId, Team team) const;
 
         //mutex that should not allow changing private data, nor allowing to update Queue during private data change.
-        mutable std::recursive_mutex m_Lock;
+        std::recursive_mutex m_Lock;
 
 
         typedef std::map<ObjectGuid, PlayerQueueInfo> QueuedPlayersMap;
@@ -270,9 +269,9 @@ class BattleGroundMgr
         BGFreeSlotQueueType BGFreeSlotQueue[MAX_BATTLEGROUND_TYPE_ID];
 
         void ScheduleQueueUpdate(BattleGroundQueueTypeId bgQueueTypeId, BattleGroundTypeId bgTypeId, BattleGroundBracketId bracket_id);
-        // Generic read-only demand snapshot for modules (#42). Delegates to the per-queue snapshot; copy-only value DTO.
+        // Generic read-only world-thread demand snapshot for modules. Delegates to the per-queue snapshot;
+        // the returned DTOs do not expose queue-owned pointers or maps.
         std::vector<BattleGroundQueue::QueuedParticipantInfo> GetQueuedParticipants(BattleGroundQueueTypeId queueTypeId, BattleGroundBracketId bracketId = BG_BRACKET_ID_NONE) const;
-        size_t GetQueuedParticipantCount(BattleGroundQueueTypeId queueTypeId, BattleGroundBracketId bracketId, Team team) const;
         uint32 GetPrematureFinishTime() const;
 
         void ToggleTesting();
