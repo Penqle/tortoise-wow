@@ -266,7 +266,12 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
             oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
             ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
         }
-        else if (raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
+    }
+    else if (outcome.result == CHAR_CREATE_DISABLED)
+    {
+        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
+        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
+        if (classEntry && raceEntry && raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
         {
             std::stringstream oss;
             oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
