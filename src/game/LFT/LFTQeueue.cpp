@@ -3,7 +3,6 @@
 #include "Group.h"
 #include "ObjectMgr.h"
 #include "Player.h"
-#include "ScriptMgr.h"
 #include "World.h"
 
 #include <algorithm>
@@ -111,13 +110,7 @@ void LFTManager::HandleRolecheckResponse(Player* player, std::vector<std::string
 
     uint8 roleMask = ParseRoleMask(fields[1]) & AllowedRoleMask(player);
     if (!roleMask)
-    {
-        // Invalid role (e.g. shaman tank when module disallows it, or no overlap
-        // with class). Notify instead of silently waiting - otherwise the whole
-        // group rolecheck stalls until timeout.
-        Send(player, "S2C_QUEUE_ERROR;invalid");
         return;
-    }
 
     ObjectGuid guid = player->GetObjectGuid();
     for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
@@ -684,32 +677,19 @@ uint8 LFTManager::AllowedRoleMask(Player const* player) const
     if (!player)
         return 0;
 
-    uint8 classMask = 0;
     switch (player->GetClass())
     {
-        case CLASS_DRUID:   classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
-        case CLASS_HUNTER:  classMask = LFT_ROLE_DAMAGE; break;
-        case CLASS_MAGE:    classMask = LFT_ROLE_DAMAGE; break;
-        case CLASS_PALADIN: classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
-        case CLASS_PRIEST:  classMask = LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
-        case CLASS_ROGUE:   classMask = LFT_ROLE_DAMAGE; break;
-        // Preserve prior human semantics for shaman (tank|healer|damage). No tank
-        // policy for bots should live in the module via GetAllowedRoles, not in
-        // the generic core class fallback, otherwise group rolechecks silently stall.
-        case CLASS_SHAMAN:  classMask = LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE; break;
-        case CLASS_WARLOCK: classMask = LFT_ROLE_DAMAGE; break;
-        case CLASS_WARRIOR: classMask = LFT_ROLE_TANK | LFT_ROLE_DAMAGE; break;
-        default:            classMask = 0; break;
+        case CLASS_DRUID:   return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
+        case CLASS_HUNTER:  return LFT_ROLE_DAMAGE;
+        case CLASS_MAGE:    return LFT_ROLE_DAMAGE;
+        case CLASS_PALADIN: return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
+        case CLASS_PRIEST:  return LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
+        case CLASS_ROGUE:   return LFT_ROLE_DAMAGE;
+        case CLASS_SHAMAN:  return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
+        case CLASS_WARLOCK: return LFT_ROLE_DAMAGE;
+        case CLASS_WARRIOR: return LFT_ROLE_TANK | LFT_ROLE_DAMAGE;
+        default:            return 0;
     }
-
-    // Generic hook: first enabled PlayerScript that returns true wins (first-answer).
-    // A 0 mask means "no opinion" and falls back to the class mask; a non-zero
-    // answer is intersected with the class mask.
-    uint8 scriptMask = Script_GetAllowedRoles(player);
-    if (scriptMask == 0)
-        return classMask;
-
-    return classMask & scriptMask;
 }
 
 void LFTManager::CleanupPlayer(ObjectGuid const& guid)
@@ -736,12 +716,12 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
 
 // Generic module API. World-thread only. Reuses native queue/rolecheck/offers/groups
 // and addon packet behavior (SendQueueJoined/SendQueueLeft/TryMakeOffers).
-// Validates instances and role (AllowedRoleMask); native grouping constraints are
-// team, hardcore and group formation (see CanQueuedPlayersGroup/CanPlayersGroup);
-// level is not compared by the core and remains caller/instance policy.
-// Grouped callers enter native rolecheck requiring per-member responses; the
-// leader's roleMask is only initial validation. Solo enqueues directly and is the
-// expected module use case.
+// Validates instances and role (AllowedRoleMask, native class mask); native grouping
+// constraints are team, hardcore and group formation (see CanQueuedPlayersGroup/
+// CanPlayersGroup); level is not compared by the core and remains caller/instance
+// policy. Grouped callers enter native rolecheck requiring per-member responses;
+// the leader's roleMask is only initial validation. Solo enqueues directly and is
+// the expected module use case.
 bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
 {
     if (!player || !player->IsInWorld())
@@ -858,17 +838,6 @@ bool LFTManager::AcceptOffer(ObjectGuid const& guid)
     // Preserves timers, cancellation/requeue, packets, private state, addon behavior.
     HandleOfferAccept(player);
     return true;
-}
-
-uint32 LFTManager::GetOfferId(ObjectGuid const& guid) const
-{
-    std::map<ObjectGuid, uint32>::const_iterator itr = m_playerOffers.find(guid);
-    return itr != m_playerOffers.end() ? itr->second : 0;
-}
-
-size_t LFTManager::GetQueueSize() const
-{
-    return m_queue.size();
 }
 
 std::vector<LFTManager::QueuedInfo> LFTManager::GetQueuedPlayers() const

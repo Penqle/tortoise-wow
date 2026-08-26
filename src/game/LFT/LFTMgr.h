@@ -31,8 +31,8 @@ class LFTManager
         void OnPlayerLogout(ObjectGuid const& guid);
 
         // Generic module API: queue a live in-world player through native validation.
-        // World-thread only. Validates instances and role (via AllowedRoleMask, i.e. class
-        // intersect module GetAllowedRoles) and owns queue/rolecheck/offers/groups.
+        // World-thread only. Validates instances and role (via AllowedRoleMask, native
+        // class mask) and owns queue/rolecheck/offers/groups.
         // Native grouping constraints are team, hardcore and group formation (leader/party),
         // enforced at offer formation (TryMakeOffers/CanQueuedPlayersGroup/CanPlayersGroup);
         // level is not compared by the core and remains caller/instance policy even at offer time.
@@ -55,15 +55,9 @@ class LFTManager
         // Validates that the participant is live (in-world) and belongs to an offer,
         // then reuses native HandleOfferAccept/CompleteOffer semantics (accepted-count,
         // S2C_OFFER_UPDATE_COUNT, timers, cancellation/requeue, packets, private state).
-        // Core owns queue/offers/groups; addon behavior unchanged. Intended for
-        // module-owned Headless participants that cannot send C2S_OFFER_ACCEPT;
-        // callers must not auto-accept all humans or bypass role/group/faction checks
-        // (enforced at offer formation via CanQueuedPlayersGroup/AllowedRoleMask).
+        // Core owns queue/offers/groups; addon behavior unchanged.
         bool AcceptOffer(Player* player);
         bool AcceptOffer(ObjectGuid const& guid);
-        // Minimal offer diagnostic. 0 if not in offer. Does not expose private maps.
-        uint32 GetOfferId(ObjectGuid const& guid) const;
-        size_t GetQueueSize() const;
 
         struct QueuedInfo
         {
