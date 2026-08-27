@@ -2433,6 +2433,11 @@ void LoadPlayerEggLoot();
             honorUpdateFile << "0";
     }
 
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
+    {
+        script->OnStartup();
+    });
+
     sLog.outString("Current content phase is set to %u.", GetContentPhase() + 1);
     uint32 uStartInterval = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
     sLog.outString("World server is up and running! Loading time: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000);
@@ -2479,11 +2484,6 @@ void World::DetectDBCLang()
     m_defaultDbcLocale = LocaleConstant(default_locale);
 
     sLog.outString("Using %s DBC locale as default.", localeNames[m_defaultDbcLocale]);
-    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
-    {
-        script->OnStartup();
-    });
-    
 }
 
 void World::ApiServerDeleter::operator()(HttpApi::ApiServer* p)
