@@ -29,6 +29,8 @@ set (game_SRCS
     GameEventMgr.cpp
     GuardMgr.cpp
     GMTicketMgr.cpp
+    HeadlessSessionMgr.cpp
+    HeadlessSessionMgr.h
     GossipDef.cpp
     PerformanceMonitor.cpp
     HardcodedEvents.cpp
@@ -41,6 +43,8 @@ set (game_SRCS
     ObjectMgr.cpp
     ObjectPosSelector.cpp
     PlayerDump.cpp
+    PlayerLoginQueryHolder.cpp
+    PlayerLoginQueryHolder.h
     QuestDef.cpp
     ReputationMgr.cpp
     ScriptObjects.h

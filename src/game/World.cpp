@@ -32,6 +32,7 @@
 #include "Log.h"
 #include "Opcodes.h"
 #include "WorldSession.h"
+#include "HeadlessSessionMgr.h"
 #include "WorldPacket.h"
 #include "Weather.h"
 #include "Player.h"
@@ -186,6 +187,7 @@ World::World():
 
     m_timeRate = 1.0f;
     m_charDbWorkerThread    = nullptr;
+    m_headlessSessionMgr = std::make_unique<HeadlessSessionMgr>(*this);
 }
 
 /// World destructor
@@ -227,19 +229,7 @@ void World::InternalShutdown()
 		m_sessions.erase(m_sessions.begin());
 	}
 
-    while (!m_pendingHeadlessSessions.empty())
-    {
-        auto itr = m_pendingHeadlessSessions.begin();
-        delete itr->second;
-        m_pendingHeadlessSessions.erase(itr);
-    }
-
-    while (!m_headlessSessions.empty())
-    {
-        auto itr = m_headlessSessions.begin();
-        delete itr->second;
-        m_headlessSessions.erase(itr);
-    }
+    m_headlessSessionMgr->Shutdown();
 
 	CliCommandHolder* command = nullptr;
 	while (cliCmdQueue.next(command))
@@ -309,92 +299,37 @@ void World::AddSession(WorldSession* s)
 
 bool World::AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid)
 {
-    // Caller owns 'session' unless true is returned; World owns it after.
-    if (!session || !session->IsHeadless() || !characterGuid.IsPlayer())
-        return false;
-
-    if (Player* player = sObjectAccessor.FindPlayer(characterGuid))
-    {
-        WorldSession* current = player->GetSession();
-        if (!current || !current->IsHeadless())
-            return false;
-    }
-
-    if (m_headlessSessions.find(characterGuid) != m_headlessSessions.end() ||
-        m_pendingHeadlessSessions.find(characterGuid) != m_pendingHeadlessSessions.end())
-        return false;
-
-    m_pendingHeadlessSessions.emplace(characterGuid, session);
-    return true;
+    return m_headlessSessionMgr->AddSession(session, characterGuid);
 }
 
 WorldSession* World::FindHeadlessSession(ObjectGuid characterGuid) const
 {
-    auto itr = m_headlessSessions.find(characterGuid);
-    return itr == m_headlessSessions.end() ? nullptr : itr->second;
+    return m_headlessSessionMgr->FindSession(characterGuid);
 }
 
 bool World::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const
 {
-    for (auto const& entry : m_sessions)
-        if (entry.second && entry.second != excluded && entry.second->GetAccountId() == accountId)
-            return true;
-
-    for (auto const& entry : m_headlessSessions)
-        if (entry.second && entry.second != excluded && entry.second->GetAccountId() == accountId)
-            return true;
-
-    for (auto const& entry : m_pendingHeadlessSessions)
-        if (entry.second && entry.second != excluded && entry.second->GetAccountId() == accountId)
-            return true;
-
-    return false;
+    return m_headlessSessionMgr->HasOtherSessionForAccount(accountId, excluded);
 }
 
 bool World::HasPendingHeadlessSession(ObjectGuid characterGuid) const
 {
-    return m_pendingHeadlessSessions.find(characterGuid) != m_pendingHeadlessSessions.end();
+    return m_headlessSessionMgr->HasPendingSession(characterGuid);
 }
 
 bool World::CancelPendingHeadlessSession(ObjectGuid characterGuid)
 {
-    auto itr = m_pendingHeadlessSessions.find(characterGuid);
-    if (itr == m_pendingHeadlessSessions.end())
-        return false;
-
-    delete itr->second;
-    m_pendingHeadlessSessions.erase(itr);
-    return true;
+    return m_headlessSessionMgr->CancelPendingSession(characterGuid);
 }
 
 bool World::RemoveHeadlessSession(ObjectGuid characterGuid, bool save)
 {
-    auto itr = m_headlessSessions.find(characterGuid);
-    if (itr == m_headlessSessions.end())
-        return CancelPendingHeadlessSession(characterGuid);
-
-    WorldSession* session = itr->second;
-    m_headlessSessions.erase(itr);
-    if (session->GetPlayer())
-        session->LogoutPlayer(save);
-    delete session;
-    return true;
+    return m_headlessSessionMgr->RemoveSession(characterGuid, save);
 }
 
 bool World::ForgetHeadlessSession(WorldSession* session)
 {
-    if (!session)
-        return false;
-
-    for (auto itr = m_headlessSessions.begin(); itr != m_headlessSessions.end(); ++itr)
-    {
-        if (itr->second == session)
-        {
-            m_headlessSessions.erase(itr);
-            return true;
-        }
-    }
-    return false;
+    return m_headlessSessionMgr->ForgetSession(session);
 }
 
 void World::AddSession_(WorldSession* s)
@@ -3602,19 +3537,7 @@ void World::UpdateSessions(uint32 diff)
     while (addSessQueue.next(sess))
         AddSession_(sess);
 
-    // Promote queued registrations, then update active headless sessions.
-    for (auto itr = m_pendingHeadlessSessions.begin(); itr != m_pendingHeadlessSessions.end(); )
-    {
-        if (m_headlessSessions.find(itr->first) != m_headlessSessions.end())
-        {
-            delete itr->second;
-            itr = m_pendingHeadlessSessions.erase(itr);
-            continue;
-        }
-
-        m_headlessSessions.emplace(itr->first, itr->second);
-        itr = m_pendingHeadlessSessions.erase(itr);
-    }
+    m_headlessSessionMgr->PromotePending();
 
     ///- Then send an update signal to remaining ones
     time_t time_now = time(nullptr);
@@ -3659,19 +3582,7 @@ void World::UpdateSessions(uint32 diff)
         }
     }
 
-    for (auto itr = m_headlessSessions.begin(); itr != m_headlessSessions.end(); )
-    {
-        WorldSession* session = itr->second;
-        WorldSessionFilter updater(session);
-        session->AddActiveTime(diff);
-        if (!session->Update(updater))
-        {
-            delete session;
-            itr = m_headlessSessions.erase(itr);
-        }
-        else
-            ++itr;
-    }
+    m_headlessSessionMgr->Update(diff);
 }
 
 // This handles the issued and queued CLI/RA commands

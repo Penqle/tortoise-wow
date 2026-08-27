@@ -55,6 +55,7 @@ class Player;
 class SqlResultQueue;
 class QueryResult;
 class World;
+class HeadlessSessionMgr;
 class ChannelBroadcaster;
 namespace DiscordBot
 {
@@ -1310,8 +1311,7 @@ class World
         uint32 m_lastDiff = 0;
         SessionMap m_sessions;
         SessionSet m_disconnectedSessions;
-        std::map<ObjectGuid, WorldSession*> m_headlessSessions;
-        std::map<ObjectGuid, WorldSession*> m_pendingHeadlessSessions;
+        std::unique_ptr<HeadlessSessionMgr> m_headlessSessionMgr;
         robin_hood::unordered_map<uint32 /*accountId*/, time_t /*last logout*/> m_accountsLastLogout;
         bool CanSkipQueue(WorldSession const* session);
 
