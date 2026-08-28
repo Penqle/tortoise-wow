@@ -5267,7 +5267,7 @@ bool Player::HasActiveSpell(uint32 spell) const
             itr->second.active && !itr->second.disabled);
 }
 
-TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell) const
+TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell, uint32 reqLevel) const
 {
     if (!trainer_spell)
         return TRAINER_SPELL_RED;
@@ -5284,13 +5284,15 @@ TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell
     if (HasSpell(TriggerSpell->Id))
         return TRAINER_SPELL_GRAY;
 
-    // check race/class requirement
-    if (!IsSpellFitByClassAndRace(TriggerSpell->Id))
+    // Check race/class eligibility without applying the DBC level requirement.
+    uint32 skillReqLevel = 0;
+    if (!IsSpellFitByClassAndRace(TriggerSpell->Id, &skillReqLevel))
         return TRAINER_SPELL_RED;
 
     // check level requirement
-    uint32 spellLevel = trainer_spell->reqLevel ? trainer_spell->reqLevel : TriggerSpell->spellLevel;
-    if (GetLevel() < spellLevel)
+    if (!reqLevel)
+        reqLevel = trainer_spell->isProvidedReqLevel ? trainer_spell->reqLevel : std::max(skillReqLevel, trainer_spell->reqLevel);
+    if (GetLevel() < reqLevel)
         return TRAINER_SPELL_RED;
 
     if (SpellChainNode const* spell_chain = sSpellMgr.GetSpellChainNode(TriggerSpell->Id))
