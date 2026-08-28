@@ -220,7 +220,7 @@ void WorldSession::SendTrainerList(ObjectGuid guid)
             uint32 triggerSpell = sSpellMgr.GetSpellEntry(tSpell->spell)->EffectTriggerSpell[0];
 
             uint32 reqLevel = 0;
-            if (!_player->IsSpellFitByClassAndRace(tSpell->learnedSpell, &reqLevel))
+            if (!_player->IsSpellFitByClassAndRace(triggerSpell, &reqLevel))
                 continue;
 
             reqLevel = tSpell->isProvidedReqLevel ? tSpell->reqLevel : std::max(reqLevel, tSpell->reqLevel);
@@ -241,7 +241,7 @@ void WorldSession::SendTrainerList(ObjectGuid guid)
             uint32 triggerSpell = sSpellMgr.GetSpellEntry(tSpell->spell)->EffectTriggerSpell[0];
 
             uint32 reqLevel = 0;
-            if (!_player->IsSpellFitByClassAndRace(tSpell->learnedSpell, &reqLevel))
+            if (!_player->IsSpellFitByClassAndRace(triggerSpell, &reqLevel))
                 continue;
 
             reqLevel = tSpell->isProvidedReqLevel ? tSpell->reqLevel : std::max(reqLevel, tSpell->reqLevel);
@@ -319,7 +319,8 @@ void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recv_data)
     
     // Can't be learned, cheat? Or double learn with lags...
     uint32 reqLevel = 0;
-    if (!_player->IsSpellFitByClassAndRace(trainer_spell->learnedSpell, &reqLevel))
+    SpellEntry const* proto = sSpellMgr.GetSpellEntry(trainer_spell->spell);
+    if (!proto || !_player->IsSpellFitByClassAndRace(proto->EffectTriggerSpell[0], &reqLevel))
     {
         SendTrainingFailure(guid, spellId, TRAIN_FAIL_NOT_ENOUGH_SKILL);
         return;
@@ -331,8 +332,6 @@ void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recv_data)
         SendTrainingFailure(guid, spellId, TRAIN_FAIL_NOT_ENOUGH_SKILL);
         return;
     }
-
-    SpellEntry const *proto = sSpellMgr.GetSpellEntry(trainer_spell->spell);
 
     // Apply reputation discount.
     uint32 nSpellCost = uint32(floor(trainer_spell->spellCost * _player->GetReputationPriceDiscount(unit)));
