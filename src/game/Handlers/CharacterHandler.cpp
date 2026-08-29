@@ -601,7 +601,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         // Network login may reclaim only a manager-owned Headless session.
         if (previousSession->IsHeadless())
         {
-            if (!sWorld.ReclaimHeadlessSession(playerGuid, previousSession, GetAccountId()))
+            if (!sWorld.ReclaimHeadlessSession(playerGuid, previousSession, this, GetAccountId()))
             {
                 KickPlayer();
                 delete holder;
@@ -610,9 +610,10 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             }
         }
         else
+        {
             previousSession->SetPlayer(nullptr);
-
-        pCurrChar->SetSession(this);
+            pCurrChar->SetSession(this);
+        }
 
         // Need to attach packet bcaster to the new socket
         pCurrChar->m_broadcaster->ChangeSocket(GetSocket());

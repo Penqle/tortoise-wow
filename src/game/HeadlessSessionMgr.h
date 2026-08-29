@@ -72,7 +72,8 @@ private:
     void Update(uint32 diff);
     void Shutdown();
     void HandleLoginCallback(LoginQueryHolder* holder);
-    bool ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session, uint32 accountId);
+    bool ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session,
+        WorldSession* replacement, uint32 accountId);
 
     struct SessionEntry
     {

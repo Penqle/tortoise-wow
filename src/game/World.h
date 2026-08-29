@@ -1269,7 +1269,8 @@ class World
 
     private:
         void HandleHeadlessLoginCallback(LoginQueryHolder* holder);
-        bool ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session, uint32 accountId);
+        bool ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session,
+            WorldSession* replacement, uint32 accountId);
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
         void setConfig(eConfigFloatValues index, char const* fieldname, float defvalue);

@@ -317,9 +317,10 @@ void World::HandleHeadlessLoginCallback(LoginQueryHolder* holder)
     m_headlessSessionMgr->HandleLoginCallback(holder);
 }
 
-bool World::ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session, uint32 accountId)
+bool World::ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session,
+    WorldSession* replacement, uint32 accountId)
 {
-    return m_headlessSessionMgr->ReclaimForNetwork(characterGuid, session, accountId);
+    return m_headlessSessionMgr->ReclaimForNetwork(characterGuid, session, replacement, accountId);
 }
 
 bool World::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const

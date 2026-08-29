@@ -256,19 +256,19 @@ void HeadlessSessionMgr::HandleLoginCallback(LoginQueryHolder* holder)
     entry->session->HandlePlayerLogin(holder);
 }
 
-bool HeadlessSessionMgr::ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session, uint32 accountId)
+bool HeadlessSessionMgr::ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session,
+    WorldSession* replacement, uint32 accountId)
 {
     auto active = m_sessions.find(characterGuid);
     if (active == m_sessions.end())
         return false;
 
     SessionEntry entry = active->second;
-    if (!session || entry.session != session || entry.accountId != accountId ||
-        session->GetTransport() != SessionTransport::Headless ||
-        session->GetPlayer() == nullptr)
+    Player* player = session ? session->GetPlayer() : nullptr;
+    if (!session || !replacement || replacement == session || entry.session != session ||
+        entry.accountId != accountId || session->GetTransport() != SessionTransport::Headless ||
+        !player)
         return false;
-
-    m_sessions.erase(active);
 
     if (MasterPlayer* master = session->GetMasterPlayer())
     {
@@ -276,7 +276,11 @@ bool HeadlessSessionMgr::ReclaimForNetwork(ObjectGuid characterGuid, WorldSessio
         session->SetMasterPlayer(nullptr);
     }
 
+    // Reattach the Player before deleting its manager-owned old session. This
+    // keeps Player::GetSession() valid throughout the reclaim transition.
+    player->SetSession(replacement);
     session->SetPlayer(nullptr);
+    m_sessions.erase(active);
     delete session;
     return true;
 }
