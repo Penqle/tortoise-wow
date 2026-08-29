@@ -51,6 +51,7 @@
 #include "miscellaneous/feature_transmog.h"
 #include "Config.hpp"
 #include "Logging/DatabaseLogger.hpp"
+#include <atomic>
 
 // config option SkipCinematics supported values
 enum CinematicsSkipMode
@@ -59,6 +60,18 @@ enum CinematicsSkipMode
     CINEMATICS_SKIP_SAME_RACE = 1,
     CINEMATICS_SKIP_ALL       = 2,
 };
+
+namespace
+{
+uint64 NextLoginRequestToken()
+{
+    static std::atomic<uint64> nextToken{0};
+    uint64 token = nextToken.fetch_add(1, std::memory_order_relaxed) + 1;
+    if (!token)
+        token = nextToken.fetch_add(1, std::memory_order_relaxed) + 1;
+    return token;
+}
+}
 
 
 
@@ -80,17 +93,25 @@ public:
     }
     void HandlePlayerLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
     {
-        if (!holder) return;
-        LoginQueryHolder* loginHolder = (LoginQueryHolder*)holder;
-        WorldSession *session = loginHolder->GetTransport() == SessionTransport::Headless
-            ? sWorld.FindHeadlessSession(loginHolder->GetGuid())
-            : sWorld.FindSession(loginHolder->GetAccountId());
-        if (!session)
+        if (!holder)
+            return;
+
+        LoginQueryHolder* loginHolder = static_cast<LoginQueryHolder*>(holder);
+        if (loginHolder->GetTransport() == SessionTransport::Headless)
         {
-            delete holder;
+            sWorld.HandleHeadlessLoginCallback(loginHolder);
             return;
         }
-        session->HandlePlayerLogin((LoginQueryHolder*)holder);
+
+        WorldSession* session = sWorld.FindSession(loginHolder->GetAccountId());
+        if (!session || !session->IsLoginRequest(loginHolder->GetGuid(),
+            loginHolder->GetTransport(), loginHolder->GetRequestToken()))
+        {
+            delete loginHolder;
+            return;
+        }
+
+        session->HandlePlayerLogin(loginHolder);
     }
 } chrHandler;
 
@@ -442,7 +463,10 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
     ObjectGuid playerGuid;
     recv_data >> playerGuid;
 
+    HeadlessSessionState headlessState = sWorld.GetHeadlessSessionState(playerGuid);
     if (PlayerLoading() || GetPlayer() != nullptr ||
+        headlessState == HeadlessSessionState::Pending ||
+        headlessState == HeadlessSessionState::Loading ||
         !playerGuid.IsPlayer() || sWorld.IsCharacterLocked(playerGuid.GetCounter()))
     {
         WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
@@ -452,15 +476,7 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
     }
 
     DEBUG_LOG("WORLD: Recvd Player Logon Message");
-
-    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), playerGuid);
-    if (!holder->Initialize())
-    {
-        delete holder;                                      // delete all unprocessed queries
-        return;
-    }
-    m_playerLoading = true;
-    CharacterDatabase.DelayQueryHolderUnsafe(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
+    LoginPlayer(playerGuid);
 }
 
 //This is what most initial priority is given.
@@ -495,24 +511,47 @@ uint32 WorldSession::GetBasePriority() const
     return priority;
 }
 
-void WorldSession::LoginPlayer(ObjectGuid loginPlayerGuid)
+bool WorldSession::LoginPlayer(ObjectGuid loginPlayerGuid, uint64 requestToken)
 {
     ASSERT(loginPlayerGuid.IsPlayer());
-    if (m_playerLoading)
-        return;
-    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid, GetTransport());
+    if (m_playerLoading || GetPlayer())
+        return false;
+
+    if (!requestToken)
+        requestToken = NextLoginRequestToken();
+
+    LoginQueryHolder* holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid,
+        GetTransport(), requestToken);
     if (!holder->Initialize())
     {
         delete holder;                                      // delete all unprocessed queries
-        return;
+        return false;
     }
+
+    m_loginRequestGuid = loginPlayerGuid;
+    m_loginRequestToken = requestToken;
     m_playerLoading = true;
     m_headlessLoginRequested = IsHeadless();
-    CharacterDatabase.DelayQueryHolderUnsafe(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
+    if (!CharacterDatabase.DelayQueryHolderUnsafe(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder))
+    {
+        delete holder;
+        m_playerLoading = false;
+        m_headlessLoginRequested = false;
+        return false;
+    }
+
+    return true;
 }
 
 void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 {
+    if (!holder || !IsLoginRequest(holder->GetGuid(), holder->GetTransport(),
+        holder->GetRequestToken()) || holder->GetAccountId() != GetAccountId())
+    {
+        delete holder;
+        return;
+    }
+
     // The following fixes a crash. Use case:
     // Session1 created, requests login, kicked.
     // Session2 created, requests login, and receives 2 login callback.
@@ -541,31 +580,39 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             return;
         }
 
-        // Hacking attempt
-        if (pCurrChar->GetSession()->GetAccountId() != GetAccountId())
+        WorldSession* previousSession = pCurrChar->GetSession();
+        if (!previousSession)
         {
             KickPlayer();
             delete holder;
             m_playerLoading = false;
             return;
         }
-        // Network login reclaims the character: unregister and delete the old
-        // headless session.
-        WorldSession* previousSession = pCurrChar->GetSession();
+
+        // Hacking attempt
+        if (previousSession->GetAccountId() != GetAccountId())
+        {
+            KickPlayer();
+            delete holder;
+            m_playerLoading = false;
+            return;
+        }
+
+        // Network login may reclaim only a manager-owned Headless session.
         if (previousSession->IsHeadless())
         {
-            sWorld.ForgetHeadlessSession(previousSession);
-            if (MasterPlayer* prevMaster = previousSession->GetMasterPlayer())
+            if (!sWorld.ReclaimHeadlessSession(playerGuid, previousSession, GetAccountId()))
             {
-                prevMaster->SetSession(nullptr);
-                previousSession->SetMasterPlayer(nullptr);
+                KickPlayer();
+                delete holder;
+                m_playerLoading = false;
+                return;
             }
         }
-        previousSession->SetPlayer(nullptr);
-        pCurrChar->SetSession(this);
+        else
+            previousSession->SetPlayer(nullptr);
 
-        if (previousSession->IsHeadless())
-            delete previousSession;
+        pCurrChar->SetSession(this);
 
         // Need to attach packet bcaster to the new socket
         pCurrChar->m_broadcaster->ChangeSocket(GetSocket());
@@ -759,13 +806,16 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         pCurrChar->SendInitWorldStates(pCurrChar->GetCachedZoneId());
 
     static SqlStatementID updChars;
-    static SqlStatementID updAccount;
 
     SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 1 WHERE guid = ?");
     stmt.PExecute(pCurrChar->GetGUIDLow());
 
-    stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET current_realm = ?, online = 1 WHERE id = ?");
-    stmt.PExecute(realmID, GetAccountId());
+    if (!IsHeadless())
+    {
+        static SqlStatementID updAccount;
+        stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET current_realm = ?, online = 1 WHERE id = ?");
+        stmt.PExecute(realmID, GetAccountId());
+    }
 
     pCurrChar->SetInGameTime(WorldTimer::getMSTime());
 

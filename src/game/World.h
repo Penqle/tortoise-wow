@@ -35,6 +35,7 @@
 #include "MapNodes/AbstractPlayer.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
+#include "HeadlessSessionMgr.h"
 #include "Utilities/robin_hood.h"
 
 //#include "Creature.h"
@@ -54,14 +55,13 @@ class WorldSession;
 class Player;
 class SqlResultQueue;
 class QueryResult;
+class LoginQueryHolder;
 class World;
-class HeadlessSessionMgr;
 class ChannelBroadcaster;
 namespace DiscordBot
 {
     class Bot;
 }
-
 namespace HttpApi
 {
     class ApiServer;
@@ -883,7 +883,8 @@ class World
         static volatile uint32 m_worldLoopCounter;
 
         friend class AccountDataWrapper;
-
+        friend class CharacterHandler;
+        friend class WorldSession;
         World();
         ~World();
 
@@ -898,16 +899,14 @@ class World
         const SessionMap& GetAllSessions() const { return m_sessions; }
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
-        // Character-GUID keyed, World-owned headless sessions; never in the
-        // account-keyed m_sessions map. AddHeadlessSession keeps caller
-        // ownership on false; World deletes after true (removal/reap/shutdown).
-        bool AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid);
-        WorldSession* FindHeadlessSession(ObjectGuid characterGuid) const;
+        HeadlessSessionStartResult StartHeadlessSession(uint32 accountId, ObjectGuid characterGuid,
+            LocaleConstant locale, std::string const& tag);
+        bool StopHeadlessSession(ObjectGuid characterGuid, bool save = true);
+        HeadlessSessionState GetHeadlessSessionState(ObjectGuid characterGuid) const;
+
+
+        // Network account state is independent of headless character sessions.
         bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;
-        bool HasPendingHeadlessSession(ObjectGuid characterGuid) const;
-        bool CancelPendingHeadlessSession(ObjectGuid characterGuid);
-        bool RemoveHeadlessSession(ObjectGuid characterGuid, bool save = true);
-        bool ForgetHeadlessSession(WorldSession* session);
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
@@ -1269,6 +1268,8 @@ class World
         void _UpdateRealmCharCount(QueryResult *resultCharCount, uint32 accountId);
 
     private:
+        void HandleHeadlessLoginCallback(LoginQueryHolder* holder);
+        bool ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session, uint32 accountId);
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
         void setConfig(eConfigFloatValues index, char const* fieldname, float defvalue);

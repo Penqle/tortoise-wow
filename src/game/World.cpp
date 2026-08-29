@@ -69,7 +69,6 @@
 #include "LFTMgr.h"
 #include "AutoBroadCastMgr.h"
 #include "Transports/TransportMgr.h"
-#include "PlayerBotMgr.h"
 #include "ZoneScriptMgr.h"
 #include "CharacterDatabaseCache.h"
 #include "CreatureGroups.h"
@@ -297,39 +296,42 @@ void World::AddSession(WorldSession* s)
     addSessQueue.add(s);
 }
 
-bool World::AddHeadlessSession(WorldSession* session, ObjectGuid characterGuid)
+HeadlessSessionStartResult World::StartHeadlessSession(uint32 accountId, ObjectGuid characterGuid,
+    LocaleConstant locale, std::string const& tag)
 {
-    return m_headlessSessionMgr->AddSession(session, characterGuid);
+    return m_headlessSessionMgr->Start(accountId, characterGuid, locale, tag);
 }
 
-WorldSession* World::FindHeadlessSession(ObjectGuid characterGuid) const
+bool World::StopHeadlessSession(ObjectGuid characterGuid, bool save)
 {
-    return m_headlessSessionMgr->FindSession(characterGuid);
+    return m_headlessSessionMgr->Stop(characterGuid, save);
+}
+
+HeadlessSessionState World::GetHeadlessSessionState(ObjectGuid characterGuid) const
+{
+    return m_headlessSessionMgr->GetState(characterGuid);
+}
+
+void World::HandleHeadlessLoginCallback(LoginQueryHolder* holder)
+{
+    m_headlessSessionMgr->HandleLoginCallback(holder);
+}
+
+bool World::ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session, uint32 accountId)
+{
+    return m_headlessSessionMgr->ReclaimForNetwork(characterGuid, session, accountId);
 }
 
 bool World::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const
 {
-    return m_headlessSessionMgr->HasOtherSessionForAccount(accountId, excluded);
-}
+    for (auto const& entry : m_sessions)
+    {
+        if (entry.second && entry.second != excluded &&
+            entry.second->GetAccountId() == accountId)
+            return true;
+    }
 
-bool World::HasPendingHeadlessSession(ObjectGuid characterGuid) const
-{
-    return m_headlessSessionMgr->HasPendingSession(characterGuid);
-}
-
-bool World::CancelPendingHeadlessSession(ObjectGuid characterGuid)
-{
-    return m_headlessSessionMgr->CancelPendingSession(characterGuid);
-}
-
-bool World::RemoveHeadlessSession(ObjectGuid characterGuid, bool save)
-{
-    return m_headlessSessionMgr->RemoveSession(characterGuid, save);
-}
-
-bool World::ForgetHeadlessSession(WorldSession* session)
-{
-    return m_headlessSessionMgr->ForgetSession(session);
+    return false;
 }
 
 void World::AddSession_(WorldSession* s)
@@ -774,8 +776,6 @@ void World::LoadConfigSettingsCommonPart(bool reload)
     sLog.outString("VMap data directory: %svmaps.", m_dataPath.c_str());
     sLog.outString("VMap support included. LineOfSight: %i | getHeight: %i | indoorCheck: %i.", enableLOS, enableHeight, getConfig(CONFIG_BOOL_VMAP_INDOOR_CHECK) ? 1 : 0);
     sLog.outString("MMap pathfinding %sabled.", getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
-
-    sPlayerBotMgr.LoadConfig();
 
     sLog.outString("Anticrash: 0x%x rearm after %u seconds.", getConfig(CONFIG_UINT32_ANTICRASH_OPTIONS), getConfig(CONFIG_UINT32_ANTICRASH_REARM_TIMER) / 1000);
     sLog.outString("Pathfinding: [%s]", getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "Enabled" : "Disabled");
@@ -2339,8 +2339,6 @@ void LoadPlayerEggLoot();
 	sObjectMgr.LoadPlayerPhaseFromDb();
     sLog.outString("Caching player pets...");
 	sCharacterDatabaseCache.LoadAll();
-    sLog.outString("Loading player bot manager...");
-	sPlayerBotMgr.Load();
     sLog.outString("Loading faction change reputations...");
 	sObjectMgr.LoadFactionChangeReputations();
     sLog.outString("Loading faction change spells...");
@@ -2738,8 +2736,6 @@ void World::Update(uint32 diff)
     else
         m_MaintenanceTimeChecker -= diff;
 
-    //Update PlayerBotMgr
-    sPlayerBotMgr.Update(diff);
     // Update AutoBroadcast
     sAutoBroadCastMgr.Update(diff);
     // Update liste des ban si besoin

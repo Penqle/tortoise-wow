@@ -21,140 +21,304 @@
 
 #include "HeadlessSessionMgr.h"
 
+#include "Database/DatabaseEnv.h"
+#include "AccountMgr.h"
 #include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Player.h"
+#include "MapNodes/MasterPlayer.h"
+#include "PlayerLoginQueryHolder.h"
 #include "World.h"
 #include "WorldSession.h"
 
-bool HeadlessSessionMgr::AddSession(WorldSession* session, ObjectGuid characterGuid)
+HeadlessSessionMgr::~HeadlessSessionMgr()
 {
-    // Caller owns 'session' unless true is returned; this manager owns it after.
-    if (!session || !session->IsHeadless() || !characterGuid.IsPlayer())
-        return false;
+    Shutdown();
+}
 
-    if (Player* player = sObjectAccessor.FindPlayer(characterGuid))
-    {
-        WorldSession* current = player->GetSession();
-        if (!current || !current->IsHeadless())
-            return false;
-    }
+HeadlessSessionStartResult HeadlessSessionMgr::ValidateStart(uint32 accountId, ObjectGuid characterGuid) const
+{
+    if (!characterGuid.IsPlayer())
+        return HeadlessSessionStartResult::InvalidCharacter;
+
+    if (!accountId)
+        return HeadlessSessionStartResult::InvalidAccount;
+
+    std::string accountName;
+    if (!sAccountMgr.GetName(accountId, accountName))
+        return HeadlessSessionStartResult::InvalidAccount;
+
+    if (m_world.IsCharacterLocked(characterGuid.GetCounter()))
+        return HeadlessSessionStartResult::CharacterLocked;
+
+    PlayerCacheData* character = sObjectMgr.GetPlayerDataByGUID(characterGuid.GetCounter());
+    if (!character)
+        return HeadlessSessionStartResult::InvalidCharacter;
+
+    if (character->uiAccount != accountId)
+        return HeadlessSessionStartResult::CharacterNotOwned;
 
     if (m_sessions.find(characterGuid) != m_sessions.end() ||
         m_pendingSessions.find(characterGuid) != m_pendingSessions.end())
-        return false;
+        return HeadlessSessionStartResult::Duplicate;
 
-    m_pendingSessions.emplace(characterGuid, session);
-    return true;
-}
-
-WorldSession* HeadlessSessionMgr::FindSession(ObjectGuid characterGuid) const
-{
-    auto itr = m_sessions.find(characterGuid);
-    return itr == m_sessions.end() ? nullptr : itr->second;
-}
-
-bool HeadlessSessionMgr::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const
-{
-    // Pending registrations are not active sessions; excluding them prevents
-    // cancellation before login from leaving account.online set indefinitely.
     for (auto const& entry : m_world.GetAllSessions())
     {
-        if (entry.second && entry.second != excluded && entry.second->GetAccountId() == accountId)
-            return true;
+        WorldSession* session = entry.second;
+        if (session && session->GetTransport() == SessionTransport::Network &&
+            session->m_playerLoading && session->m_loginRequestGuid == characterGuid)
+            return HeadlessSessionStartResult::ConflictingPlayer;
     }
 
-    for (auto const& entry : m_sessions)
+    if (sObjectAccessor.FindPlayerNotInWorld(characterGuid))
+        return HeadlessSessionStartResult::ConflictingPlayer;
+
+    return HeadlessSessionStartResult::Started;
+}
+
+uint64 HeadlessSessionMgr::NextRequestToken()
+{
+    ++m_nextRequestToken;
+    if (!m_nextRequestToken)
+        ++m_nextRequestToken;
+    return m_nextRequestToken;
+}
+
+HeadlessSessionStartResult HeadlessSessionMgr::Start(uint32 accountId, ObjectGuid characterGuid,
+    LocaleConstant locale, std::string const& tag)
+{
+    HeadlessSessionStartResult result = ValidateStart(accountId, characterGuid);
+    if (result != HeadlessSessionStartResult::Started)
+        return result;
+
+    WorldSession* session = new WorldSession(accountId, nullptr, sAccountMgr.GetSecurity(accountId),
+        time_t(0), locale, std::string(), 0, SessionTransport::Headless);
+    session->InitHeadlessSession();
+    session->SetUsername(tag.empty() ? "Headless" : tag);
+
+    SessionEntry entry;
+    entry.session = session;
+    entry.accountId = accountId;
+    entry.characterGuid = characterGuid;
+    entry.requestToken = NextRequestToken();
+
+    auto inserted = m_pendingSessions.emplace(characterGuid, entry);
+    if (!inserted.second)
     {
-        if (entry.second && entry.second != excluded && entry.second->GetAccountId() == accountId)
-            return true;
+        delete session;
+        return HeadlessSessionStartResult::Duplicate;
     }
 
-    return false;
+    if (!session->LoginPlayer(characterGuid, entry.requestToken))
+    {
+        auto pending = m_pendingSessions.find(characterGuid);
+        if (pending != m_pendingSessions.end() && pending->second.session == session)
+        {
+            SessionEntry failed = pending->second;
+            m_pendingSessions.erase(pending);
+            DestroySession(failed, false, false);
+        }
+        return HeadlessSessionStartResult::QueryDispatchFailed;
+    }
+
+    return HeadlessSessionStartResult::Started;
 }
 
-bool HeadlessSessionMgr::HasPendingSession(ObjectGuid characterGuid) const
+void HeadlessSessionMgr::DestroySession(SessionEntry& entry, bool save, bool clearCharacterOnline)
 {
-    return m_pendingSessions.find(characterGuid) != m_pendingSessions.end();
+    WorldSession* session = entry.session;
+    entry.session = nullptr;
+    if (!session)
+        return;
+
+    bool hadPlayer = session->GetPlayer() != nullptr;
+    if (hadPlayer || session->GetMasterPlayer())
+        session->LogoutPlayer(save);
+
+    if (clearCharacterOnline)
+        CharacterDatabase.PExecute("UPDATE characters SET online = 0 WHERE guid = '%u'",
+            entry.characterGuid.GetCounter());
+
+    delete session;
 }
 
-bool HeadlessSessionMgr::CancelPendingSession(ObjectGuid characterGuid)
+bool HeadlessSessionMgr::Stop(ObjectGuid characterGuid, bool save)
 {
-    auto itr = m_pendingSessions.find(characterGuid);
-    if (itr == m_pendingSessions.end())
+    auto active = m_sessions.find(characterGuid);
+    if (active != m_sessions.end())
+    {
+        SessionEntry entry = active->second;
+        m_sessions.erase(active);
+        DestroySession(entry, save, true);
+        return true;
+    }
+
+    auto pending = m_pendingSessions.find(characterGuid);
+    if (pending == m_pendingSessions.end())
         return false;
 
-    delete itr->second;
-    m_pendingSessions.erase(itr);
+    SessionEntry entry = pending->second;
+    m_pendingSessions.erase(pending);
+    DestroySession(entry, false, false);
     return true;
 }
 
-bool HeadlessSessionMgr::RemoveSession(ObjectGuid characterGuid, bool save)
+HeadlessSessionState HeadlessSessionMgr::GetState(ObjectGuid characterGuid) const
 {
-    auto itr = m_sessions.find(characterGuid);
-    if (itr == m_sessions.end())
-        return CancelPendingSession(characterGuid);
+    if (m_pendingSessions.find(characterGuid) != m_pendingSessions.end())
+        return HeadlessSessionState::Pending;
 
-    WorldSession* session = itr->second;
-    m_sessions.erase(itr);
+    auto active = m_sessions.find(characterGuid);
+    if (active == m_sessions.end())
+        return HeadlessSessionState::NotFound;
 
-    if (session->GetPlayer())
-        session->LogoutPlayer(save);
+    WorldSession* session = active->second.session;
+    if (session && session->GetPlayer() && !session->PlayerLoading())
+        return HeadlessSessionState::Active;
+    return HeadlessSessionState::Loading;
+}
 
+HeadlessSessionMgr::SessionEntry* HeadlessSessionMgr::FindEntry(ObjectGuid characterGuid,
+    uint32 accountId, SessionTransport transport, uint64 requestToken)
+{
+    auto matches = [&](SessionEntry& entry)
+    {
+        return entry.session && entry.accountId == accountId &&
+            entry.characterGuid == characterGuid &&
+            entry.requestToken == requestToken &&
+            entry.session->GetTransport() == transport;
+    };
+
+    auto active = m_sessions.find(characterGuid);
+    if (active != m_sessions.end() && matches(active->second))
+        return &active->second;
+
+    auto pending = m_pendingSessions.find(characterGuid);
+    if (pending != m_pendingSessions.end() && matches(pending->second))
+        return &pending->second;
+
+    return nullptr;
+}
+
+
+void HeadlessSessionMgr::HandleLoginCallback(LoginQueryHolder* holder)
+{
+    if (!holder)
+        return;
+
+    if (holder->GetTransport() != SessionTransport::Headless)
+    {
+        delete holder;
+        return;
+    }
+
+    SessionEntry* entry = FindEntry(holder->GetGuid(), holder->GetAccountId(),
+        holder->GetTransport(), holder->GetRequestToken());
+    if (!entry)
+    {
+        delete holder;
+        return;
+    }
+
+    ObjectGuid characterGuid = holder->GetGuid();
+    PlayerCacheData* character = sObjectMgr.GetPlayerDataByGUID(characterGuid.GetCounter());
+    Player* livePlayer = sObjectAccessor.FindPlayerNotInWorld(characterGuid);
+    if (m_world.IsCharacterLocked(characterGuid.GetCounter()) ||
+        !character || character->uiAccount != holder->GetAccountId())
+    {
+        Stop(characterGuid, false);
+        delete holder;
+        return;
+    }
+
+    if (livePlayer)
+    {
+        if (entry->session->GetPlayer() != livePlayer)
+            Stop(characterGuid, false);
+        delete holder;
+        return;
+    }
+
+    if (m_pendingSessions.find(characterGuid) != m_pendingSessions.end())
+    {
+        SessionEntry promoted = *entry;
+        m_pendingSessions.erase(characterGuid);
+        auto active = m_sessions.emplace(characterGuid, promoted);
+        if (!active.second)
+        {
+            DestroySession(promoted, false, false);
+            delete holder;
+            return;
+        }
+        entry = &active.first->second;
+    }
+
+    entry->session->HandlePlayerLogin(holder);
+}
+
+bool HeadlessSessionMgr::ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session, uint32 accountId)
+{
+    auto active = m_sessions.find(characterGuid);
+    if (active == m_sessions.end())
+        return false;
+
+    SessionEntry entry = active->second;
+    if (!session || entry.session != session || entry.accountId != accountId ||
+        session->GetTransport() != SessionTransport::Headless ||
+        session->GetPlayer() == nullptr)
+        return false;
+
+    m_sessions.erase(active);
+
+    if (MasterPlayer* master = session->GetMasterPlayer())
+    {
+        master->SetSession(nullptr);
+        session->SetMasterPlayer(nullptr);
+    }
+
+    session->SetPlayer(nullptr);
     delete session;
     return true;
 }
 
-bool HeadlessSessionMgr::ForgetSession(WorldSession* session)
-{
-    if (!session)
-        return false;
-
-    for (auto itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
-    {
-        if (itr->second == session)
-        {
-            m_sessions.erase(itr);
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void HeadlessSessionMgr::PromotePending()
 {
-    for (auto itr = m_pendingSessions.begin(); itr != m_pendingSessions.end(); )
+    for (auto pending = m_pendingSessions.begin(); pending != m_pendingSessions.end(); )
     {
-        if (m_sessions.find(itr->first) != m_sessions.end() ||
-            sObjectAccessor.FindPlayer(itr->first))
+        ObjectGuid characterGuid = pending->first;
+        if (m_sessions.find(characterGuid) != m_sessions.end() ||
+            sObjectAccessor.FindPlayerNotInWorld(characterGuid))
         {
-            delete itr->second;
-            itr = m_pendingSessions.erase(itr);
+            SessionEntry rejected = pending->second;
+            pending = m_pendingSessions.erase(pending);
+            DestroySession(rejected, false, false);
             continue;
         }
 
-        m_sessions.emplace(itr->first, itr->second);
-        itr = m_pendingSessions.erase(itr);
+        SessionEntry entry = pending->second;
+        pending = m_pendingSessions.erase(pending);
+        if (!m_sessions.emplace(characterGuid, entry).second)
+            DestroySession(entry, false, false);
     }
 }
 
 void HeadlessSessionMgr::Update(uint32 diff)
 {
-    for (auto itr = m_sessions.begin(); itr != m_sessions.end(); )
+    for (auto active = m_sessions.begin(); active != m_sessions.end(); )
     {
-        WorldSession* session = itr->second;
+        WorldSession* session = active->second.session;
         WorldSessionFilter updater(session);
 
         session->AddActiveTime(diff);
-        if (!session->Update(updater))
+        bool missingPlayer = !session->GetPlayer() && !session->PlayerLoading();
+        if (missingPlayer || !session->Update(updater))
         {
-            if (session->GetPlayer())
-                session->LogoutPlayer(true);
-            delete session;
-            itr = m_sessions.erase(itr);
+            SessionEntry expired = active->second;
+            active = m_sessions.erase(active);
+            DestroySession(expired, true, true);
         }
         else
-            ++itr;
+            ++active;
     }
 }
 
@@ -162,20 +326,17 @@ void HeadlessSessionMgr::Shutdown()
 {
     while (!m_pendingSessions.empty())
     {
-        auto itr = m_pendingSessions.begin();
-        delete itr->second;
-        m_pendingSessions.erase(itr);
+        auto pending = m_pendingSessions.begin();
+        SessionEntry entry = pending->second;
+        m_pendingSessions.erase(pending);
+        DestroySession(entry, false, false);
     }
 
     while (!m_sessions.empty())
     {
-        auto itr = m_sessions.begin();
-        WorldSession* session = itr->second;
-        m_sessions.erase(itr);
-
-        if (session->GetPlayer())
-            session->LogoutPlayer(true);
-
-        delete session;
+        auto active = m_sessions.begin();
+        SessionEntry entry = active->second;
+        m_sessions.erase(active);
+        DestroySession(entry, true, true);
     }
 }

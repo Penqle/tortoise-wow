@@ -29,8 +29,10 @@
 class LoginQueryHolder : public SqlQueryHolder
 {
 public:
-    LoginQueryHolder(uint32 accountId, ObjectGuid guid, SessionTransport transport = SessionTransport::Network)
-        : SqlQueryHolder(guid.GetCounter()), m_accountId(accountId), m_guid(guid), m_transport(transport) { }
+    LoginQueryHolder(uint32 accountId, ObjectGuid guid,
+        SessionTransport transport = SessionTransport::Network, uint64 requestToken = 0)
+        : SqlQueryHolder(guid.GetCounter()), m_accountId(accountId), m_guid(guid),
+          m_transport(transport), m_requestToken(requestToken) { }
 
     ~LoginQueryHolder() override
     {
@@ -41,10 +43,12 @@ public:
     ObjectGuid GetGuid() const { return m_guid; }
     uint32 GetAccountId() const { return m_accountId; }
     SessionTransport GetTransport() const { return m_transport; }
+    uint64 GetRequestToken() const { return m_requestToken; }
     bool Initialize();
 
 private:
-    uint32 m_accountId;
-    ObjectGuid m_guid;
-    SessionTransport m_transport;
+    uint32 const m_accountId;
+    ObjectGuid const m_guid;
+    SessionTransport const m_transport;
+    uint64 const m_requestToken;
 };

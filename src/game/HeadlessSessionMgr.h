@@ -23,31 +23,73 @@
 
 #include "Common.h"
 #include "ObjectGuid.h"
+#include "SessionTransport.h"
 
 #include <map>
+#include <string>
 
+class LoginQueryHolder;
 class World;
 class WorldSession;
+
+enum class HeadlessSessionState : unsigned char
+{
+    NotFound,
+    Pending,
+    Loading,
+    Active,
+};
+
+enum class HeadlessSessionStartResult : unsigned char
+{
+    Started,
+    InvalidAccount,
+    InvalidCharacter,
+    CharacterLocked,
+    CharacterNotOwned,
+    Duplicate,
+    ConflictingPlayer,
+    QueryDispatchFailed,
+};
 
 class HeadlessSessionMgr
 {
 public:
     explicit HeadlessSessionMgr(World& world) : m_world(world) { }
+    ~HeadlessSessionMgr();
 
-    bool AddSession(WorldSession* session, ObjectGuid characterGuid);
-    WorldSession* FindSession(ObjectGuid characterGuid) const;
-    bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;
-    bool HasPendingSession(ObjectGuid characterGuid) const;
-    bool CancelPendingSession(ObjectGuid characterGuid);
-    bool RemoveSession(ObjectGuid characterGuid, bool save = true);
-    bool ForgetSession(WorldSession* session);
+    HeadlessSessionStartResult Start(uint32 accountId, ObjectGuid characterGuid,
+        LocaleConstant locale, std::string const& tag);
+    bool Stop(ObjectGuid characterGuid, bool save = true);
+    HeadlessSessionState GetState(ObjectGuid characterGuid) const;
 
+private:
+    friend class World;
+
+    // Called by World only. The manager remains the sole owner of all
+    // headless-session transitions and callback identity.
     void PromotePending();
     void Update(uint32 diff);
     void Shutdown();
+    void HandleLoginCallback(LoginQueryHolder* holder);
+    bool ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session, uint32 accountId);
 
-private:
+    struct SessionEntry
+    {
+        WorldSession* session = nullptr;
+        uint32 accountId = 0;
+        ObjectGuid characterGuid;
+        uint64 requestToken = 0;
+    };
+
+    HeadlessSessionStartResult ValidateStart(uint32 accountId, ObjectGuid characterGuid) const;
+    uint64 NextRequestToken();
+    void DestroySession(SessionEntry& entry, bool save, bool clearCharacterOnline);
+    SessionEntry* FindEntry(ObjectGuid characterGuid, uint32 accountId,
+        SessionTransport transport, uint64 requestToken);
+
     World& m_world;
-    std::map<ObjectGuid, WorldSession*> m_sessions;
-    std::map<ObjectGuid, WorldSession*> m_pendingSessions;
+    std::map<ObjectGuid, SessionEntry> m_sessions;
+    std::map<ObjectGuid, SessionEntry> m_pendingSessions;
+    uint64 m_nextRequestToken = 0;
 };
