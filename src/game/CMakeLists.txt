@@ -107,6 +107,8 @@ set (game_SRCS
     Handlers/BattleGroundHandler.cpp
     Handlers/ChannelBroadcaster.cpp
     Handlers/ChannelHandler.cpp
+    Handlers/CharacterCreation.cpp
+    Handlers/CharacterCreation.h
     Handlers/CharacterHandler.cpp
     Handlers/ChatHandler.cpp
     Handlers/CombatHandler.cpp

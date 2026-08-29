@@ -31,6 +31,7 @@
 #include "World.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "Handlers/CharacterCreation.h"
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "UpdateMask.h"
@@ -182,210 +183,70 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
 {
     std::string name;
     uint8 race_, class_;
-
     recv_data >> name;
-
     recv_data >> race_;
     recv_data >> class_;
-
-    // extract other data required for player creating
     uint8 gender, skin, face, hairStyle, hairColor, facialHair, outfitId;
     recv_data >> gender >> skin >> face;
     recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
-
     uint32 challengeMask;
     recv_data >> challengeMask;
 
-    WorldPacket data(SMSG_CHAR_CREATE, 1);                  // returned with diff.values in all cases
+    CharacterCreateInfo info;
+    info.name = name;
+    info.race = race_;
+    info.class_ = class_;
+    info.gender = gender;
+    info.skin = skin;
+    info.face = face;
+    info.hairStyle = hairStyle;
+    info.hairColor = hairColor;
+    info.facialHair = facialHair;
+    info.outfitId = outfitId;
+    info.challengeMask = challengeMask;
+    info.remoteAddress = GetRemoteAddress();
 
-    Team team = Player::TeamForRace(race_);
-    if (GetSecurity() == SEC_PLAYER)
+    CharacterCreateOutcome outcome = CharacterCreation::CreateCharacter(GetAccountId(), info);
+
+    if (outcome.result == CHAR_CREATE_SUCCESS)
     {
-        bool disabled = false;
-
-        if (uint32 mask = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_CREATING_DISABLED))
-        {
-            switch (team)
-            {
-            case ALLIANCE:
-                disabled = mask & (1 << 0);
-                break;
-            case HORDE:
-                disabled = mask & (1 << 1);
-                break;
-            }
-        }
-
-        if (!disabled)
-            disabled = sObjectMgr.IsFactionImbalanced(team);
-
-        if (disabled)
-        {
-            data << (uint8)CHAR_CREATE_DISABLED;
-            SendPacket(&data);
-            return;
-        }
-    }
-
-    ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
-    ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
-
-    if (!classEntry || !raceEntry)
-    {
-        data << (uint8)CHAR_CREATE_FAILED;
-        SendPacket(&data);
-        std::stringstream oss;
-        oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
-        ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    if (raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
-    {
-        data << (uint8)CHAR_CREATE_DISABLED;
-        SendPacket(&data);
-        std::stringstream oss;
-        oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
-        ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    // Prevent character creating with invalid name
-    if (!normalizePlayerName(name))
-    {
-        data << (uint8)CHAR_NAME_NO_NAME;
-        SendPacket(&data);
-        ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    // check name limitations
-    uint8 res = ObjectMgr::CheckPlayerName(name, true);
-    if (res != CHAR_NAME_SUCCESS)
-    {
-        data << uint8(res);
-        SendPacket(&data);
-        return;
-    }
-
-    if (GetSecurity() == SEC_PLAYER && sObjectMgr.IsReservedName(name))
-    {
-        data << (uint8)CHAR_NAME_RESERVED;
-        SendPacket(&data);
-        return;
-    }
-
-    if (ObjectGuid existingGuid = sObjectMgr.GetPlayerGuidByName(name))
-    {
-        PlayerCacheData const* pExistingData = sObjectMgr.GetPlayerDataByGUID(existingGuid.GetCounter());
-        if (pExistingData && pExistingData->sName == name)
-        {
-            data << (uint8)CHAR_CREATE_NAME_IN_USE;
-            SendPacket(&data);
-            return;
-        }
+        uint32 limit = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM);
+        if (outcome.newCharactersCount)
+            _charactersCount = std::min(outcome.newCharactersCount, limit);
         else
+            _charactersCount = std::min<uint32>(_charactersCount + 1, limit);
+    }
+
+    if (outcome.result == CHAR_CREATE_FAILED)
+    {
+        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
+        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
+        if (!classEntry || !raceEntry)
         {
-            sObjectMgr.DeletePlayerNameFromCache(name);
-            sLog.outError("Character name %s taken but no player data in cache!", name.c_str());
+            std::stringstream oss;
+            oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
+            ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
         }
     }
-
-    if (_charactersCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
+    else if (outcome.result == CHAR_CREATE_DISABLED)
     {
-        data << (uint8)CHAR_CREATE_SERVER_LIMIT;
-        SendPacket(&data);
-        return;
-    }
-
-    bool AllowTwoSideAccounts = !sWorld.IsPvPRealm() || sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_ACCOUNTS) || GetSecurity() > SEC_PLAYER;
-    CinematicsSkipMode skipCinematics = CinematicsSkipMode(sWorld.getConfig(CONFIG_UINT32_SKIP_CINEMATICS));
-
-    bool have_same_race = false;
-    if (!AllowTwoSideAccounts || skipCinematics == CINEMATICS_SKIP_SAME_RACE)
-    {
-        std::vector<PlayerCacheData*> characters;
-        sObjectMgr.GetPlayerDataForAccount(GetAccountId(), characters);
-
-        if (!characters.empty())
+        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
+        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
+        if (classEntry && raceEntry && raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
         {
-            PlayerCacheData* cData = characters.front();
-
-            uint8 acc_race = cData->uiRace;
-
-            // need to check team only for first character
-            // TODO: what to if account already has characters of both races?
-            if (!AllowTwoSideAccounts)
-            {
-                if (acc_race == 0 || Player::TeamForRace(acc_race) != team)
-                {
-                    data << (uint8)CHAR_CREATE_PVP_TEAMS_VIOLATION;
-                    SendPacket(&data);
-                    return;
-                }
-            }
-
-            // search same race for cinematic or same class if need
-            // TODO: check if cinematic already shown? (already logged in?; cinematic field)
-            std::vector<PlayerCacheData*>::iterator iter = characters.begin();
-            while (iter != characters.end() && skipCinematics == CINEMATICS_SKIP_SAME_RACE && !have_same_race)
-            {
-                acc_race = (*iter)->uiRace;
-
-                have_same_race = race_ == acc_race;
-                ++iter;
-            }
+            std::stringstream oss;
+            oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
+            ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
         }
     }
-
-    // created only to call SaveToDB()
-    std::unique_ptr<Player> pNewChar = std::make_unique<Player>(this);
-    if (!pNewChar->Create(sObjectMgr.GeneratePlayerLowGuid(), name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair))
+    else if (outcome.result == CHAR_NAME_NO_NAME)
     {
-        // Player not create (race/class problem?)
-        data << (uint8)CHAR_CREATE_ERROR;
-        SendPacket(&data);
-        return;
+        ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
     }
 
-    MasterPlayer masterPlayer(this);
-    masterPlayer.Create(pNewChar.get());
-    if ((have_same_race && skipCinematics == CINEMATICS_SKIP_SAME_RACE) || skipCinematics == CINEMATICS_SKIP_ALL)
-        pNewChar->SetCinematic(1);                          // not show intro
-
-    pNewChar->SetAtLoginFlag(AT_LOGIN_FIRST);               // First login
-
-    // Challenge spells are given on first login and not on character creation
-    if (challengeMask)
-        pNewChar->SetPlayerVariable(PlayerVariables::PendingChallengeMask, std::to_string(challengeMask));
-
-    // Player created, save it now
-    if (!pNewChar->SaveToDB(false, true, false))
-    {
-        data << (uint8)CHAR_CREATE_ERROR;
-        SendPacket(&data);
-        return;
-    }
-    masterPlayer.SaveToDB();
-
-    sObjectMgr.InsertPlayerInCache(pNewChar.get());
-    sObjectMgr.UpdatePlayerCachedPosition(pNewChar.get());
-    _charactersCount += 1;
-
-    LoginDatabase.PExecute("REPLACE INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)",  _charactersCount, GetAccountId(), realmID);
-
-    data << (uint8)CHAR_CREATE_SUCCESS;
+    WorldPacket data(SMSG_CHAR_CREATE, 1);
+    data << uint8(outcome.result);
     SendPacket(&data);
-
-    std::string IP_str = GetRemoteAddress();
-    BASIC_LOG("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
-    sLog.out(LOG_CHAR, "[%s:%u@%s] Create Character:[%s] (guid: %u)", GetUsername().c_str(), GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
-    sDBLogger.LogCharAction({ pNewChar->GetGUIDLow(), GetAccountId(), LogCharAction::ActionCreate, {} });
-    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CREATE, [&](PlayerScript* script)
-    {
-        script->OnCreate(pNewChar.get());
-    });
-    sObjectMgr.IncreaseActivePlayersCount(team);
 }
 
 void WorldSession::HandleCharDeleteOpcode(WorldPacket & recv_data)

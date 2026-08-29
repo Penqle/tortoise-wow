@@ -58,6 +58,7 @@ class DynamicObject : public WorldObject
         bool NeedsRefresh(Unit *unit) const;
         void AddAffected(Unit* unit);
         void RemoveAffected(Unit* unit);
+        bool IsAffecting(Unit const* unit) const;
         void Delay(int32 delaytime);
         char const* GetName() const final { return "DynamicObject"; }
 
