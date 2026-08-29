@@ -59,21 +59,6 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     // Effective IP for logging/session; keep module calls generic with safe default.
     std::string effectiveIP = info.remoteAddress.empty() ? std::string("127.0.0.1") : info.remoteAddress;
 
-    // Character count with failure distinction: COUNT(*) returns a row with 0 when empty,
-    // so null QueryResult means DB error, not zero characters. Fail closed on error
-    // to avoid silently weakening per-realm/per-account limits.
-    uint32 charCount = 0;
-    bool charCountFailed = false;
-    if (QueryResult* cntRes = CharacterDatabase.PQuery("SELECT COUNT(guid) FROM characters WHERE account = '%u'", accountId))
-    {
-        charCount = (*cntRes)[0].GetUInt32();
-        delete cntRes;
-    }
-    else
-    {
-        sLog.outError("CharacterCreation::CreateCharacter: character count query failed for account %u", accountId);
-        charCountFailed = true;
-    }
 
     Team team = Player::TeamForRace(info.race);
     if (sec == SEC_PLAYER)
@@ -145,9 +130,27 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
         }
     }
 
-    // Restore original ordering: account limits after name/race/class checks
-    // so invalid name/race/class and anticheat are not hidden by limit errors.
-    // Distinguish DB failure from zero: fail closed on count query error.
+    uint32 charCount = info.currentRealmCharacterCount;
+    bool charCountFailed = false;
+    if (!info.currentRealmCharacterCountProvided)
+    {
+        // COUNT(*) returns a row with 0 when empty; null means a database
+        // failure. Module callers use this fallback because they have no
+        // character-list session cache.
+        if (QueryResult* cntRes = CharacterDatabase.PQuery("SELECT COUNT(guid) FROM characters WHERE account = '%u'", accountId))
+        {
+            charCount = (*cntRes)[0].GetUInt32();
+            delete cntRes;
+        }
+        else
+        {
+            sLog.outError("CharacterCreation::CreateCharacter: character count query failed for account %u", accountId);
+            charCountFailed = true;
+        }
+    }
+
+
+    // Preserve the packet path's current-realm limit and error ordering.
     if (charCountFailed)
     {
         outcome.result = CHAR_CREATE_ERROR;
@@ -156,11 +159,6 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
     {
         outcome.result = CHAR_CREATE_SERVER_LIMIT;
-        return outcome;
-    }
-    if (charCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_ACCOUNT))
-    {
-        outcome.result = CHAR_CREATE_ACCOUNT_LIMIT;
         return outcome;
     }
 
@@ -213,7 +211,8 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     // session dependency (security, account id) on the world thread.
     // OnCreate limitation: Player is not in world and session is transient;
     // hooks must not assume FindSession/online/world presence (see header).
-    WorldSession dummySession(accountId, nullptr, sec, 0, LOCALE_enUS, effectiveIP, 0);
+    WorldSession dummySession(accountId, nullptr, sec, 0, LOCALE_enUS, effectiveIP, 0,
+        SessionTransport::Headless);
 
     std::unique_ptr<Player> pNewChar = std::make_unique<Player>(&dummySession);
     if (!pNewChar->Create(sObjectMgr.GeneratePlayerLowGuid(), name, info.race, info.class_, info.gender, info.skin, info.face, info.hairStyle, info.hairColor, info.facialHair))

@@ -205,6 +205,8 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
     info.outfitId = outfitId;
     info.challengeMask = challengeMask;
     info.remoteAddress = GetRemoteAddress();
+    info.currentRealmCharacterCount = _charactersCount;
+    info.currentRealmCharacterCountProvided = true;
 
     CharacterCreateOutcome outcome = CharacterCreation::CreateCharacter(GetAccountId(), info);
 

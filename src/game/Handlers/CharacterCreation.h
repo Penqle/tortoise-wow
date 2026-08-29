@@ -1,9 +1,22 @@
-#pragma once
 /*
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos/zero>
- * Generic synchronous world-thread character materialization.
- * Core owns validation and persistence; callers do not write character rows.
+ * Copyright (C) 2011-2016 Nostalrius <https://nostalrius.org>
+ * Copyright (C) 2016-2017 Elysium Project <https://elysium-project.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "Common.h"
@@ -31,13 +44,19 @@ struct CharacterCreateInfo
     uint8 outfitId = 0;
     uint32 challengeMask = 0;
     std::string remoteAddress = "127.0.0.1";
+
+    // Packet callers should provide their current-realm character-list count
+    // so the extracted path preserves the normal session semantics. Module
+    // callers may leave this false; the core obtains a count synchronously.
+    uint32 currentRealmCharacterCount = 0;
+    bool currentRealmCharacterCountProvided = false;
 };
 
 // Outcome of CreateCharacter. `result` uses the same values as SharedDefines
 // ResponseCodes (CHAR_CREATE_*/CHAR_NAME_*). `guid` is valid only on
-// CHAR_CREATE_SUCCESS. newCharactersCount is the expected realmcharacters
-// count (pre-create DB count + 1) on success, carried to avoid post-commit
-// async recount lag; callers may sync cached _charactersCount from it.
+// CHAR_CREATE_SUCCESS. `newCharactersCount` is the current-realm count after
+// creation, carried to let a packet caller update its character-list cache
+// without an asynchronous recount.
 struct CharacterCreateOutcome
 {
     uint8 result = 0;
@@ -50,9 +69,8 @@ namespace CharacterCreation
     // Synchronous, world-thread only. Reuses Player::Create / SaveToDB and the
     // exact validation path of HandleCharCreateOpcode. Must not be called from
     // a DB worker and must not use a fake registered WorldSession.
-    // Per-realm/per-account limit checks distinguish DB count failure (null
-    // QueryResult) from zero (row with 0) and fail closed with
-    // CHAR_CREATE_ERROR rather than silently weakening limits.
+    // The per-realm count is either supplied by a packet caller or queried
+    // synchronously for a module caller. Database failure is fail-closed.
     // Transient-session OnCreate limitation: Player passed to
     // PlayerScript::OnCreate is not yet in world and the session is a
     // transient helper not registered in World nor tied to a network socket;
