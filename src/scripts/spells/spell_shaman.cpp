@@ -23,6 +23,12 @@ enum ShamanSpells
     SPELL_SHAMAN_EARTH_SHIELD_R3          = 51526,
     SPELL_SHAMAN_CALL_OF_EARTH_R1         = 58238,
     SPELL_SHAMAN_CALL_OF_EARTH_R2         = 58239,
+    SPELL_SHAMAN_CLEARCASTING             = 16246,
+    SPELL_SHAMAN_IMPROVED_CLEARCASTING    = 46761,
+    SPELL_SHAMAN_IMPROVED_CLEARCASTING_SET = 46762,
+    SPELL_SHAMAN_FLAMETONGUE_DAMAGE_BONUS = 51838,
+    SPELL_SHAMAN_ELEMENTAL_SHELL          = 51847,
+    SPELL_SHAMAN_ELEMENTAL_SHELL_PASSIVE  = 51848,
     SPELL_SHAMAN_LIGHTNING_STRIKE_NATURE_R1 = 51386,
     SPELL_SHAMAN_LIGHTNING_STRIKE_NATURE_R2 = 52419,
     SPELL_SHAMAN_LIGHTNING_STRIKE_NATURE_R3 = 52421,
@@ -669,6 +675,55 @@ int32 GetLightningStrikeShieldAmount(Unit* owner, Aura const* shieldAura)
     return amount;
 }
 
+void TriggerElementalShell(Unit* owner)
+{
+    if (!owner || !owner->HasAura(SPELL_SHAMAN_ELEMENTAL_SHELL_PASSIVE))
+        return;
+
+    owner->CastSpell(owner, SPELL_SHAMAN_ELEMENTAL_SHELL, true);
+}
+
+bool TriggerEmpoweredElementalShield(Spell* spell, bool consumeCharge)
+{
+    if (!spell || !spell->m_casterUnit)
+        return true;
+
+    Aura* shieldAura = GetActiveElementalShield(spell->m_casterUnit);
+    if (!shieldAura)
+        return false;
+
+    uint32 triggerSpellId = GetLightningShieldDamageSpell(shieldAura->GetId());
+    if (!triggerSpellId)
+        triggerSpellId = shieldAura->GetSpellProto()->EffectTriggerSpell[EFFECT_INDEX_0];
+    if (!triggerSpellId)
+        return false;
+
+    int32 const amount = GetLightningStrikeShieldAmount(spell->m_casterUnit, shieldAura);
+    if (amount <= 0)
+        return false;
+
+    SpellEntry const* shieldSpell = shieldAura->GetSpellProto();
+    if (IsLightningShieldSpell(shieldSpell))
+    {
+        Unit* target = spell->GetUnitTarget();
+        if (target && spell->m_casterUnit->IsValidAttackTarget(target))
+            spell->m_casterUnit->CastCustomSpell(target, triggerSpellId, &amount, nullptr, nullptr, true);
+    }
+    else if (IsWaterShieldSpell(shieldSpell))
+        spell->m_casterUnit->EnergizeBySpell(spell->m_casterUnit, triggerSpellId, amount, POWER_MANA);
+    else if (IsEarthShieldSpell(shieldSpell))
+        spell->m_casterUnit->CastCustomSpell(spell->m_casterUnit, triggerSpellId, &amount, nullptr, nullptr, true);
+
+    TriggerElementalShell(spell->m_casterUnit);
+
+    if (consumeCharge)
+        if (SpellAuraHolder* holder = shieldAura->GetHolder())
+            if (holder->DropAuraCharge())
+                spell->m_casterUnit->RemoveSpellAuraHolder(holder);
+
+    return false;
+}
+
 uint32 GetImprovedSearingTotemSpell(Unit const* owner)
 {
     if (!owner)
@@ -803,6 +858,7 @@ struct spell_shaman_lightning_shield : public AuraScript
         if (cooldown)
             owner->AddSpellCooldown(triggerSpellId, 0, time(nullptr) + cooldown);
 
+        TriggerElementalShell(owner);
         return SPELL_AURA_PROC_OK;
     }
 };
@@ -819,6 +875,27 @@ struct spell_shaman_water_shield : public AuraScript
     {
         if (holder && holder->GetTarget())
             holder->GetTarget()->UpdateManaRegen();
+    }
+
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 /*damage*/, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!aura || aura->GetEffIndex() != EFFECT_INDEX_0 || !IsWaterShieldSpell(aura->GetSpellProto()))
+            return std::nullopt;
+
+        TriggerElementalShell(owner);
+        return std::nullopt;
+    }
+};
+
+struct spell_shaman_earth_shield : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 /*damage*/, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!aura || aura->GetEffIndex() != EFFECT_INDEX_0 || !IsEarthShieldSpell(aura->GetSpellProto()))
+            return std::nullopt;
+
+        TriggerElementalShell(owner);
+        return std::nullopt;
     }
 };
 
@@ -912,37 +989,18 @@ struct spell_shaman_lightning_strike_shield : public SpellScript
         if (effIdx != EFFECT_INDEX_0 || !spell->m_casterUnit)
             return true;
 
-        Aura* shieldAura = GetActiveElementalShield(spell->m_casterUnit);
-        if (!shieldAura)
-            return false;
+        return TriggerEmpoweredElementalShield(spell, true);
+    }
+};
 
-        uint32 triggerSpellId = GetLightningShieldDamageSpell(shieldAura->GetId());
-        if (!triggerSpellId)
-            triggerSpellId = shieldAura->GetSpellProto()->EffectTriggerSpell[EFFECT_INDEX_0];
-        if (!triggerSpellId)
-            return false;
+struct spell_shaman_stormhowl_trigger_elemental_shield : public SpellScript
+{
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell->m_casterUnit)
+            return true;
 
-        int32 const amount = GetLightningStrikeShieldAmount(spell->m_casterUnit, shieldAura);
-        if (amount <= 0)
-            return false;
-
-        SpellEntry const* shieldSpell = shieldAura->GetSpellProto();
-        if (IsLightningShieldSpell(shieldSpell))
-        {
-            Unit* target = spell->GetUnitTarget();
-            if (target && spell->m_casterUnit->IsValidAttackTarget(target))
-                spell->m_casterUnit->CastCustomSpell(target, triggerSpellId, &amount, nullptr, nullptr, true);
-        }
-        else if (IsWaterShieldSpell(shieldSpell))
-            spell->m_casterUnit->EnergizeBySpell(spell->m_casterUnit, triggerSpellId, amount, POWER_MANA);
-        else if (IsEarthShieldSpell(shieldSpell))
-            spell->m_casterUnit->CastCustomSpell(spell->m_casterUnit, triggerSpellId, &amount, nullptr, nullptr, true);
-
-        if (SpellAuraHolder* holder = shieldAura->GetHolder())
-            if (holder->DropAuraCharge())
-                spell->m_casterUnit->RemoveSpellAuraHolder(holder);
-
-        return false;
+        return TriggerEmpoweredElementalShield(spell, false);
     }
 };
 
@@ -1103,9 +1161,21 @@ struct spell_shaman_elemental_focus : public AuraScript
 {
     std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 /*damage*/, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
     {
+        if (!owner || !aura || aura->GetEffIndex() != EFFECT_INDEX_0)
+            return std::nullopt;
+
         uint32 triggerSpellId = aura->GetSpellProto()->EffectTriggerSpell[aura->GetEffIndex()];
         if (owner->HasAura(triggerSpellId))
             owner->RemoveAurasDueToSpellByCancel(triggerSpellId);
+
+        if (owner->HasAura(SPELL_SHAMAN_IMPROVED_CLEARCASTING))
+            owner->RemoveAurasDueToSpellByCancel(SPELL_SHAMAN_IMPROVED_CLEARCASTING);
+
+        if (owner->HasAura(SPELL_SHAMAN_IMPROVED_CLEARCASTING_SET))
+        {
+            owner->CastSpell(owner, SPELL_SHAMAN_IMPROVED_CLEARCASTING, true, nullptr, aura);
+            return SPELL_AURA_PROC_OK;
+        }
 
         return std::nullopt;
     }
@@ -1276,6 +1346,13 @@ struct spell_shaman_flametongue_proc : public SpellScript
         int32 spellDamage = spell->m_caster->SpellBaseDamageBonusDone(spell->m_spellInfo->GetSpellSchoolMask());
         float weaponSpeed = (1.0f / IN_MILLISECONDS) * weapon->GetProto()->Delay;
         int32 totalDamage = int32((spell->damage + 3.85f * spellDamage) * 0.01f * weaponSpeed);
+        if (spell->m_spellInfo->IsFitToFamily<SPELLFAMILY_SHAMAN, CF_SHAMAN_FLAMETONGUE_WEAPON>() &&
+            spell->m_casterUnit && GetCasterFlameShock(spell->m_casterUnit, target))
+        {
+            if (Aura const* setBonus = spell->m_casterUnit->GetAura(SPELL_SHAMAN_FLAMETONGUE_DAMAGE_BONUS, EFFECT_INDEX_0))
+                totalDamage += totalDamage * setBonus->GetBasePoints() / 100;
+        }
+
         spell->m_caster->CastCustomSpell(target, 10444, &totalDamage, nullptr, nullptr, true, weapon);
         return false;
     }
@@ -1486,8 +1563,10 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript("spell_shaman_molten_blast", &GetSpellScript<spell_shaman_molten_blast>);
     RegisterSpellScript("spell_shaman_earthquake", &GetSpellScript<spell_shaman_earthquake>);
     RegisterSpellScript("spell_shaman_lightning_strike_shield", &GetSpellScript<spell_shaman_lightning_strike_shield>);
+    RegisterSpellScript("spell_shaman_stormhowl_trigger_elemental_shield", &GetSpellScript<spell_shaman_stormhowl_trigger_elemental_shield>);
     RegisterSpellScript("spell_shaman_lightning_strike_nature_damage", &GetSpellScript<spell_shaman_lightning_strike_nature_damage>);
     RegisterAuraScript("spell_shaman_water_shield", &GetAuraScript<spell_shaman_water_shield>);
+    RegisterAuraScript("spell_shaman_earth_shield", &GetAuraScript<spell_shaman_earth_shield>);
     RegisterAuraScript("spell_shaman_improved_fire_totems", &GetAuraScript<spell_shaman_improved_fire_totems>);
     RegisterAuraScript("spell_shaman_stoneskin", &GetAuraScript<spell_shaman_stoneskin>);
     RegisterAuraScript("spell_shaman_improved_water_shield", &GetAuraScript<spell_shaman_improved_water_shield>);

@@ -79,6 +79,7 @@ enum PaladinSpells
     SPELL_PALADIN_JUDGEMENT_OF_WISDOM_PROC_R4      = 51749,
     SPELL_PALADIN_JUDGEMENT_OF_WISDOM_PROC_R5      = 51750,
     SPELL_PALADIN_JUDGEMENT_OF_LIGHT_BONUS         = 28775,
+    SPELL_PALADIN_REDEMPTION_JUDGEMENT_OF_LIGHT_BONUS = 51820,
     SPELL_PALADIN_FLASH_OF_LIGHT_BONUS_41          = 28851,
     SPELL_PALADIN_FLASH_OF_LIGHT_BONUS_53          = 28853,
     SPELL_PALADIN_REPENTANCE_R1                    = 20066,
@@ -158,6 +159,20 @@ void ResetHolyShockCooldowns(Player* player)
 
     for (uint32 spellId : spellsToClear)
         player->RemoveSpellCooldown(spellId, true);
+}
+
+int32 GetJudgementOfLightFlatHealBonus(Unit* caster)
+{
+    if (!caster)
+        return 0;
+
+    if (Aura const* aura = caster->GetAura(SPELL_PALADIN_REDEMPTION_JUDGEMENT_OF_LIGHT_BONUS, EFFECT_INDEX_0))
+        return aura->GetBasePoints();
+
+    if (Aura const* aura = caster->GetAura(SPELL_PALADIN_JUDGEMENT_OF_LIGHT_BONUS, EFFECT_INDEX_0))
+        return aura->GetBasePoints();
+
+    return 0;
 }
 
 // Coeffs not driven by spell data for SoR so that 1 handed and 2 handed weapons can have separate coeffs
@@ -660,9 +675,11 @@ struct spell_paladin_judgement_of_light_wisdom_proc : public SpellScript
     {
         if (effIdx == EFFECT_INDEX_0 &&
                 spell->m_spellInfo->IsFitToFamilyMask<CF_PALADIN_JUDGEMENT_OF_WISDOM_LIGHT>() &&
-                spell->m_spellInfo->SpellIconID == 299 &&
-                spell->m_casterUnit && spell->m_casterUnit->HasAura(SPELL_PALADIN_JUDGEMENT_OF_LIGHT_BONUS))
-            spell->m_currentBasePoints[effIdx] = 20;
+                spell->m_spellInfo->SpellIconID == 299)
+        {
+            if (int32 bonus = GetJudgementOfLightFlatHealBonus(spell->m_casterUnit))
+                spell->m_currentBasePoints[effIdx] = bonus;
+        }
 
         return true;
     }
