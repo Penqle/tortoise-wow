@@ -83,6 +83,7 @@ modules/mod-example/conf/mod-example.conf.dist
 
 Enabled module config templates are installed as `.conf.dist` files.
 Before the server will load them, copy or move each template to the same name without `.dist` in the module config directory and review the settings.
+Module config values must be under a section header. The generated template uses `[ModuleConf]`, but a custom bracketed section header can be used.
 
 ## SQL
 

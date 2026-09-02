@@ -2,4 +2,6 @@
 # MODULE-NAME module configuration
 ###################################################################################################
 
+[ModuleConf]
+
 MODULE-NAME.Enable = 1

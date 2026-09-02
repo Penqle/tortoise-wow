@@ -10405,18 +10405,134 @@ void Unit::UpdateAuraForGroup(uint8 slot)
     }
 }
 
+bool Unit::IsWarlockEnslavedDemon(Unit const* demon) const
+{
+    if (!IsPlayer() || GetClass() != CLASS_WARLOCK || !demon || GetCharm() != demon)
+        return false;
+
+    Creature const* creature = demon->ToCreature();
+    CreatureInfo const* creatureInfo = creature ? creature->GetCreatureInfo() : nullptr;
+    return creature && creature->IsAlive() && creatureInfo && creatureInfo->type == CREATURE_TYPE_DEMON;
+}
+
+void Unit::CastPetAuraOnUnit(PetAura const* petAura, Unit* target) const
+{
+    uint32 auraId = petAura->GetAura(target->GetEntry());
+    if (!auraId)
+        return;
+
+    if (auraId == 35696)                                      // Demonic Knowledge
+    {
+        int32 basePoints = int32(petAura->GetDamage() * (target->GetStat(STAT_STAMINA) + target->GetStat(STAT_INTELLECT)) / 100);
+        target->CastCustomSpell(target, auraId, &basePoints, nullptr, nullptr, true);
+    }
+    else
+        target->CastSpell(target, auraId, true);
+}
+
+void Unit::UpdateEnslavedDemonPetStats()
+{
+    Unit* demon = GetCharm();
+    if (!IsWarlockEnslavedDemon(demon))
+        return;
+
+    Player* player = ToPlayer();
+    if (!player)
+        return;
+
+    for (Stats stat : { STAT_STAMINA, STAT_INTELLECT })
+    {
+        float bonusValue = 0.0f;
+        float value = demon->GetTotalStatValue(stat);
+
+        AuraList const& demonPetStatAuras = demon->GetAurasByType(SPELL_AURA_MOD_PET_STAT_PERCENT_OF_OWNER);
+        for (Aura const* aura : demonPetStatAuras)
+            if (aura->GetModifier()->m_miscvalue == int32(stat))
+                bonusValue += player->GetStat(stat) * aura->GetModifier()->m_amount / 100.0f;
+
+        AuraList const& ownerPetStatAuras = player->GetAurasByType(SPELL_AURA_MOD_PET_STAT_PERCENT_OF_OWNER);
+        for (Aura const* aura : ownerPetStatAuras)
+            if (aura->GetModifier()->m_miscvalue == int32(stat))
+                bonusValue += player->GetStat(stat) * aura->GetModifier()->m_amount / 100.0f;
+
+        value += bonusValue;
+
+        demon->SetStat(stat, int32(value));
+
+        switch (stat)
+        {
+            case STAT_STAMINA:
+            {
+                UnitMods unitMod = UNIT_MOD_HEALTH;
+                float health = demon->GetTotalAuraModValue(unitMod) + bonusValue * 10.0f;
+                demon->SetMaxHealth(std::max(1, int(health)));
+                break;
+            }
+            case STAT_INTELLECT:
+            {
+                UnitMods unitMod = UnitMods(UNIT_MOD_POWER_START + POWER_MANA);
+                float mana = demon->GetTotalAuraModValue(unitMod) + bonusValue * 15.0f;
+                demon->SetMaxPower(POWER_MANA, uint32(mana));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if (demon->GetMaxPower(POWER_MANA))
+        demon->UpdateManaRegen();
+}
+
 void Unit::AddPetAura(PetAura const* petSpell)
 {
     m_petAuras.insert(petSpell);
     if (Pet* pet = GetPet())
         pet->CastPetAura(petSpell);
+
+    Unit* demon = GetCharm();
+    if (IsWarlockEnslavedDemon(demon))
+        CastPetAuraOnUnit(petSpell, demon);
 }
 
 void Unit::RemovePetAura(PetAura const* petSpell)
 {
-    m_petAuras.erase(petSpell);
     if (Pet* pet = GetPet())
         pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
+
+    Unit* demon = GetCharm();
+    if (IsWarlockEnslavedDemon(demon))
+        if (uint32 auraId = petSpell->GetAura(demon->GetEntry()))
+            demon->RemoveAurasDueToSpell(auraId);
+
+    m_petAuras.erase(petSpell);
+}
+
+void Unit::CastEnslavedDemonPetAuras()
+{
+    Unit* demon = GetCharm();
+    if (!IsWarlockEnslavedDemon(demon))
+        return;
+
+    for (PetAura const* petAura : m_petAuras)
+    {
+        uint32 auraId = petAura->GetAura(demon->GetEntry());
+        if (!auraId)
+            continue;
+
+        CastPetAuraOnUnit(petAura, demon);
+    }
+}
+
+void Unit::RemoveEnslavedDemonPetAuras()
+{
+    Unit* demon = GetCharm();
+    if (!IsWarlockEnslavedDemon(demon))
+        return;
+
+    for (PetAura const* petAura : m_petAuras)
+        if (uint32 auraId = petAura->GetAura(demon->GetEntry()))
+            demon->RemoveAurasDueToSpell(auraId);
 }
 
 void Unit::RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive /*= false*/)

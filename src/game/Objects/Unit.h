@@ -811,12 +811,18 @@ class Unit : public WorldObject
         PetAuraSet m_petAuras;
         void AddPetAura(PetAura const* petSpell);
         void RemovePetAura(PetAura const* petSpell);
+        void CastEnslavedDemonPetAuras();
+        void RemoveEnslavedDemonPetAuras();
+        void UpdateEnslavedDemonPetStats();
 
         // Apply SpellEffects::EffectSummonPet after ressurecting in BG.
         ObjectGuid EffectSummonPet(uint32 spellId, uint32 petEntry, uint32 petLevel);
         void ModPossess(Unit* target, bool apply, AuraRemoveMode m_removeMode = AURA_REMOVE_BY_DEFAULT);
 
     private:
+        bool IsWarlockEnslavedDemon(Unit const* demon) const;
+        void CastPetAuraOnUnit(PetAura const* petAura, Unit* target) const;
+
         void CleanupDeletedAuras();
 
         std::multimap<uint32, SpellAuraHolder*> m_customDebuffs;

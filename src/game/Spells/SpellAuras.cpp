@@ -476,6 +476,7 @@ AreaAura::AreaAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *cu
             m_areaAuraType = AREA_AURA_PET;
             break;
         case SPELL_EFFECT_APPLY_AREA_AURA_OWNER:
+        case SPELL_EFFECT_APPLY_AURA_PET:
             m_areaAuraType = AREA_AURA_OWNER;
             if (target == caster_ptr)
                 m_modifier.m_auraname = SPELL_AURA_NONE;
@@ -704,6 +705,30 @@ void AreaAura::Update(uint32 diff)
                     {
                         if (pet->IsAlive() && caster->IsWithinDistInMap(pet, m_radius))
                             targets.push_back(pet);
+                    }
+                    switch (GetId())
+                    {
+                        case 18731:
+                        case 18743:
+                        case 18744:
+                        case 18748:
+                        case 18749:
+                        case 18750:
+                        case 18751:
+                        case 18752:
+                        {
+                            Unit* charm = caster->GetCharm();
+                            Player const* player = caster->ToPlayer();
+                            Creature const* creature = charm ? charm->ToCreature() : nullptr;
+                            CreatureInfo const* creatureInfo = creature ? creature->GetCreatureInfo() : nullptr;
+                            if (player && player->GetClass() == CLASS_WARLOCK && creature && creature->IsAlive() &&
+                                    creatureInfo && creatureInfo->type == CREATURE_TYPE_DEMON && player->GetCharm() == charm &&
+                                    caster->IsWithinDistInMap(charm, m_radius))
+                                targets.push_back(charm);
+                            break;
+                        }
+                        default:
+                            break;
                     }
                     break;
                 }
@@ -2228,6 +2253,57 @@ void NotifyAuraScriptsAfterShapeshift(Unit* target, ShapeshiftForm oldForm, Shap
     }
 }
 
+void NotifyAuraScriptsCastSpeedChanged(Unit* target)
+{
+    std::vector<SpellAuraHolder*> holders;
+    holders.reserve(target->GetSpellAuraHolderMap().size());
+
+    for (auto const& itr : target->GetSpellAuraHolderMap())
+        if (!itr.second->IsDeleted() && itr.second->GetAuraScript())
+            holders.push_back(itr.second);
+
+    for (SpellAuraHolder* holder : holders)
+    {
+        if (holder->IsDeleted())
+            continue;
+
+        holder->SetInUse(true);
+        if (Aura* aura = holder->GetAuraByEffectIndex(EFFECT_INDEX_0))
+            holder->GetAuraScript()->OnCastSpeedChanged(aura);
+        holder->SetInUse(false);
+    }
+}
+
+void NotifyAuraScriptsCharmStateChanged(Unit* caster, Unit* target, bool apply)
+{
+    std::vector<SpellAuraHolder*> holders;
+    if (caster)
+        holders.reserve(holders.size() + caster->GetSpellAuraHolderMap().size());
+    if (target && target != caster)
+        holders.reserve(holders.size() + target->GetSpellAuraHolderMap().size());
+
+    if (caster)
+        for (auto const& itr : caster->GetSpellAuraHolderMap())
+            if (!itr.second->IsDeleted() && itr.second->GetAuraScript())
+                holders.push_back(itr.second);
+
+    if (target && target != caster)
+        for (auto const& itr : target->GetSpellAuraHolderMap())
+            if (!itr.second->IsDeleted() && itr.second->GetAuraScript())
+                holders.push_back(itr.second);
+
+    for (SpellAuraHolder* holder : holders)
+    {
+        if (holder->IsDeleted())
+            continue;
+
+        holder->SetInUse(true);
+        if (Aura* aura = holder->GetAuraByEffectIndex(EFFECT_INDEX_0))
+            holder->GetAuraScript()->OnCharmStateChanged(aura, caster, target, apply);
+        holder->SetInUse(false);
+    }
+}
+
 void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 {
     if (!Real)
@@ -3111,11 +3187,19 @@ void Aura::HandleModCharm(bool apply, bool Real)
         }
         else
             target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+
+        caster->CastEnslavedDemonPetAuras();
+        NotifyAuraScriptsCharmStateChanged(caster, target, true);
     }
     else
     {
         Creature* pCreatureTarget = target->ToCreature();
         Player* pPlayerTarget = target->ToPlayer();
+
+        Unit* charmCaster = caster ? caster : target->GetCharmer();
+        NotifyAuraScriptsCharmStateChanged(charmCaster, target, false);
+        if (charmCaster)
+            charmCaster->RemoveEnslavedDemonPetAuras();
 
         target->SetCharmerGuid(ObjectGuid());
 
@@ -4063,6 +4147,7 @@ void Aura::HandleAuraProcTriggerSpell(bool apply, bool Real)
         case 8288: // Rank 2
         case 8289: // Rank 3
         case 11675: // Rank 4
+        case 51687: // Rank 5
             if (apply)
             {
                 // Fix talent Improved Drain Soul not triggering if target dies from last tick of Drain Soul damage.
@@ -4590,6 +4675,11 @@ void Aura::HandleAuraModPetStatsFromOwner(bool /*apply*/, bool /*Real*/)
 
     if (pet)
         pet->UpdateAllStats();
+
+    if (target->GetTypeId() == TYPEID_PLAYER)
+        target->UpdateEnslavedDemonPetStats();
+    else if (Unit* charmer = target->GetCharmer())
+        charmer->UpdateEnslavedDemonPetStats();
 }
 
 void Aura::HandleModPercentStat(bool apply, bool /*Real*/)
@@ -5048,6 +5138,7 @@ void Aura::HandleModCastingSpeed(bool apply, bool /*Real*/)
     }
 
     GetTarget()->ApplyCastTimePercentMod(m_modifier.m_amount, apply);
+    NotifyAuraScriptsCastSpeedChanged(GetTarget());
 }
 
 void Aura::HandleModAttackSpeed(bool apply, bool /*Real*/)
@@ -5915,9 +6006,6 @@ void Aura::PeriodicTick(SpellEntry const* sProto, AuraType auraType, uint32 data
 
             if (GetAuraScript())
                 GetAuraScript()->OnPeriodicDamageAfterDeal(this, dealtDamage, &cleanDamage);
-            // Curse of Doom: If the target dies from this damage, there is a chance that a Doomguard will be summoned.
-            if (spellProto->Id == 603 && !target->IsAlive() && !urand(0, 9))
-                pCaster->CastSpell(pCaster, 18662, true);
             break;
         }
         case SPELL_AURA_PERIODIC_LEECH:
@@ -6230,15 +6318,6 @@ void Aura::PeriodicTick(SpellEntry const* sProto, AuraType auraType, uint32 data
                     GetHolder()->SetAuraDuration(0);
                 }
             }
-            // Improved Drain Mana (soul siphon now)
-            auto improvedManaDrain1 = pCaster->GetAura(45913, EFFECT_INDEX_0); // CUSTOM replaced 17864 for soul siphon
-            auto improvedManaDrain2 = pCaster->GetAura(45914, EFFECT_INDEX_0); // same for rank 2.
-
-            if (improvedManaDrain2)
-                PeriodicTick(improvedManaDrain2->GetHolder()->GetSpellProto(), SPELL_AURA_PERIODIC_DAMAGE, drain_amount * 0.3f);
-            else if (improvedManaDrain1)
-                PeriodicTick(improvedManaDrain1->GetHolder()->GetSpellProto(), SPELL_AURA_PERIODIC_DAMAGE, drain_amount * 0.15f);
-
             // Nostalrius: break des controles type 'AURA_INTERRUPT_FLAG_DAMAGE'
             target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_DAMAGE);
             break;

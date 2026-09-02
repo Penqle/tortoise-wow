@@ -8,10 +8,15 @@ This project targets version 1.18.1 build 7272.
 Portions of this project are ported from AzerothCore and VMaNGOS.
 See `AUTHORS.md` for specific contributions.
 
-## Client Version
-
-The client version targeted is patch 1.18.1, build 7272 with the 2026-04-12 hotfixes.  
-Any client that does not match this version or build will likely have a myriad of issues.
+> [!CAUTION]
+> The client version targeted is the unmodified 1.18.1.7272 with 2026-04-12 hotfixes client, the final client version of Turtle-WoW.  
+> Any client that does not match the above specifications will likely have a myriad of issues.  
+> Several of the Turtle-WoW successor servers do __not__ offer the correct client version for this project.  
+> Use the [`dbc_verifier.py`](tools/dbc_verification/dbc_verifier.py) script to verify your extracted DBC files are the correct versions.  
+>   
+> You only need to use the `mapextractor` tool to extract all DBC files quickly, not the full vmap extract and build.  
+> A full SHA-256 manifest can be found in the [`DBC verification`](tools/dbc_verification/) folder.  
+> This manifest was retrieved from https://launcher.turtlecraft.gg/api/manifest/EU on 2026-07-14.
 
 ## Module System
 

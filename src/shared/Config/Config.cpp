@@ -21,6 +21,7 @@
 
 #include "Config.h"
 
+#include "Log.h"
 #include "Policies/SingletonImp.h"
 #include <vector>
 
@@ -30,6 +31,21 @@ INSTANTIATE_CLASS_MUTEX(Config, std::shared_mutex);
 #ifndef TW_MODULE_CONFIG_LIST
 #define TW_MODULE_CONFIG_LIST ""
 #endif
+
+static char const* GetConfigImportErrorText(int importResult)
+{
+    switch (importResult)
+    {
+        case -1:
+            return "file could not be opened";
+        case -3:
+            return "config has invalid INI syntax";
+        case -4:
+            return "config is missing a section header";
+        default:
+            return "unknown import error";
+    }
+}
 
 std::vector<std::string> Config::GetModuleConfigFiles() const
 {
@@ -204,8 +220,13 @@ bool Config::LoadModulesConfigs()
         std::string const moduleConfigPath = moduleConfigDirectory + moduleConfigFile;
         ACE_Ini_ImpExp moduleConfigImporter(*mConf);
 
-        if (moduleConfigImporter.import_config(moduleConfigPath.c_str()) == -1)
+        int const importResult = moduleConfigImporter.import_config(moduleConfigPath.c_str());
+        if (importResult != 0)
+        {
+            sLog.outError("Could not load module configuration file %s: %s.",
+                moduleConfigPath.c_str(), GetConfigImportErrorText(importResult));
             return false;
+        }
     }
 
     return true;

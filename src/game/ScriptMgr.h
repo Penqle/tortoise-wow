@@ -1430,7 +1430,9 @@ struct AuraScript
     virtual int32 OnDurationCalculate(WorldObject const* /*caster*/, Unit const* /*target*/, int32 duration) { return duration; }
     virtual void OnBeforeApply(Aura* /*aura*/, bool /*apply*/) {}
     virtual void OnAfterApply(Aura* /*aura*/, bool /*apply*/) {}
+    virtual void OnCharmStateChanged(Aura* /*aura*/, Unit* /*caster*/, Unit* /*target*/, bool /*apply*/) {}
     virtual void OnAfterShapeshift(Aura* /*aura*/, ShapeshiftForm /*oldForm*/, ShapeshiftForm /*newForm*/) {}
+    virtual void OnCastSpeedChanged(Aura* /*aura*/) {}
     virtual void OnDispel(SpellAuraHolder* /*holder*/, Unit* /*target*/, Spell* /*dispelSpell*/, uint32 /*dispelCount*/) {}
     virtual std::optional<SpellProcEventTriggerCheck> OnCheckProc(Unit const* /*owner*/, Unit* /*victim*/, SpellAuraHolder* /*holder*/, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procExtra*/, WeaponAttackType /*attType*/, bool /*isVictim*/) { return std::nullopt; }
     virtual std::optional<SpellAuraProcResult> OnProc(Unit* /*owner*/, Unit* /*victim*/, uint32 /*amount*/, int32 /*originalAmount*/, Aura* /*triggeredByAura*/, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) { return std::nullopt; }

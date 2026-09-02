@@ -206,7 +206,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNostalrius,                               //131 SPELL_EFFECT_NOSTALRIUS
     &Spell::EffectApplyAreaAura,                            //132 SPELL_EFFECT_APPLY_AREA_AURA_RAID
     &Spell::EffectApplyAreaAura,                            //133 SPELL_EFFECT_APPLY_AREA_AURA_OWNER
-    &Spell::EffectApplyAura,                                //134 SPELL_EFFECT_APPLY_AURA_PET
+    &Spell::EffectApplyAreaAura,                            //134 SPELL_EFFECT_APPLY_AURA_PET
 };
 
 void Spell::EffectEmpty(SpellEffectIndex /*eff_idx*/)
