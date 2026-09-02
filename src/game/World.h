@@ -56,6 +56,7 @@ class Player;
 class SqlResultQueue;
 class QueryResult;
 class LoginQueryHolder;
+class BanAccountHandler;
 class World;
 class ChannelBroadcaster;
 namespace DiscordBot
@@ -883,6 +884,7 @@ class World
         static volatile uint32 m_worldLoopCounter;
 
         friend class AccountDataWrapper;
+        friend class BanAccountHandler;
         friend class CharacterHandler;
         friend class WorldSession;
         World();
@@ -899,6 +901,8 @@ class World
         const SessionMap& GetAllSessions() const { return m_sessions; }
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
+        // Trusted native-module interface. Calls must run on the world thread;
+        // the manager owns construction, callbacks, lifetime and reclaim.
         HeadlessSessionStartResult StartHeadlessSession(uint32 accountId, ObjectGuid characterGuid,
             LocaleConstant locale, std::string const& tag);
         bool StopHeadlessSession(ObjectGuid characterGuid, bool save = true);
@@ -1271,6 +1275,7 @@ class World
         void HandleHeadlessLoginCallback(LoginQueryHolder* holder);
         bool ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session,
             WorldSession* replacement, uint32 accountId);
+        void StopHeadlessSessionsForAccount(uint32 accountId, bool save);
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
         void setConfig(eConfigFloatValues index, char const* fieldname, float defvalue);

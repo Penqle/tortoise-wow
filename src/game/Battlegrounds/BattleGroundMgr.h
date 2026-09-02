@@ -345,7 +345,7 @@ class BattleGroundMgr
 
 extern BattleGroundMgr sBattleGroundMgr;
 
-// Focused static assertions for the generic read-only demand DTO (#42).
+// Focused static assertions for the generic read-only demand DTO.
 static_assert(std::is_copy_constructible<BattleGroundQueue::QueuedParticipantInfo>::value, "QueuedParticipantInfo must be copy-constructible");
 static_assert(std::is_default_constructible<BattleGroundQueue::QueuedParticipantInfo>::value, "QueuedParticipantInfo must be default-constructible");
 

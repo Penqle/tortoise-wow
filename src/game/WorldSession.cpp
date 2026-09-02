@@ -93,6 +93,9 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_
     _whisper_targets(id, sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_MAX), sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_BYPASS_LEVEL),
     sWorld.getConfig(CONFIG_UINT32_WHISPER_TARGETS_DECAY), this), sessionDbcLocaleRaw(locale)
 {
+    // A remote socket must never be routed through the trusted Headless path.
+    MANGOS_ASSERT(!sock || transport == SessionTransport::Network);
+
     if (sock)
     {
         m_Address = remote_ip;

@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#pragma once
+
 #include "Common.h"
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
@@ -52,6 +54,15 @@ struct CharacterCreateInfo
     bool currentRealmCharacterCountProvided = false;
 };
 
+// Exact cause used by the packet adapter to preserve legacy anticheat logging.
+enum class CharacterCreateFailureReason : uint8
+{
+    None,
+    InvalidClassOrRace,
+    NonPlayableRace,
+    InvalidName,
+};
+
 // Outcome of CreateCharacter. `result` uses the same values as SharedDefines
 // ResponseCodes (CHAR_CREATE_*/CHAR_NAME_*). `guid` is valid only on
 // CHAR_CREATE_SUCCESS. `newCharactersCount` is the current-realm count after
@@ -62,6 +73,7 @@ struct CharacterCreateOutcome
     uint8 result = 0;
     ObjectGuid guid;
     uint32 newCharactersCount = 0;
+    CharacterCreateFailureReason failureReason = CharacterCreateFailureReason::None;
 };
 
 namespace CharacterCreation

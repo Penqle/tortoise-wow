@@ -50,6 +50,7 @@ enum class HeadlessSessionStartResult : unsigned char
     Duplicate,
     ConflictingPlayer,
     QueryDispatchFailed,
+    AccountBanned,
 };
 
 class HeadlessSessionMgr
@@ -71,6 +72,7 @@ private:
     void PromotePending();
     void Update(uint32 diff);
     void Shutdown();
+    void StopForAccount(uint32 accountId, bool save);
     void HandleLoginCallback(LoginQueryHolder* holder);
     bool ReclaimForNetwork(ObjectGuid characterGuid, WorldSession* session,
         WorldSession* replacement, uint32 accountId);

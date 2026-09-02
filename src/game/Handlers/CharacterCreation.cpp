@@ -1,8 +1,26 @@
 /*
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
- * Generic synchronous world-thread character materialization.
- * Reuses the real packet creation validation/persistence path.
+ * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos/zero>
+ * Copyright (C) 2011-2016 Nostalrius <https://nostalrius.org>
+ * Copyright (C) 2016-2017 Elysium Project <https://elysium-project.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+// Generic synchronous world-thread character materialization. Reuses the real
+// packet creation validation and persistence path.
 
 #include "Handlers/CharacterCreation.h"
 
@@ -87,11 +105,13 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     if (!classEntry || !raceEntry)
     {
         outcome.result = CHAR_CREATE_FAILED;
+        outcome.failureReason = CharacterCreateFailureReason::InvalidClassOrRace;
         return outcome;
     }
     if (raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
     {
         outcome.result = CHAR_CREATE_DISABLED;
+        outcome.failureReason = CharacterCreateFailureReason::NonPlayableRace;
         return outcome;
     }
 
@@ -99,6 +119,7 @@ CharacterCreateOutcome CreateCharacter(uint32 accountId, CharacterCreateInfo con
     if (!normalizePlayerName(name))
     {
         outcome.result = CHAR_NAME_NO_NAME;
+        outcome.failureReason = CharacterCreateFailureReason::InvalidName;
         return outcome;
     }
 

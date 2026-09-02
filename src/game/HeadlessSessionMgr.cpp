@@ -48,6 +48,9 @@ HeadlessSessionStartResult HeadlessSessionMgr::ValidateStart(uint32 accountId, O
     if (!sAccountMgr.GetName(accountId, accountName))
         return HeadlessSessionStartResult::InvalidAccount;
 
+    if (sAccountMgr.IsAccountBanned(accountId))
+        return HeadlessSessionStartResult::AccountBanned;
+
     if (m_world.IsCharacterLocked(characterGuid.GetCounter()))
         return HeadlessSessionStartResult::CharacterLocked;
 
@@ -163,6 +166,35 @@ bool HeadlessSessionMgr::Stop(ObjectGuid characterGuid, bool save)
     return true;
 }
 
+void HeadlessSessionMgr::StopForAccount(uint32 accountId, bool save)
+{
+    for (auto pending = m_pendingSessions.begin(); pending != m_pendingSessions.end(); )
+    {
+        if (pending->second.accountId != accountId)
+        {
+            ++pending;
+            continue;
+        }
+
+        SessionEntry entry = pending->second;
+        pending = m_pendingSessions.erase(pending);
+        DestroySession(entry, false, false);
+    }
+
+    for (auto active = m_sessions.begin(); active != m_sessions.end(); )
+    {
+        if (active->second.accountId != accountId)
+        {
+            ++active;
+            continue;
+        }
+
+        SessionEntry entry = active->second;
+        active = m_sessions.erase(active);
+        DestroySession(entry, save, true);
+    }
+}
+
 HeadlessSessionState HeadlessSessionMgr::GetState(ObjectGuid characterGuid) const
 {
     if (m_pendingSessions.find(characterGuid) != m_pendingSessions.end())
@@ -216,6 +248,13 @@ void HeadlessSessionMgr::HandleLoginCallback(LoginQueryHolder* holder)
         holder->GetTransport(), holder->GetRequestToken());
     if (!entry)
     {
+        delete holder;
+        return;
+    }
+
+    if (sAccountMgr.IsAccountBanned(holder->GetAccountId()))
+    {
+        StopForAccount(holder->GetAccountId(), true);
         delete holder;
         return;
     }

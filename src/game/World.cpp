@@ -323,6 +323,11 @@ bool World::ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* sessi
     return m_headlessSessionMgr->ReclaimForNetwork(characterGuid, session, replacement, accountId);
 }
 
+void World::StopHeadlessSessionsForAccount(uint32 accountId, bool save)
+{
+    m_headlessSessionMgr->StopForAccount(accountId, save);
+}
+
 bool World::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const
 {
     for (auto const& entry : m_sessions)
@@ -3081,6 +3086,8 @@ void World::BanAccount(uint32 accountId, uint32 duration, std::string reason, st
     else
         sAccountMgr.BanAccount(accountId, 0xFFFFFFFF);
 
+    StopHeadlessSessionsForAccount(accountId, true);
+
     if (WorldSession* sess = FindSession(accountId))
     {
         if (std::string(sess->GetPlayerName()) != author)
@@ -3153,6 +3160,8 @@ public:
                     sAccountMgr.BanAccount(account, time(nullptr) + holder->GetDuration());
                 else
                     sAccountMgr.BanAccount(account, 0xFFFFFFFF);
+
+                sWorld.StopHeadlessSessionsForAccount(account, true);
             }
             // Don't immediately kick if we're banning ourselves (destroys session, crash)
             if (account != holder->GetAuthorAccountId())

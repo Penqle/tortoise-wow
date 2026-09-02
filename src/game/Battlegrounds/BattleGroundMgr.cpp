@@ -1886,7 +1886,7 @@ bool BattleGroundQueue::IsAllQueuesEmpty(BattleGroundBracketId bracket_id)
     return queueEmptyCount == BG_QUEUE_MAX;
 }
 
-// Generic read-only demand snapshot for modules (#42). Copy-only value DTO, no Player pointers.
+// Generic read-only demand snapshot for modules. Copy-only value DTO, no Player pointers.
 std::vector<BattleGroundQueue::QueuedParticipantInfo> BattleGroundQueue::GetQueuedParticipants(BattleGroundBracketId bracketId) const
 {
     // BattleGroundMgr and its queues are world-thread-owned. Keep this snapshot

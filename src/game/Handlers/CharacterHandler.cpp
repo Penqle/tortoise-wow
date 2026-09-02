@@ -54,14 +54,6 @@
 #include "Logging/DatabaseLogger.hpp"
 #include <atomic>
 
-// config option SkipCinematics supported values
-enum CinematicsSkipMode
-{
-    CINEMATICS_SKIP_NONE      = 0,
-    CINEMATICS_SKIP_SAME_RACE = 1,
-    CINEMATICS_SKIP_ALL       = 2,
-};
-
 namespace
 {
 uint64 NextLoginRequestToken()
@@ -219,31 +211,27 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
             _charactersCount = std::min<uint32>(_charactersCount + 1, limit);
     }
 
-    if (outcome.result == CHAR_CREATE_FAILED)
+    switch (outcome.failureReason)
     {
-        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
-        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
-        if (!classEntry || !raceEntry)
+        case CharacterCreateFailureReason::InvalidClassOrRace:
         {
             std::stringstream oss;
             oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
             ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
+            break;
         }
-    }
-    else if (outcome.result == CHAR_CREATE_DISABLED)
-    {
-        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
-        ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
-        if (classEntry && raceEntry && raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
+        case CharacterCreateFailureReason::NonPlayableRace:
         {
             std::stringstream oss;
             oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
             ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
+            break;
         }
-    }
-    else if (outcome.result == CHAR_NAME_NO_NAME)
-    {
-        ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
+        case CharacterCreateFailureReason::InvalidName:
+            ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
+            break;
+        case CharacterCreateFailureReason::None:
+            break;
     }
 
     WorldPacket data(SMSG_CHAR_CREATE, 1);
@@ -328,9 +316,19 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
 
     HeadlessSessionState headlessState = sWorld.GetHeadlessSessionState(playerGuid);
     if (PlayerLoading() || GetPlayer() != nullptr ||
-        headlessState == HeadlessSessionState::Pending ||
-        headlessState == HeadlessSessionState::Loading ||
         !playerGuid.IsPlayer() || sWorld.IsCharacterLocked(playerGuid.GetCounter()))
+    {
+        WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
+        data << (uint8)1;
+        SendPacket(&data);
+        return;
+    }
+
+    // A real client always wins. Pending/Loading Headless sessions have not
+    // materialized a Player yet, so cancel them before dispatching this login.
+    if ((headlessState == HeadlessSessionState::Pending ||
+         headlessState == HeadlessSessionState::Loading) &&
+        !sWorld.StopHeadlessSession(playerGuid, false))
     {
         WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
         data << (uint8)1;
