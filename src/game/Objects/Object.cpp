@@ -52,6 +52,7 @@
 #include "Chat.h"
 #include "Anticheat.h"
 #include "ScriptObjects.h"
+#include "SpellClassMask.h"
 
 #include "packet_builder.h"
 #include "MovementBroadcaster.h"
@@ -4763,6 +4764,25 @@ uint32 WorldObject::SpellHealingBonusDone(Unit* pVictim, SpellEntry const* spell
                 case 3736: // Hateful Totem of the Third Wind / Increased Lesser Healing Wave / Savage Totem of the Third Wind
                     DoneTotal += i->GetModifier()->m_amount;
                     break;
+                case 5069: // Spiritual Healing
+                    DoneTotalMod *= (100.0f + i->GetModifier()->m_amount) / 100.0f;
+                    break;
+                case 5065: // Empowered Recovery
+                {
+                    if (!pVictim)
+                        break;
+
+                    Unit::AuraList const& periodicHeals = pVictim->GetAurasByType(SPELL_AURA_PERIODIC_HEAL);
+                    for (Aura const* aura : periodicHeals)
+                    {
+                        if (aura->GetSpellProto()->IsFitToFamily<SPELLFAMILY_PRIEST, CF_PRIEST_RENEW>())
+                        {
+                            DoneTotalMod *= (100.0f + i->GetModifier()->m_amount) / 100.0f;
+                            break;
+                        }
+                    }
+                    break;
+                }
                 default:
                     break;
             }

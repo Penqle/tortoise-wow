@@ -1391,6 +1391,7 @@ struct SpellScript
     virtual void OnSuccessfulStart(Spell* /*spell*/) const {}
     virtual void OnSuccessfulFinish(Spell* /*spell*/) const {}
     virtual void OnFinish(Spell* /*spell*/, bool /*ok*/) const {}
+    virtual void OnComboPointsSpent(Spell* /*spell*/, uint8 /*comboPoints*/) const {}
     virtual SpellCastResult OnCheckCast(Spell* /*spell*/, bool /*strict*/) const { return SPELL_CAST_OK; }
     virtual bool OnCanCastNonCombatSpellInCombat(Spell* /*spell*/) const { return false; }
     virtual std::optional<uint32> OnCalculatePowerCost(SpellEntry const* /*spellInfo*/, Unit* /*caster*/, Spell* /*spell*/, Item* /*castItem*/) const { return std::nullopt; }
@@ -1410,6 +1411,7 @@ struct SpellScript
     virtual void OnPrepareProcFlags(Spell* /*spell*/, bool& /*canTrigger*/, uint32& /*procAttacker*/, uint32& /*procVictim*/) const {}
     virtual void OnBeforeProc(Spell* /*spell*/, Unit* /*target*/, SpellMissInfo /*missInfo*/, uint32& /*procAttacker*/, uint32& /*procVictim*/, uint32& /*procEx*/, bool& /*triggerWeaponProcs*/) const {}
     virtual void OnHit(Spell* /*spell*/, SpellMissInfo /*missInfo*/) const {}
+    virtual void OnAfterHeal(Spell* /*spell*/, Unit* /*target*/, uint32 /*heal*/, int32 /*gain*/, bool /*crit*/) const {}
     virtual void OnAfterHit(Spell* /*spell*/) const {}
     virtual bool OnSendLoot(Spell* /*spell*/, GameObject* /*target*/, uint32 /*lootType*/, LockType /*lockType*/) const { return false; }
     virtual void OnSummonBeforeAdd(Spell* /*spell*/, Pet* /*summon*/, uint32 /*summonIndex*/) const {}
