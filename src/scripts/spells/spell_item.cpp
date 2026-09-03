@@ -2,6 +2,11 @@
 
 namespace
 {
+enum ItemSpells
+{
+    SPELL_ITEM_IMPENDING_DOOM = 44080,
+};
+
 template <class T>
 SpellScript* GetSpellScript(SpellEntry const*)
 {
@@ -299,6 +304,99 @@ struct spell_item_mana_surge : public AuraScript
 
         int32 mana = procSpell->manaCost * 35 / 100;
         owner->CastCustomSpell(owner, 23571, &mana, nullptr, nullptr, true, nullptr, aura);
+        return SPELL_AURA_PROC_OK;
+    }
+};
+
+struct spell_item_unrelenting_strikes : public AuraScript
+{
+    std::optional<SpellProcEventTriggerCheck> OnCheckProc(Unit const* owner, Unit* /*victim*/, SpellAuraHolder* /*holder*/, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procExtra*/, WeaponAttackType /*attType*/, bool isVictim) override
+    {
+        if (isVictim || !owner || !owner->IsExtraAttacksLocked())
+            return SPELL_PROC_TRIGGER_FAILED;
+
+        return std::nullopt;
+    }
+};
+
+struct spell_item_purging_flames : public SpellScript
+{
+    void OnHit(Spell* spell, SpellMissInfo missInfo) const override
+    {
+        if (missInfo != SPELL_MISS_NONE || !spell->m_casterUnit)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || target->GetCreatureType() != CREATURE_TYPE_UNDEAD)
+            return;
+
+        spell->m_casterUnit->CastSpell(target, 44075, true);
+    }
+};
+
+struct spell_item_opportunistic_strike : public SpellScript
+{
+    void OnEffectDamageCalculate(Spell* spell, SpellEffectIndex effIdx, float& damage) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell->m_casterUnit)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || target->HasInArc(spell->m_casterUnit))
+            return;
+
+        damage *= 1.35f;
+    }
+};
+
+struct spell_item_wild_regeneration : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* /*owner*/, Unit* /*victim*/, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        Unit* target = aura ? aura->GetTarget() : nullptr;
+        if (!target || !damage)
+            return SPELL_AURA_PROC_FAILED;
+
+        if (!target->HealthBelowPct(35) && !target->HealthBelowPctDamaged(35, damage))
+            return SPELL_AURA_PROC_FAILED;
+
+        return std::nullopt;
+    }
+};
+
+struct spell_item_impending_doom : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* procSpell, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!owner || !aura || !procSpell || !damage)
+            return SPELL_AURA_PROC_FAILED;
+
+        if (procSpell->Id == SPELL_ITEM_IMPENDING_DOOM || !(procSpell->GetSpellSchoolMask() & SPELL_SCHOOL_MASK_SHADOW))
+            return SPELL_AURA_PROC_FAILED;
+
+        Unit* caster = aura->GetCaster();
+        if (!caster)
+            return SPELL_AURA_PROC_FAILED;
+
+        SpellEntry const* spellInfo = aura->GetSpellProto();
+        uint32 doomDamage = uint32(std::max(0, aura->GetModifier()->m_amount) * 120 / 100);
+        if (!doomDamage)
+            return SPELL_AURA_PROC_FAILED;
+
+        uint32 absorb = 0;
+        int32 resist = 0;
+        owner->CalculateDamageAbsorbAndResist(caster, spellInfo->GetSpellSchoolMask(), SPELL_DIRECT_DAMAGE, doomDamage, &absorb, &resist, spellInfo);
+        caster->DealDamageMods(owner, doomDamage, &absorb);
+        caster->SendSpellNonMeleeDamageLog(owner, spellInfo->Id, doomDamage, spellInfo->GetSpellSchoolMask(), absorb, resist, false, 0, false);
+
+        uint32 const bonus = resist < 0 ? uint32(std::abs(resist)) : 0;
+        uint32 const malus = resist > 0 ? absorb + uint32(resist) : absorb;
+        uint32 const finalDamage = doomDamage + bonus <= malus ? 0 : doomDamage + bonus - malus;
+
+        owner->RemoveAurasByCasterSpell(spellInfo->Id, aura->GetCasterGuid());
+
+        CleanDamage cleanDamage(0, BASE_ATTACK, MELEE_HIT_NORMAL, absorb, resist);
+        caster->DealDamage(owner, finalDamage, &cleanDamage, SPELL_DIRECT_DAMAGE, spellInfo->GetSpellSchoolMask(), spellInfo, false, nullptr, true);
         return SPELL_AURA_PROC_OK;
     }
 };
@@ -1056,6 +1154,11 @@ void AddSC_item_spell_scripts()
     RegisterAuraScript("spell_item_lesser_healing_wave_relic", &GetAuraScript<spell_item_lesser_healing_wave_relic>);
     RegisterAuraScript("spell_item_ten_storms_lightning_shield", &GetAuraScript<spell_item_ten_storms_lightning_shield>);
     RegisterAuraScript("spell_item_mana_surge", &GetAuraScript<spell_item_mana_surge>);
+    RegisterAuraScript("spell_item_unrelenting_strikes", &GetAuraScript<spell_item_unrelenting_strikes>);
+    RegisterSpellScript("spell_item_purging_flames", &GetSpellScript<spell_item_purging_flames>);
+    RegisterSpellScript("spell_item_opportunistic_strike", &GetSpellScript<spell_item_opportunistic_strike>);
+    RegisterAuraScript("spell_item_wild_regeneration", &GetAuraScript<spell_item_wild_regeneration>);
+    RegisterAuraScript("spell_item_impending_doom", &GetAuraScript<spell_item_impending_doom>);
     RegisterSpellScript("spell_item_elunes_candle", &GetSpellScript<spell_item_elunes_candle>);
     RegisterSpellScript("spell_item_first_aid", &GetSpellScript<spell_item_first_aid>);
     RegisterSpellScript("spell_item_gnomish_death_ray", &GetSpellScript<spell_item_gnomish_death_ray>);

@@ -26,6 +26,13 @@ enum DruidSpells
     SPELL_DRUID_ECLIPSE_ARCANE = 51445,
     SPELL_DRUID_NATURE_ECLIPSE = 51442,
     SPELL_DRUID_ARCANE_ECLIPSE = 51443,
+    SPELL_DRUID_CENARION_BLESSING_HEAL = 52324,
+    SPELL_DRUID_RAPID_SOLSTICE = 52336,
+    SPELL_DRUID_RAPID_SOLSTICE_PASSIVE = 52337,
+    SPELL_DRUID_RESTO_T25_5P_BONUS = 52345,
+    SPELL_DRUID_PRIMAL_FEROCITY_STACK = 52369,
+    SPELL_DRUID_ASHAMANES_FURY = 52370,
+    SPELL_DRUID_PRIMAL_FEROCITY = 52372,
     SPELL_DRUID_CARNAGE_HEAL = 52735,
     SPELL_DRUID_CARNAGE_COMBO_POINT = 52736,
 };
@@ -55,6 +62,15 @@ void RegisterAuraScript(char const* name, AuraScript* (*getter)(SpellEntry const
     Script* script = new Script;
     script->Name = name;
     script->GetAuraScript = getter;
+    script->RegisterSelf();
+}
+
+void RegisterSpellAndAuraScript(char const* name, SpellScript* (*spellGetter)(SpellEntry const*), AuraScript* (*auraGetter)(SpellEntry const*))
+{
+    Script* script = new Script;
+    script->Name = name;
+    script->GetSpellScript = spellGetter;
+    script->GetAuraScript = auraGetter;
     script->RegisterSelf();
 }
 
@@ -161,6 +177,27 @@ bool IsDruidFerociousBite(SpellEntry const* spellInfo)
 {
     return spellInfo && spellInfo->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_RIP_BITE>() &&
             spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE);
+}
+
+void AddDruidPrimalFerocityStacks(Player* player, uint8 comboPoints)
+{
+    if (!player || !comboPoints || !player->HasAura(SPELL_DRUID_PRIMAL_FEROCITY))
+        return;
+
+    for (uint8 i = 0; i < comboPoints; ++i)
+    {
+        SpellAuraHolder* holder = player->GetSpellAuraHolder(SPELL_DRUID_PRIMAL_FEROCITY_STACK);
+        if (holder)
+            holder->ModStackAmount(1);
+        else
+            holder = player->AddAura(SPELL_DRUID_PRIMAL_FEROCITY_STACK, ADD_AURA_POSITIVE, player);
+
+        if (!holder || holder->GetStackAmount() < holder->GetSpellProto()->StackAmount)
+            continue;
+
+        player->RemoveAurasDueToSpell(SPELL_DRUID_PRIMAL_FEROCITY_STACK);
+        player->CastSpell(player, SPELL_DRUID_ASHAMANES_FURY, true);
+    }
 }
 
 void RefreshDruidCarnageBleed(Unit* target, ObjectGuid casterGuid, uint64 classMask, uint32 spellIconId)
@@ -336,6 +373,28 @@ struct spell_druid_aessinas_bloom : public AuraScript
 
 struct spell_druid_healing_touch : public SpellScript
 {
+    bool OnEffectHealCalculate(Spell* spell, SpellEffectIndex /*effIdx*/, int32& heal) const override
+    {
+        if (!spell || !spell->m_casterUnit || !spell->m_casterUnit->HasAura(SPELL_DRUID_RESTO_T25_5P_BONUS))
+            return true;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || !spell->m_spellInfo->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_HEALING_TOUCH>())
+            return true;
+
+        int32 bonusPct = 0;
+        if (TargetHasDruidPeriodicHeal<CF_DRUID_REJUVENATION>(target))
+            bonusPct += 10;
+
+        if (TargetHasDruidPeriodicHeal<CF_DRUID_REGROWTH>(target))
+            bonusPct += 10;
+
+        if (bonusPct > 0)
+            heal = heal * (100 + bonusPct) / 100;
+
+        return true;
+    }
+
     void OnFinish(Spell* spell, bool ok) const override
     {
         if (!ok || !spell || !spell->m_casterUnit || !spell->GetPowerCost())
@@ -570,6 +629,12 @@ struct spell_druid_open_wounds : public SpellScript
 
 struct spell_druid_ferocious_bite : public SpellScript
 {
+    void OnComboPointsSpent(Spell* spell, uint8 comboPoints) const override
+    {
+        Player* player = spell && spell->m_casterUnit ? spell->m_casterUnit->ToPlayer() : nullptr;
+        AddDruidPrimalFerocityStacks(player, comboPoints);
+    }
+
     void OnEffectDamageCalculate(Spell* spell, SpellEffectIndex effIdx, float& damage) const override
     {
         if (spell->m_spellInfo->SpellVisual != 6587)
@@ -738,6 +803,9 @@ struct spell_druid_eclipse : public AuraScript
             bonus += int32(player->GetSpellCritPercent(GetFirstSchoolInMask(procSpell->GetSpellSchoolMask())) * float(aura->GetModifier()->m_amount) / 100.0f);
 
         owner->CastCustomSpell(owner, triggerSpellId, &bonus, nullptr, nullptr, true, nullptr, aura);
+        if (owner->HasAura(SPELL_DRUID_RAPID_SOLSTICE_PASSIVE))
+            owner->CastSpell(owner, SPELL_DRUID_RAPID_SOLSTICE, true, nullptr, aura);
+
         owner->AddSpellCooldown(triggerSpellId, 0, time(nullptr) + (cooldown ? cooldown : 30));
         return SPELL_AURA_PROC_OK;
     }
@@ -816,8 +884,14 @@ struct spell_druid_efflorescence : public AuraScript
     }
 };
 
-struct spell_druid_rip : public AuraScript
+struct spell_druid_rip : public SpellScript, public AuraScript
 {
+    void OnComboPointsSpent(Spell* spell, uint8 comboPoints) const override
+    {
+        Player* player = spell && spell->m_casterUnit ? spell->m_casterUnit->ToPlayer() : nullptr;
+        AddDruidPrimalFerocityStacks(player, comboPoints);
+    }
+
     void OnPeriodicCalculateAmount(Aura* aura, float& amount) override
     {
         Unit* caster = aura->GetCaster();
@@ -900,6 +974,22 @@ struct spell_druid_primal_fury : public AuraScript
         return std::nullopt;
     }
 };
+
+struct spell_druid_cenarion_blessing : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 /*damage*/, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!owner)
+            return SPELL_AURA_PROC_FAILED;
+
+        Unit* target = owner->FindLowestHpFriendlyUnit(30.0f);
+        if (!target)
+            return SPELL_AURA_PROC_FAILED;
+
+        owner->CastSpell(target, SPELL_DRUID_CENARION_BLESSING_HEAL, true, nullptr, aura);
+        return SPELL_AURA_PROC_OK;
+    }
+};
 }
 
 void AddSC_druid_spell_scripts()
@@ -920,11 +1010,12 @@ void AddSC_druid_spell_scripts()
     RegisterAuraScript("spell_druid_eclipse", &GetAuraScript<spell_druid_eclipse>);
     RegisterAuraScript("spell_druid_frenzied_regeneration", &GetAuraScript<spell_druid_frenzied_regeneration>);
     RegisterAuraScript("spell_druid_efflorescence", &GetAuraScript<spell_druid_efflorescence>);
-    RegisterAuraScript("spell_druid_rip", &GetAuraScript<spell_druid_rip>);
+    RegisterSpellAndAuraScript("spell_druid_rip", &GetSpellScript<spell_druid_rip>, &GetAuraScript<spell_druid_rip>);
     RegisterAuraScript("spell_druid_moonclaw", &GetAuraScript<spell_druid_moonclaw>);
     RegisterAuraScript("spell_druid_berserk_form_swap", &GetAuraScript<spell_druid_berserk_form_swap>);
     RegisterAuraScript("spell_druid_tree_of_life_aura", &GetAuraScript<spell_druid_tree_of_life_aura>);
     RegisterAuraScript("spell_druid_preservation", &GetAuraScript<spell_druid_preservation>);
     RegisterAuraScript("spell_druid_glyph_of_the_moon", &GetAuraScript<spell_druid_glyph_of_the_moon>);
     RegisterAuraScript("spell_druid_primal_fury", &GetAuraScript<spell_druid_primal_fury>);
+    RegisterAuraScript("spell_druid_cenarion_blessing", &GetAuraScript<spell_druid_cenarion_blessing>);
 }

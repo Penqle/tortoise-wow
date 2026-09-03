@@ -43,6 +43,10 @@ enum MageSpells
     SPELL_MAGE_ARCANE_RUPTURE_BUFF           = 52502,
     SPELL_MAGE_ICICLES_R1                    = 52516,
     SPELL_MAGE_ICICLE_R1                     = 52517,
+    SPELL_MAGE_ERUPTING_SHIELD               = 52582,
+    SPELL_MAGE_ERUPTING_SHIELD_DAMAGE        = 52583,
+    SPELL_MAGE_NETHER_OVERCHARGE             = 52594,
+    SPELL_MAGE_NETHER_OVERCHARGE_BUFF        = 52595,
 };
 
 enum MageMisc
@@ -308,6 +312,33 @@ struct spell_mage_ignite : public AuraScript
             std::lock_guard<std::mutex> guard(s_igniteContributionsMutex);
             s_igniteContributions.erase(aura->GetTarget()->GetObjectGuid());
         }
+    }
+};
+
+struct spell_mage_mana_shield : public AuraScript
+{
+    void OnManaAbsorb(Aura* aura, int32& currentAbsorb, int32& /*remainingDamage*/) override
+    {
+        if (!aura || aura->GetEffIndex() != EFFECT_INDEX_0 || currentAbsorb <= 0)
+            return;
+
+        Unit* target = aura->GetTarget();
+        if (!target || !target->HasAura(SPELL_MAGE_ERUPTING_SHIELD))
+            return;
+
+        int32 const remainingAbsorb = aura->GetModifier()->m_amount;
+        if (currentAbsorb < remainingAbsorb)
+            return;
+
+        Aura const* setBonus = target->GetAura(SPELL_MAGE_ERUPTING_SHIELD, EFFECT_INDEX_0);
+        if (!setBonus || setBonus->GetModifier()->m_amount <= 0)
+            return;
+
+        int32 damage = std::max(aura->GetInitialAbsorbAmount(), remainingAbsorb) * setBonus->GetModifier()->m_amount / 100;
+        if (damage <= 0)
+            return;
+
+        target->CastCustomSpell(target, SPELL_MAGE_ERUPTING_SHIELD_DAMAGE, &damage, nullptr, nullptr, true, nullptr, aura);
     }
 };
 
@@ -607,6 +638,17 @@ struct spell_mage_arcane_rupture : public SpellScript
     }
 };
 
+struct spell_mage_evocation : public SpellScript
+{
+    void OnSuccessfulFinish(Spell* spell) const override
+    {
+        if (!spell->m_casterUnit || !spell->m_casterUnit->HasAura(SPELL_MAGE_NETHER_OVERCHARGE))
+            return;
+
+        spell->m_casterUnit->CastSpell(spell->m_casterUnit, SPELL_MAGE_NETHER_OVERCHARGE_BUFF, true);
+    }
+};
+
 struct spell_mage_arcane_rupture_buff : public AuraScript
 {
     void OnAfterApply(Aura* aura, bool apply) override
@@ -896,6 +938,7 @@ void AddSC_mage_spell_scripts()
     RegisterAuraScript("spell_mage_magic_absorption", &GetAuraScript<spell_mage_magic_absorption>);
     RegisterAuraScript("spell_mage_master_of_elements", &GetAuraScript<spell_mage_master_of_elements>);
     RegisterAuraScript("spell_mage_ignite", &GetAuraScript<spell_mage_ignite>);
+    RegisterAuraScript("spell_mage_mana_shield", &GetAuraScript<spell_mage_mana_shield>);
     RegisterAuraScript("spell_mage_combustion", &GetAuraScript<spell_mage_combustion>);
     RegisterAuraScript("spell_mage_resonance_cascade", &GetAuraScript<spell_mage_resonance_cascade>);
     RegisterAuraScript("spell_mage_arcane_instability", &GetAuraScript<spell_mage_arcane_instability>);
@@ -905,6 +948,7 @@ void AddSC_mage_spell_scripts()
     RegisterAuraScript("spell_mage_flash_freeze", &GetAuraScript<spell_mage_flash_freeze>);
     RegisterSpellScript("spell_mage_clear_resist_state", &GetSpellScript<spell_mage_clear_resist_state>);
     RegisterSpellScript("spell_mage_arcane_rupture", &GetSpellScript<spell_mage_arcane_rupture>);
+    RegisterSpellScript("spell_mage_evocation", &GetSpellScript<spell_mage_evocation>);
     RegisterAuraScript("spell_mage_arcane_rupture_buff", &GetAuraScript<spell_mage_arcane_rupture_buff>);
     RegisterAuraScript("spell_mage_arcane_power", &GetAuraScript<spell_mage_arcane_power>);
     RegisterAuraScript("spell_mage_arcane_meditation", &GetAuraScript<spell_mage_arcane_meditation>);
