@@ -2047,14 +2047,6 @@ Transmog.ReqMoneyRate = 0
 
 StaticObjectLOS = 1
 
-PlayerBot.Enable = 1
-PlayerBot.Debug = 0
-PlayerBot.UpdateMs = 1000
-PlayerBot.MinBots = 0
-PlayerBot.MaxBots = 0
-PlayerBot.Refresh = 10000
-PlayerBot.ForceLogoutDelay = 1
-
 MailSpam.ExpireSecs = 30
 MailSpam.MaxMails = 5
 MailSpam.Level = 10

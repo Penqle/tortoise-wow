@@ -1962,21 +1962,6 @@ CREATE TABLE `petition_sign` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=DYNAMIC COMMENT='Guild System';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `playerbot`
---
-
-DROP TABLE IF EXISTS `playerbot`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `playerbot` (
-  `char_guid` bigint(20) unsigned NOT NULL,
-  `chance` int(10) unsigned NOT NULL DEFAULT 10,
-  `comment` varchar(255) DEFAULT NULL,
-  `ai` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`char_guid`) USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=DYNAMIC;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `saved_variables`
@@ -8439,20 +8424,6 @@ CREATE TABLE `player_xp_for_level` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=FIXED;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `playerbot`
---
-
-DROP TABLE IF EXISTS `playerbot`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `playerbot` (
-  `char_guid` bigint(20) unsigned NOT NULL,
-  `chance` int(10) unsigned NOT NULL DEFAULT 10,
-  `comment` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`char_guid`) USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=DYNAMIC;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `playercreateinfo`

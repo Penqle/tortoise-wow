@@ -79,4 +79,5 @@ See `CONTRIBUTING.md` for ways to get started.
 [13]: http://slproweb.com/products/Win32OpenSSL.html "OpenSSL for Windows"
 [14]: http://www.ubuntu.com/ "Ubuntu - The world's most popular free OS"
 [15]: http://windows.microsoft.com/ "Microsoft Windows"
+
 [21]: http://github.com/memononen/recastnavigation "Recast - Navigation-mesh Toolset for Games"

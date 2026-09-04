@@ -11659,11 +11659,18 @@ bool ChatHandler::HandleKickPlayerCommand(char* args)
 
     // send before target pointer invalidate
     PSendSysMessage(LANG_COMMAND_KICKMESSAGE, GetNameLink(target).c_str());
+    WorldSession* targetSession = target->GetSession();
+    if (targetSession->IsHeadless())
+    {
+        sWorld.StopHeadlessSession(target->GetObjectGuid(), true);
+        return true;
+    }
+
     // First kick: close socket but keep player online
-    if (target->GetSession()->IsConnected())
-        target->GetSession()->KickPlayer();
+    if (targetSession->IsConnected())
+        targetSession->KickPlayer();
     else
-        target->GetSession()->KickDisconnectedFromWorld();
+        targetSession->KickDisconnectedFromWorld();
 
     return true;
 }

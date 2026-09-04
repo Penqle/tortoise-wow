@@ -32,6 +32,7 @@
 #include "Item.h"
 #include "GossipDef.h"
 #include "MapNodes/AbstractPlayer.h"
+#include "SessionTransport.h"
 #include "WhisperTargetLimits.h"
 #include "Analysis/AccountAnalyser.hpp"
 
@@ -67,7 +68,6 @@ class BehaviorAnalyzer;
 class MasterPlayer;
 
 struct OpcodeHandler;
-struct PlayerBotEntry;
 
 enum ClientOSType
 {
@@ -305,8 +305,9 @@ enum WorldRegion
 class WorldSession
 {
     friend class CharacterHandler;
+    friend class HeadlessSessionMgr;
     public:
-        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp);
+        WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_t mute_time, LocaleConstant locale, const std::string& remote_ip, uint32 binaryIp, SessionTransport transport = SessionTransport::Network);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
@@ -349,8 +350,10 @@ class WorldSession
         std::string const& GetClientHash() const { return _clientHash; }
         void SetPlayer(Player *plr) { _player = plr; }
         void SetMasterPlayer(MasterPlayer *plr) { m_masterPlayer = plr; }
-        void LoginPlayer(ObjectGuid playerGuid);
         WorldSocket* GetSocket() { return m_Socket; }
+        SessionTransport GetTransport() const { return m_transport; }
+        bool IsHeadless() const { return m_transport == SessionTransport::Headless; }
+        bool HasNetworkTransport() const { return m_transport == SessionTransport::Network && m_Socket != nullptr; }
         void SetFingerprintBanned() { m_fingerprintBanned = true; }
         bool IsFingerprintBanned() const { return m_fingerprintBanned; }
 
@@ -536,11 +539,6 @@ class WorldSession
         time_t GetLastPubChanMsgTime() { return m_lastPubChannelMsgTime; }
         void SetLastPubChanMsgTime(time_t time) { m_lastPubChannelMsgTime = time; }
 
-        // Bot system
-        std::stringstream _chatBotHistory;
-        PlayerBotEntry* GetBot() { return m_bot; }
-        void SetBot(PlayerBotEntry* b) { m_bot = b; }
-
         // Player online / socket offline system
         void SetDisconnectedSession(); // Remove from World::m_session. Used when an account gets disconnected.
         bool UpdateDisconnected(uint32 diff);
@@ -648,7 +646,6 @@ class WorldSession
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
         void HandleCharEnum(QueryResult * result);
-        void HandlePlayerLogin(LoginQueryHolder * holder);
         void HandlePlayedTime(WorldPacket& recvPacket);
 
         // Movement
@@ -992,11 +989,22 @@ class WorldSession
         // logging helper
         void LogUnexpectedOpcode(WorldPacket *packet, const char * reason);
         void LogUnprocessedTail(WorldPacket *packet);
+        bool LoginPlayer(ObjectGuid playerGuid, uint64 requestToken = 0);
+        bool IsLoginRequest(ObjectGuid characterGuid, SessionTransport transport, uint64 requestToken) const
+        {
+            return m_loginRequestGuid == characterGuid &&
+                m_transport == transport && m_loginRequestToken == requestToken;
+        }
+        void HandlePlayerLogin(LoginQueryHolder* holder);
+        void InitHeadlessSession();
 
         Player *_player;
         ObjectGuid m_clientMoverGuid;
+        ObjectGuid m_loginRequestGuid;
+        uint64 m_loginRequestToken = 0;
         uint32 m_moveRejectTime;
         WorldSocket *m_Socket;
+        SessionTransport const m_transport;
         std::string m_Address;
         uint32 m_BinaryAddress = 0;
 
@@ -1013,6 +1021,7 @@ class WorldSession
         bool m_inQueue;                                     // session wait in auth.queue
         bool m_hadQueue = false;                            // true if the session was in a queue this session.
         bool m_playerLoading;                               // code processed in LoginPlayer
+        bool m_headlessLoginRequested = false;
         bool m_playerLogout;                                // code processed in LogoutPlayer
         bool m_playerRecentlyLogout;
         bool m_playerSave;
@@ -1031,7 +1040,6 @@ class WorldSession
         uint32 _floodPacketsCount[FLOOD_MAX_OPCODES_TYPE];
 
         std::unordered_map<uint32, std::pair<uint32, uint32>> m_requeuePacketCount; 
-        PlayerBotEntry* m_bot;
         uint32 m_lastReceivedPacketTime;
         ClientIdentifiersMap _clientIdentifiers;
         std::string     _clientHash;
