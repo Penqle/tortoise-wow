@@ -83,6 +83,7 @@ private:
         uint32 accountId = 0;
         ObjectGuid characterGuid;
         uint64 requestToken = 0;
+        uint32 outOfWorldMs = 0;
     };
 
     HeadlessSessionStartResult ValidateStart(uint32 accountId, ObjectGuid characterGuid) const;

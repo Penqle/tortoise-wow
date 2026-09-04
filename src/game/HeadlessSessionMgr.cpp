@@ -30,6 +30,11 @@
 #include "PlayerLoginQueryHolder.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "Log.h"
+
+namespace {
+constexpr uint32 kHeadlessOutOfWorldGraceMs = 5000;
+}
 
 HeadlessSessionMgr::~HeadlessSessionMgr()
 {
@@ -353,9 +358,26 @@ void HeadlessSessionMgr::Update(uint32 diff)
         WorldSessionFilter updater(session);
 
         session->AddActiveTime(diff);
-        bool missingPlayer = !session->GetPlayer() && !session->PlayerLoading();
-        if (missingPlayer || !session->Update(updater))
+        bool sessionAlive = session->Update(updater);
+        Player* player = session->GetPlayer();
+        bool loading = session->PlayerLoading();
+        bool missingPlayer = !player && !loading;
+        bool strandedPlayer = player && !player->IsInWorld() &&
+            !player->IsBeingTeleported() && !loading;
+        if (strandedPlayer)
+            active->second.outOfWorldMs += diff;
+        else
+            active->second.outOfWorldMs = 0;
+
+        if (missingPlayer || !sessionAlive ||
+            active->second.outOfWorldMs >= kHeadlessOutOfWorldGraceMs)
         {
+            if (strandedPlayer)
+            {
+                sLog.outError("HeadlessSessionMgr: expiring out-of-world session for %s after %u ms",
+                    active->second.characterGuid.GetString().c_str(),
+                    active->second.outOfWorldMs);
+            }
             SessionEntry expired = active->second;
             active = m_sessions.erase(active);
             DestroySession(expired, true, true);
