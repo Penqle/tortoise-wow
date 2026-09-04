@@ -3,6 +3,7 @@
 
 Some basic guidelines for contributing to this project
 
+- PRs should target the 1181dev branch or their own branch
 - Target 1.18.1 (7272) from March of 2026
 - Any SQL updates should be placed in sql/wip_updates/ in a SQL script named for its table. They will be merged into a proper full update when deemed appropriate (Mostly when a spec is fully functional)
 - Always comment SQL blocks
