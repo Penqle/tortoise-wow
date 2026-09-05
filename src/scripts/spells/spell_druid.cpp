@@ -35,6 +35,8 @@ enum DruidSpells
     SPELL_DRUID_PRIMAL_FEROCITY = 52372,
     SPELL_DRUID_CARNAGE_HEAL = 52735,
     SPELL_DRUID_CARNAGE_COMBO_POINT = 52736,
+    SPELL_DRUID_EQUILIBRIUM_INSECT_SWARM = 52924,
+    SPELL_DRUID_EQUILIBRIUM_MOONFIRE = 52925,
 };
 
 template <class T>
@@ -116,6 +118,26 @@ bool TargetHasDruidPeriodicAuraFromCaster(Unit const* target, ObjectGuid casterG
 }
 
 template <ClassFlag... Args>
+Aura* GetDruidPeriodicDamageAuraFromCaster(Unit* target, ObjectGuid casterGuid)
+{
+    if (!target)
+        return nullptr;
+
+    Unit::AuraList const& periodic = target->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+    for (Aura* aura : periodic)
+    {
+        if (aura->GetCasterGuid() != casterGuid)
+            continue;
+
+        SpellEntry const* auraSpell = aura->GetSpellProto();
+        if (auraSpell && auraSpell->IsFitToFamily<SPELLFAMILY_DRUID, Args...>())
+            return aura;
+    }
+
+    return nullptr;
+}
+
+template <ClassFlag... Args>
 bool TargetHasDruidPeriodicHeal(Unit const* target)
 {
     if (!target)
@@ -177,6 +199,49 @@ bool IsDruidFerociousBite(SpellEntry const* spellInfo)
 {
     return spellInfo && spellInfo->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_RIP_BITE>() &&
             spellInfo->HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE);
+}
+
+void DealDruidExtraPeriodicDamageTick(Unit* caster, Unit* target, Aura* periodicAura)
+{
+    if (!caster || !target || !periodicAura || !target->IsAlive())
+        return;
+
+    SpellEntry const* spellProto = periodicAura->GetSpellProto();
+    if (!spellProto)
+        return;
+
+    SpellEffectIndex const effIdx = periodicAura->GetEffIndex();
+    uint32 damage = periodicAura->GetModifier()->m_amount > 0 ? uint32(periodicAura->GetModifier()->m_amount) : 0;
+    if (!damage)
+        return;
+
+    if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE || spellProto->DmgClass == SPELL_DAMAGE_CLASS_MAGIC)
+        damage = target->SpellDamageBonusTaken(caster, spellProto, effIdx, damage, DOT, periodicAura->GetStackAmount());
+    else
+        damage = target->MeleeDamageBonusTaken(caster, damage, spellProto->GetWeaponAttackType(), spellProto, effIdx, DOT, periodicAura->GetStackAmount());
+
+    uint32 const originalDamage = damage;
+    uint32 absorb = 0;
+    int32 resist = 0;
+    target->CalculateDamageAbsorbAndResist(caster, spellProto->GetSpellSchoolMask(), DOT, damage, &absorb, &resist, spellProto);
+    caster->DealDamageMods(target, damage, &absorb);
+
+    uint32 const bonus = resist < 0 ? uint32(std::abs(resist)) : 0;
+    damage += bonus;
+    uint32 const malus = resist > 0 ? absorb + uint32(resist) : absorb;
+    damage = damage <= malus ? 0 : damage - malus;
+
+    SpellPeriodicAuraLogInfo logInfo(periodicAura, damage, absorb, resist, 0.0f);
+    target->SendPeriodicAuraLog(&logInfo);
+
+    uint32 procVictim = PROC_FLAG_TAKE_HARMFUL_PERIODIC;
+    if (damage)
+        procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
+
+    caster->ProcDamageAndSpell(target, PROC_FLAG_DEAL_HARMFUL_PERIODIC, procVictim, PROC_EX_NORMAL_HIT, damage, originalDamage, BASE_ATTACK, spellProto);
+
+    CleanDamage cleanDamage(0, BASE_ATTACK, MELEE_HIT_NORMAL, absorb, resist);
+    caster->DealDamage(target, damage, &cleanDamage, DOT, spellProto->GetSpellSchoolMask(), spellProto, true);
 }
 
 void AddDruidPrimalFerocityStacks(Player* player, uint8 comboPoints)
@@ -686,6 +751,35 @@ struct spell_druid_thorns_explosion : public AuraScript
     }
 };
 
+struct spell_druid_idol_of_equilibrium : public SpellScript
+{
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell || !spell->m_casterUnit)
+            return false;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target)
+            return false;
+
+        Aura* periodicAura = nullptr;
+        switch (spell->m_spellInfo->Id)
+        {
+            case SPELL_DRUID_EQUILIBRIUM_INSECT_SWARM:
+                periodicAura = GetDruidPeriodicDamageAuraFromCaster<CF_DRUID_INSECT_SWARM>(target, spell->m_casterUnit->GetObjectGuid());
+                break;
+            case SPELL_DRUID_EQUILIBRIUM_MOONFIRE:
+                periodicAura = GetDruidPeriodicDamageAuraFromCaster<CF_DRUID_MOONFIRE>(target, spell->m_casterUnit->GetObjectGuid());
+                break;
+            default:
+                return false;
+        }
+
+        DealDruidExtraPeriodicDamageTick(spell->m_casterUnit, target, periodicAura);
+        return false;
+    }
+};
+
 struct spell_druid_balance_of_all_things : public AuraScript
 {
     std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* victim, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* procSpell, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
@@ -1003,6 +1097,7 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript("spell_druid_open_wounds", &GetSpellScript<spell_druid_open_wounds>);
     RegisterSpellScript("spell_druid_ferocious_bite", &GetSpellScript<spell_druid_ferocious_bite>);
     RegisterSpellScript("spell_druid_starfire", &GetSpellScript<spell_druid_starfire>);
+    RegisterSpellScript("spell_druid_idol_of_equilibrium", &GetSpellScript<spell_druid_idol_of_equilibrium>);
     RegisterAuraScript("spell_druid_aessinas_bloom", &GetAuraScript<spell_druid_aessinas_bloom>);
     RegisterAuraScript("spell_druid_thorns_explosion", &GetAuraScript<spell_druid_thorns_explosion>);
     RegisterAuraScript("spell_druid_balance_of_all_things", &GetAuraScript<spell_druid_balance_of_all_things>);

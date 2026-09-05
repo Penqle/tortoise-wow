@@ -1,4 +1,5 @@
 #include "scriptPCH.h"
+#include "DynamicObject.h"
 #include "Pet.h"
 #include "Totem.h"
 
@@ -8,6 +9,7 @@ enum ShamanSpells
 {
     SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R1 = 46107,
     SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R2 = 46108,
+    SPELL_SHAMAN_MOLTEN_CORE              = 46110,
     SPELL_SHAMAN_REKINDLED_FLAME          = 46109,
     SPELL_SHAMAN_ELEMENTAL_WEAPONS_R1     = 16266,
     SPELL_SHAMAN_ELEMENTAL_WEAPONS_R2     = 29079,
@@ -33,6 +35,16 @@ enum ShamanSpells
     SPELL_SHAMAN_LIGHTNING_STRIKE_NATURE_R2 = 52419,
     SPELL_SHAMAN_LIGHTNING_STRIKE_NATURE_R3 = 52421,
     SPELL_SHAMAN_STORMSTRIKE_AURA        = 52412,
+    SPELL_SHAMAN_TOTEMIC_SLAM            = 45500,
+    SPELL_SHAMAN_HEX                     = 45504,
+    SPELL_SHAMAN_ANCIENT_RITES_TOTEMIC_SLAM = 58241,
+    SPELL_SHAMAN_ANCIENT_RITES_FERAL_SPIRIT = 58242,
+    SPELL_SHAMAN_ANCIENT_RITES_HEX       = 58243,
+    SPELL_SHAMAN_ANCIENT_RITES_KNOCKDOWN = 58244,
+    SPELL_SHAMAN_ANCIENT_RITES_FROGS     = 58245,
+    SPELL_SHAMAN_ANCIENT_RITES_LUNGE     = 58246,
+    SPELL_SHAMAN_ANCIENT_RITES_LUNGE_DAMAGE = 58247,
+    SPELL_SHAMAN_THUNDERCALL             = 52872,
     SPELL_SHAMAN_HEALING_WAY             = 29203,
     SPELL_SHAMAN_IMPROVED_FIRE_TOTEMS_R1 = 16086,
     SPELL_SHAMAN_IMPROVED_FIRE_TOTEMS_R2 = 16544,
@@ -452,20 +464,26 @@ int32 GetImprovedMoltenBlastPct(Unit* caster)
     if (!caster)
         return 0;
 
-    if (Aura* aura = caster->GetAura(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R2, EFFECT_INDEX_0))
-        return aura->GetModifier()->m_amount + 1;
+    if (caster->HasAura(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R2, EFFECT_INDEX_0))
+        if (SpellEntry const* talent = sSpellMgr.GetSpellEntry(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R2))
+            return talent->CalculateSimpleValue(EFFECT_INDEX_0);
 
-    if (Aura* aura = caster->GetAura(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R1, EFFECT_INDEX_0))
-        return aura->GetModifier()->m_amount + 1;
+    if (caster->HasAura(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R1, EFFECT_INDEX_0))
+        if (SpellEntry const* talent = sSpellMgr.GetSpellEntry(SPELL_SHAMAN_IMPROVED_MOLTEN_BLAST_R1))
+            return talent->CalculateSimpleValue(EFFECT_INDEX_0);
 
     return 0;
 }
 
 int32 CalculateImprovedMoltenBlastDamage(Unit* caster, SpellAuraHolder* flameShock)
 {
-    int32 const pct = GetImprovedMoltenBlastPct(caster);
+    int32 pct = GetImprovedMoltenBlastPct(caster);
     if (pct <= 0 || !flameShock)
         return 0;
+
+    if (caster->HasAura(SPELL_SHAMAN_MOLTEN_CORE, EFFECT_INDEX_1))
+        if (SpellEntry const* moltenCore = sSpellMgr.GetSpellEntry(SPELL_SHAMAN_MOLTEN_CORE))
+            pct += moltenCore->CalculateSimpleValue(EFFECT_INDEX_1);
 
     Aura* periodicAura = flameShock->GetAuraByEffectIndex(EFFECT_INDEX_1);
     if (!periodicAura)
@@ -1043,6 +1061,26 @@ struct spell_shaman_stormstrike : public AuraScript
     }
 };
 
+struct spell_shaman_thundercall : public AuraScript
+{
+    void OnPeriodicDamageCalculateAmount(Aura* aura, float& amount) override
+    {
+        if (!aura || aura->GetId() != SPELL_SHAMAN_THUNDERCALL || !aura->IsPersistent())
+            return;
+
+        DynamicObject* dynObj = static_cast<PersistentAreaAura*>(aura)->GetDynObject();
+        uint32 const affectedCount = dynObj ? dynObj->GetAffectedCount() : m_lastAffectedCount;
+        if (dynObj && affectedCount)
+            m_lastAffectedCount = affectedCount;
+
+        if (affectedCount > 1)
+            amount /= affectedCount;
+    }
+
+private:
+    uint32 m_lastAffectedCount = 0;
+};
+
 struct spell_shaman_healing_way : public AuraScript
 {
     void OnSpellHealingBonusTaken(Aura* aura, WorldObject* /*caster*/, SpellEntry const* spellInfo, SpellEffectIndex /*effIdx*/, int32 /*healAmount*/, DamageEffectType /*damageType*/, uint32 /*stack*/, Spell* /*spell*/, float& takenTotalMod) override
@@ -1051,6 +1089,48 @@ struct spell_shaman_healing_way : public AuraScript
             return;
 
         takenTotalMod *= (aura->GetModifier()->m_amount + 100.0f) / 100.0f;
+    }
+};
+
+struct spell_shaman_totemic_slam : public SpellScript
+{
+    void OnEffectDamageCalculate(Spell* spell, SpellEffectIndex effIdx, float& damage) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell || !spell->m_casterUnit || spell->m_spellInfo->Id != SPELL_SHAMAN_TOTEMIC_SLAM)
+            return;
+
+        float attackPowerMultiplier = 0.10f;
+        if (spell->m_casterUnit->HasAura(SPELL_SHAMAN_ANCIENT_RITES_TOTEMIC_SLAM))
+            attackPowerMultiplier += 0.05f;
+
+        damage = spell->m_casterUnit->GetTotalAttackPowerValue(BASE_ATTACK) * attackPowerMultiplier;
+    }
+
+    void OnHit(Spell* spell, SpellMissInfo missInfo) const override
+    {
+        if (missInfo != SPELL_MISS_NONE || !spell || !spell->m_casterUnit || spell->m_spellInfo->Id != SPELL_SHAMAN_TOTEMIC_SLAM)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || !target->IsAlive() || !spell->m_casterUnit->HasAura(SPELL_SHAMAN_ANCIENT_RITES_TOTEMIC_SLAM))
+            return;
+
+        spell->m_casterUnit->CastSpell(target, SPELL_SHAMAN_ANCIENT_RITES_KNOCKDOWN, true);
+    }
+};
+
+struct spell_shaman_hex : public SpellScript
+{
+    void OnHit(Spell* spell, SpellMissInfo missInfo) const override
+    {
+        if (missInfo != SPELL_MISS_NONE || !spell || !spell->m_casterUnit || spell->m_spellInfo->Id != SPELL_SHAMAN_HEX)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || !target->IsAlive() || !spell->m_casterUnit->HasAura(SPELL_SHAMAN_ANCIENT_RITES_HEX))
+            return;
+
+        spell->m_casterUnit->CastSpell(target, SPELL_SHAMAN_ANCIENT_RITES_FROGS, true);
     }
 };
 
@@ -1478,6 +1558,46 @@ struct spell_shaman_mana_tide : public AuraScript
     }
 };
 
+class AncientRitesLungeDamageEvent : public BasicEvent
+{
+public:
+    AncientRitesLungeDamageEvent(Creature& wolf, ObjectGuid targetGuid, bool startMovement)
+        : m_wolf(wolf), m_targetGuid(targetGuid), m_startMovement(startMovement) {}
+
+    bool Execute(uint64 /*time*/, uint32 /*diff*/) override
+    {
+        if (!m_wolf.IsAlive())
+            return true;
+
+        Unit* target = m_wolf.GetMap()->GetUnit(m_targetGuid);
+        if (!target || !target->IsAlive() || !m_wolf.IsValidAttackTarget(target))
+            return true;
+
+        if (m_startMovement)
+        {
+            float const distance = m_wolf.GetDistance(target);
+            uint32 const lungeDelay = uint32(distance * 1000.0f / 24.0f) + 100;
+
+            m_wolf.SetTargetGuid(target->GetObjectGuid());
+            m_wolf.Attack(target, true);
+            m_wolf.CastSpell(&m_wolf, SPELL_SHAMAN_ANCIENT_RITES_LUNGE, true);
+            m_wolf.GetMotionMaster()->MoveCharge(target, 0, true);
+            m_wolf.m_Events.AddEvent(new AncientRitesLungeDamageEvent(m_wolf, m_targetGuid, false),
+                m_wolf.m_Events.CalculateTime(lungeDelay));
+            return true;
+        }
+
+        m_wolf.CastSpell(target, SPELL_SHAMAN_ANCIENT_RITES_LUNGE_DAMAGE, true);
+        m_wolf.Attack(target, true);
+        return true;
+    }
+
+private:
+    Creature& m_wolf;
+    ObjectGuid m_targetGuid;
+    bool m_startMovement;
+};
+
 struct spell_shaman_feral_spirit : public SpellScript
 {
     void OnSummonBeforeAdd(Spell* spell, Pet* summon, uint32 summonIndex) const override
@@ -1487,6 +1607,26 @@ struct spell_shaman_feral_spirit : public SpellScript
 
         summon->InitStatsForLevel(spell->m_casterUnit->GetLevel());
         summon->SetFollowAngle(PET_FOLLOW_ANGLE + summonIndex * M_PI_F);
+    }
+
+    void OnSummon(Spell* spell, Creature* summon) const override
+    {
+        if (!spell->m_casterUnit || !summon)
+            return;
+
+        if (!spell->m_casterUnit->HasAura(SPELL_SHAMAN_ANCIENT_RITES_FERAL_SPIRIT))
+            return;
+
+        ObjectGuid targetGuid = spell->m_casterUnit->GetTargetGuid();
+        if (Player* player = spell->m_casterUnit->ToPlayer())
+            targetGuid = player->GetSelectionGuid();
+
+        Unit* target = targetGuid ? spell->m_casterUnit->GetMap()->GetUnit(targetGuid) : nullptr;
+        if (!target || !spell->m_casterUnit->IsValidAttackTarget(target) || !spell->m_casterUnit->IsWithinDistInMap(target, 30.0f))
+            return;
+
+        summon->m_Events.AddEvent(new AncientRitesLungeDamageEvent(*summon, target->GetObjectGuid(), true),
+            summon->m_Events.CalculateTime(1));
     }
 };
 
@@ -1565,6 +1705,8 @@ void AddSC_shaman_spell_scripts()
     RegisterSpellScript("spell_shaman_lightning_strike_shield", &GetSpellScript<spell_shaman_lightning_strike_shield>);
     RegisterSpellScript("spell_shaman_stormhowl_trigger_elemental_shield", &GetSpellScript<spell_shaman_stormhowl_trigger_elemental_shield>);
     RegisterSpellScript("spell_shaman_lightning_strike_nature_damage", &GetSpellScript<spell_shaman_lightning_strike_nature_damage>);
+    RegisterSpellScript("spell_shaman_totemic_slam", &GetSpellScript<spell_shaman_totemic_slam>);
+    RegisterSpellScript("spell_shaman_hex", &GetSpellScript<spell_shaman_hex>);
     RegisterAuraScript("spell_shaman_water_shield", &GetAuraScript<spell_shaman_water_shield>);
     RegisterAuraScript("spell_shaman_earth_shield", &GetAuraScript<spell_shaman_earth_shield>);
     RegisterAuraScript("spell_shaman_improved_fire_totems", &GetAuraScript<spell_shaman_improved_fire_totems>);
@@ -1572,6 +1714,7 @@ void AddSC_shaman_spell_scripts()
     RegisterAuraScript("spell_shaman_improved_water_shield", &GetAuraScript<spell_shaman_improved_water_shield>);
     RegisterAuraScript("spell_shaman_calming_winds", &GetAuraScript<spell_shaman_calming_winds>);
     RegisterAuraScript("spell_shaman_stormstrike", &GetAuraScript<spell_shaman_stormstrike>);
+    RegisterAuraScript("spell_shaman_thundercall", &GetAuraScript<spell_shaman_thundercall>);
     RegisterAuraScript("spell_shaman_healing_way", &GetAuraScript<spell_shaman_healing_way>);
     RegisterAuraScript("spell_shaman_lightning_shield", &GetAuraScript<spell_shaman_lightning_shield>);
     RegisterAuraScript("spell_shaman_call_of_earth", &GetAuraScript<spell_shaman_call_of_earth>);

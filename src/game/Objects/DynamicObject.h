@@ -55,6 +55,7 @@ class DynamicObject : public WorldObject
         Unit* GetUnitCaster() const;
         float GetRadius() const { return m_radius; }
         DynamicObjectType GetType() const { return (DynamicObjectType)GetByteValue(DYNAMICOBJECT_BYTES,0); }
+        uint32 GetAffectedCount() const { return m_affected.size(); }
         bool NeedsRefresh(Unit *unit) const;
         void AddAffected(Unit* unit);
         void RemoveAffected(Unit* unit);
