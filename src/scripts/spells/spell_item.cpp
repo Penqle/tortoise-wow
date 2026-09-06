@@ -2,6 +2,20 @@
 
 namespace
 {
+enum ItemSpells
+{
+    SPELL_ITEM_IMPENDING_DOOM = 44080,
+    SPELL_ITEM_ACID_BLAST = 58186,
+    SPELL_ITEM_FROST_BLAST = 58187,
+    SPELL_ITEM_FLAME_BLAST = 58188,
+    SPELL_ITEM_RECKLESS_THRASH = 58138,
+    SPELL_ITEM_BROKEN_WILL_SNARE = 58132,
+    SPELL_ITEM_BROKEN_WILL_ROOT = 58133,
+    SPELL_ITEM_ENDLESS_BOND_SELF = 58125,
+    SPELL_ITEM_ENDLESS_BOND_TARGET = 58126,
+    SPELL_ITEM_CACOPHONY_OF_KNOWLEDGE = 58232,
+};
+
 template <class T>
 SpellScript* GetSpellScript(SpellEntry const*)
 {
@@ -69,6 +83,69 @@ bool HasLightningShield(Unit* target)
     }
 
     return false;
+}
+
+bool IsUndeadOrDemon(Unit const* target)
+{
+    if (!target)
+        return false;
+
+    uint32 const creatureType = target->GetCreatureType();
+    return creatureType == CREATURE_TYPE_UNDEAD || creatureType == CREATURE_TYPE_DEMON;
+}
+
+int32 CalculatePysanSealOfRighteousnessDamage(Player* player, Aura* aura)
+{
+    constexpr float maxWeaponSpeed = 4.0f;
+    constexpr float minWeaponSpeed = 1.5f;
+    constexpr float twoHandedCoefficient = 0.125f;
+
+    Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+    float weaponSpeed = (item ? item->GetProto()->Delay : BASE_ATTACK_TIME) / 1000.0f;
+
+    float minDmg = aura->GetModifier()->m_amount / 87.0f;
+    float maxDmg = aura->GetModifier()->m_amount / 25.0f;
+    float damageBasePoints = (maxDmg - minDmg) * ((weaponSpeed - minWeaponSpeed) / (maxWeaponSpeed - minWeaponSpeed)) + minDmg;
+    int32 damagePoint = urand(0, 1) ? floor(damageBasePoints) : ceil(damageBasePoints);
+
+    SpellEntry const* auraSpell = aura->GetSpellProto();
+    float coefficient = twoHandedCoefficient;
+    coefficient *= weaponSpeed;
+
+    if (Player* modOwner = player->GetSpellModOwner())
+    {
+        coefficient *= 100.0f;
+        modOwner->ApplySpellMod(auraSpell->Id, SPELLMOD_SPELL_BONUS_DAMAGE, coefficient, nullptr);
+        coefficient /= 100.0f;
+    }
+
+    int32 const spellPower = player->SpellBaseDamageBonusDone(auraSpell->GetSpellSchoolMask());
+    return damagePoint + int32(spellPower * coefficient);
+}
+
+void TriggerPysanActiveSeal(Player* player, Unit* target, Spell* spell)
+{
+    Unit::AuraList const& procAuras = player->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
+    for (Aura* aura : procAuras)
+    {
+        SpellEntry const* auraSpell = aura->GetSpellProto();
+        if (!auraSpell || !auraSpell->IsSealSpell() || aura->GetEffIndex() != EFFECT_INDEX_0)
+            continue;
+
+        uint32 const triggerSpellId = auraSpell->EffectTriggerSpell[EFFECT_INDEX_0];
+        if (!triggerSpellId)
+            return;
+
+        if (auraSpell->IsFitToFamilyMask<CF_PALADIN_SEAL_OF_RIGHTEOUSNESS>())
+        {
+            int32 damagePoint = CalculatePysanSealOfRighteousnessDamage(player, aura);
+            player->CastCustomSpell(target, triggerSpellId, &damagePoint, nullptr, nullptr, true, nullptr, aura, true, player->GetObjectGuid(), spell->m_spellInfo);
+        }
+        else
+            player->CastSpell(target, triggerSpellId, true, nullptr, aura, player->GetObjectGuid(), nullptr, spell->m_spellInfo);
+
+        return;
+    }
 }
 
 struct spell_item_persistent_shield : public AuraScript
@@ -154,6 +231,242 @@ struct spell_item_wolfshead_helm : public SpellScript
             spell->m_casterUnit->CastSpell(spell->m_casterUnit, 29940, true, nullptr);
 
         return false;
+    }
+};
+
+struct spell_item_endless_bond : public SpellScript
+{
+    SpellCastResult OnCheckCast(Spell* spell, bool /*strict*/) const override
+    {
+        Unit* caster = spell->m_casterUnit;
+        Unit* target = spell->m_targets.getUnitTarget();
+        if (!caster || !target || !target->IsAlive() || !caster->IsFriendlyTo(target))
+            return SPELL_FAILED_BAD_TARGETS;
+
+        if (caster == target)
+            return SPELL_CAST_OK;
+
+        Player const* casterPlayer = caster->ToPlayer();
+        Player const* targetPlayer = target->ToPlayer();
+        if (!casterPlayer || !targetPlayer || !casterPlayer->IsInSameGroupWith(targetPlayer))
+            return SPELL_FAILED_TARGET_NOT_IN_PARTY;
+
+        return SPELL_CAST_OK;
+    }
+
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell->m_casterUnit)
+            return false;
+
+        Unit* caster = spell->m_casterUnit;
+        Unit* target = spell->m_targets.getUnitTarget();
+        if (!target)
+            return false;
+
+        if (caster == target)
+        {
+            caster->CastSpell(caster, SPELL_ITEM_ENDLESS_BOND_SELF, true, spell->m_CastItem);
+            return false;
+        }
+
+        caster->CastSpell(target, SPELL_ITEM_ENDLESS_BOND_TARGET, true, spell->m_CastItem);
+        target->CastSpell(caster, SPELL_ITEM_ENDLESS_BOND_TARGET, true);
+        return false;
+    }
+};
+
+struct spell_item_endless_bond_target : public AuraScript
+{
+    void OnAfterApply(Aura* aura, bool apply) override
+    {
+        if (apply || aura->GetEffIndex() != EFFECT_INDEX_1)
+            return;
+
+        Unit* target = aura->GetTarget();
+        Unit* caster = aura->GetCaster();
+        if (!target || !caster)
+            return;
+
+        caster->RemoveAurasByCasterSpell(SPELL_ITEM_ENDLESS_BOND_TARGET, target->GetObjectGuid());
+    }
+};
+
+struct spell_item_whispers_of_aln : public AuraScript
+{
+    int32 m_accumulatedDamage = 0;
+    bool m_released = false;
+
+    void Release(Aura* aura)
+    {
+        if (m_released || m_accumulatedDamage <= 0)
+            return;
+
+        Unit* target = aura->GetTarget();
+        if (!target || !target->IsAlive())
+            return;
+
+        m_released = true;
+        int32 damage = m_accumulatedDamage;
+        m_accumulatedDamage = 0;
+        target->CastCustomSpell(target, SPELL_ITEM_CACOPHONY_OF_KNOWLEDGE, &damage, nullptr, nullptr, true, nullptr, aura);
+    }
+
+    void OnAfterApply(Aura* aura, bool apply) override
+    {
+        if (apply)
+            return;
+
+        if (aura->GetRemoveMode() == AURA_REMOVE_BY_EXPIRE)
+            Release(aura);
+    }
+
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* procSpell, uint32 procFlag, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!owner || !owner->IsAlive() || !damage)
+            return SPELL_AURA_PROC_FAILED;
+
+        bool const isPhysicalDamage = procSpell
+            ? (procSpell->GetSpellSchoolMask() & SPELL_SCHOOL_MASK_NORMAL)
+            : (procFlag & MELEE_BASED_TRIGGER_MASK);
+        if (!isPhysicalDamage)
+            return SPELL_AURA_PROC_FAILED;
+
+        int32 const percent = aura->GetModifier()->m_amount;
+        int32 const maxDamage = aura->GetSpellProto()->EffectMiscValue[aura->GetEffIndex()];
+        if (percent <= 0 || maxDamage <= 0)
+            return SPELL_AURA_PROC_FAILED;
+
+        m_accumulatedDamage = std::min(maxDamage, m_accumulatedDamage + int32(damage * percent / 100));
+
+        if (m_accumulatedDamage >= maxDamage)
+        {
+            Release(aura);
+            owner->RemoveAurasDueToSpell(aura->GetId());
+        }
+
+        return SPELL_AURA_PROC_OK;
+    }
+};
+
+struct spell_item_cacophony_of_knowledge : public SpellScript
+{
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_0)
+            return true;
+
+        uint32 count = 0;
+        for (const auto& hit : spell->m_UniqueTargetInfo)
+            if (hit.effectMask & (1 << effIdx))
+                ++count;
+
+        if (count)
+            spell->damage /= count;
+
+        return true;
+    }
+};
+
+struct spell_item_trifang_shredders : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* victim, uint32 /*damage*/, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!owner || !victim || !victim->IsAlive())
+            return SPELL_AURA_PROC_FAILED;
+
+        uint32 triggerSpell = SPELL_ITEM_ACID_BLAST;
+        switch (urand(0, 2))
+        {
+            case 0:
+                triggerSpell = SPELL_ITEM_ACID_BLAST;
+                break;
+            case 1:
+                triggerSpell = SPELL_ITEM_FROST_BLAST;
+                break;
+            case 2:
+                triggerSpell = SPELL_ITEM_FLAME_BLAST;
+                break;
+        }
+
+        owner->CastSpell(victim, triggerSpell, true, nullptr, aura);
+        return SPELL_AURA_PROC_OK;
+    }
+};
+
+struct spell_item_will_of_the_chieftain : public SpellScript
+{
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_0)
+            return false;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target)
+            return false;
+
+        if (!target->IsMovedByPlayer())
+        {
+            spell->m_caster->CastSpell(target, SPELL_ITEM_BROKEN_WILL_ROOT, true);
+            return false;
+        }
+
+        float speedXY = float(spell->m_spellInfo->EffectMiscValue[effIdx]) * 0.1f;
+        if (speedXY <= 0.0f)
+            return false;
+
+        float speedZ = target->GetDistance(spell->m_caster) / speedXY * 0.5f * 20.0f;
+        target->KnockBackFrom(spell->m_caster, -speedXY, speedZ);
+        spell->m_caster->CastSpell(target, SPELL_ITEM_BROKEN_WILL_SNARE, true);
+        return false;
+    }
+};
+
+struct spell_item_pysans_wrath : public SpellScript
+{
+    bool OnEffectExecute(Spell* spell, SpellEffectIndex effIdx) const override
+    {
+        if (effIdx != EFFECT_INDEX_1 && effIdx != EFFECT_INDEX_2)
+            return true;
+
+        return IsUndeadOrDemon(spell->GetUnitTarget());
+    }
+
+    void OnAfterHit(Spell* spell) const override
+    {
+        Player* player = spell->m_casterUnit ? spell->m_casterUnit->ToPlayer() : nullptr;
+        Unit* target = spell->GetUnitTarget();
+        if (!player || !target || !target->IsAlive())
+            return;
+
+        TriggerPysanActiveSeal(player, target, spell);
+    }
+};
+
+struct spell_item_wild_thrash : public SpellScript
+{
+    mutable uint32 m_totalDamage = 0;
+
+    bool OnEffectExecute(Spell* /*spell*/, SpellEffectIndex effIdx) const override
+    {
+        return effIdx != EFFECT_INDEX_1;
+    }
+
+    void OnAfterHit(Spell* spell) const override
+    {
+        m_totalDamage += uint32(spell->GetTotalEffectDamage());
+    }
+
+    void OnSuccessfulFinish(Spell* spell) const override
+    {
+        if (!spell->m_casterUnit || !m_totalDamage)
+            return;
+
+        int32 selfDamage = int32(m_totalDamage * spell->m_currentBasePoints[EFFECT_INDEX_1] / 100);
+        if (selfDamage <= 0)
+            return;
+
+        spell->m_casterUnit->CastCustomSpell(spell->m_casterUnit, SPELL_ITEM_RECKLESS_THRASH, &selfDamage, nullptr, nullptr, true, spell->m_CastItem);
     }
 };
 
@@ -299,6 +612,99 @@ struct spell_item_mana_surge : public AuraScript
 
         int32 mana = procSpell->manaCost * 35 / 100;
         owner->CastCustomSpell(owner, 23571, &mana, nullptr, nullptr, true, nullptr, aura);
+        return SPELL_AURA_PROC_OK;
+    }
+};
+
+struct spell_item_unrelenting_strikes : public AuraScript
+{
+    std::optional<SpellProcEventTriggerCheck> OnCheckProc(Unit const* owner, Unit* /*victim*/, SpellAuraHolder* /*holder*/, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procExtra*/, WeaponAttackType /*attType*/, bool isVictim) override
+    {
+        if (isVictim || !owner || !owner->IsExtraAttacksLocked())
+            return SPELL_PROC_TRIGGER_FAILED;
+
+        return std::nullopt;
+    }
+};
+
+struct spell_item_purging_flames : public SpellScript
+{
+    void OnHit(Spell* spell, SpellMissInfo missInfo) const override
+    {
+        if (missInfo != SPELL_MISS_NONE || !spell->m_casterUnit)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || target->GetCreatureType() != CREATURE_TYPE_UNDEAD)
+            return;
+
+        spell->m_casterUnit->CastSpell(target, 44075, true);
+    }
+};
+
+struct spell_item_opportunistic_strike : public SpellScript
+{
+    void OnEffectDamageCalculate(Spell* spell, SpellEffectIndex effIdx, float& damage) const override
+    {
+        if (effIdx != EFFECT_INDEX_0 || !spell->m_casterUnit)
+            return;
+
+        Unit* target = spell->GetUnitTarget();
+        if (!target || target->HasInArc(spell->m_casterUnit))
+            return;
+
+        damage *= 1.35f;
+    }
+};
+
+struct spell_item_wild_regeneration : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* /*owner*/, Unit* /*victim*/, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        Unit* target = aura ? aura->GetTarget() : nullptr;
+        if (!target || !damage)
+            return SPELL_AURA_PROC_FAILED;
+
+        if (!target->HealthBelowPct(35) && !target->HealthBelowPctDamaged(35, damage))
+            return SPELL_AURA_PROC_FAILED;
+
+        return std::nullopt;
+    }
+};
+
+struct spell_item_impending_doom : public AuraScript
+{
+    std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* /*victim*/, uint32 damage, int32 /*originalAmount*/, Aura* aura, SpellEntry const* procSpell, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
+    {
+        if (!owner || !aura || !procSpell || !damage)
+            return SPELL_AURA_PROC_FAILED;
+
+        if (procSpell->Id == SPELL_ITEM_IMPENDING_DOOM || !(procSpell->GetSpellSchoolMask() & SPELL_SCHOOL_MASK_SHADOW))
+            return SPELL_AURA_PROC_FAILED;
+
+        Unit* caster = aura->GetCaster();
+        if (!caster)
+            return SPELL_AURA_PROC_FAILED;
+
+        SpellEntry const* spellInfo = aura->GetSpellProto();
+        uint32 doomDamage = uint32(std::max(0, aura->GetModifier()->m_amount) * 120 / 100);
+        if (!doomDamage)
+            return SPELL_AURA_PROC_FAILED;
+
+        uint32 absorb = 0;
+        int32 resist = 0;
+        owner->CalculateDamageAbsorbAndResist(caster, spellInfo->GetSpellSchoolMask(), SPELL_DIRECT_DAMAGE, doomDamage, &absorb, &resist, spellInfo);
+        caster->DealDamageMods(owner, doomDamage, &absorb);
+        caster->SendSpellNonMeleeDamageLog(owner, spellInfo->Id, doomDamage, spellInfo->GetSpellSchoolMask(), absorb, resist, false, 0, false);
+
+        uint32 const bonus = resist < 0 ? uint32(std::abs(resist)) : 0;
+        uint32 const malus = resist > 0 ? absorb + uint32(resist) : absorb;
+        uint32 const finalDamage = doomDamage + bonus <= malus ? 0 : doomDamage + bonus - malus;
+
+        owner->RemoveAurasByCasterSpell(spellInfo->Id, aura->GetCasterGuid());
+
+        CleanDamage cleanDamage(0, BASE_ATTACK, MELEE_HIT_NORMAL, absorb, resist);
+        caster->DealDamage(owner, finalDamage, &cleanDamage, SPELL_DIRECT_DAMAGE, spellInfo->GetSpellSchoolMask(), spellInfo, false, nullptr, true);
         return SPELL_AURA_PROC_OK;
     }
 };
@@ -1045,6 +1451,14 @@ void AddSC_item_spell_scripts()
     RegisterAuraScript("spell_item_vial_of_potent_venoms", &GetAuraScript<spell_item_vial_of_potent_venoms>);
     RegisterAuraScript("spell_item_bonus_healing", &GetAuraScript<spell_item_bonus_healing>);
     RegisterSpellScript("spell_item_wolfshead_helm", &GetSpellScript<spell_item_wolfshead_helm>);
+    RegisterSpellScript("spell_item_endless_bond", &GetSpellScript<spell_item_endless_bond>);
+    RegisterAuraScript("spell_item_endless_bond_target", &GetAuraScript<spell_item_endless_bond_target>);
+    RegisterAuraScript("spell_item_whispers_of_aln", &GetAuraScript<spell_item_whispers_of_aln>);
+    RegisterSpellScript("spell_item_cacophony_of_knowledge", &GetSpellScript<spell_item_cacophony_of_knowledge>);
+    RegisterAuraScript("spell_item_trifang_shredders", &GetAuraScript<spell_item_trifang_shredders>);
+    RegisterSpellScript("spell_item_will_of_the_chieftain", &GetSpellScript<spell_item_will_of_the_chieftain>);
+    RegisterSpellScript("spell_item_pysans_wrath", &GetSpellScript<spell_item_pysans_wrath>);
+    RegisterSpellScript("spell_item_wild_thrash", &GetSpellScript<spell_item_wild_thrash>);
     RegisterAuraScript("spell_item_dreamwalker_healing_touch", &GetAuraScript<spell_item_dreamwalker_healing_touch>);
     RegisterAuraScript("spell_item_healing_touch_refund", &GetAuraScript<spell_item_healing_touch_refund>);
     RegisterAuraScript("spell_item_dreamwalker_rejuvenation", &GetAuraScript<spell_item_dreamwalker_rejuvenation>);
@@ -1056,6 +1470,11 @@ void AddSC_item_spell_scripts()
     RegisterAuraScript("spell_item_lesser_healing_wave_relic", &GetAuraScript<spell_item_lesser_healing_wave_relic>);
     RegisterAuraScript("spell_item_ten_storms_lightning_shield", &GetAuraScript<spell_item_ten_storms_lightning_shield>);
     RegisterAuraScript("spell_item_mana_surge", &GetAuraScript<spell_item_mana_surge>);
+    RegisterAuraScript("spell_item_unrelenting_strikes", &GetAuraScript<spell_item_unrelenting_strikes>);
+    RegisterSpellScript("spell_item_purging_flames", &GetSpellScript<spell_item_purging_flames>);
+    RegisterSpellScript("spell_item_opportunistic_strike", &GetSpellScript<spell_item_opportunistic_strike>);
+    RegisterAuraScript("spell_item_wild_regeneration", &GetAuraScript<spell_item_wild_regeneration>);
+    RegisterAuraScript("spell_item_impending_doom", &GetAuraScript<spell_item_impending_doom>);
     RegisterSpellScript("spell_item_elunes_candle", &GetSpellScript<spell_item_elunes_candle>);
     RegisterSpellScript("spell_item_first_aid", &GetSpellScript<spell_item_first_aid>);
     RegisterSpellScript("spell_item_gnomish_death_ray", &GetSpellScript<spell_item_gnomish_death_ray>);

@@ -4992,9 +4992,14 @@ void Spell::EffectSelfResurrect(SpellEffectIndex eff_idx)
     {
         health += health * uint32(recoveryMod) / 100;
         mana += mana * uint32(recoveryMod) / 100;
-        health = std::min<uint32>(health, unitTarget->GetMaxHealth());
-        mana = std::min<uint32>(mana, unitTarget->GetMaxPower(POWER_MANA));
     }
+
+    if (Aura const* manaBonus = unitTarget->GetAura(51893, EFFECT_INDEX_0))
+        if (manaBonus->GetModifier()->m_amount > 0)
+            mana += mana * uint32(manaBonus->GetModifier()->m_amount) / 100;
+
+    health = std::min<uint32>(health, unitTarget->GetMaxHealth());
+    mana = std::min<uint32>(mana, unitTarget->GetMaxPower(POWER_MANA));
 
     Player *plr = ((Player*)unitTarget);
     plr->ResurrectPlayer(0.0f);

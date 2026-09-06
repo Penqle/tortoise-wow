@@ -4514,7 +4514,14 @@ void Spell::finish(bool ok)
             }
         }
         if (needDrop)
-            ((Player*)m_caster)->ClearComboPoints();
+        {
+            Player* player = (Player*)m_caster;
+            uint8 const comboPoints = player->GetComboPoints();
+            if (comboPoints && m_spellScript)
+                m_spellScript->OnComboPointsSpent(this, comboPoints);
+
+            player->ClearComboPoints();
+        }
     }
 
     // call triggered spell only at successful cast (after clear combo points -> for add some if need)

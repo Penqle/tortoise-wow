@@ -27,6 +27,8 @@ Modules can be built statically, dynamically, or disabled with the `MODULES` CMa
 Each discovered module also gets its own `MODULE_<NAME>` cache option for overriding the global setting.  
 Most modules can be ported from AzerothCore with minimal effort.  
 
+Modules can be given the topic [`tortoise-module`](https://github.com/topics/tortoise-module) for visibility.  
+
 See `modules/README.md` for module layout, build options, config loading, SQL migrations, and authoring notes.
 
 ## Operating Systems
