@@ -56,6 +56,8 @@ enum PriestSpells
     SPELL_PRIEST_SHADOWGUARD_DAMAGE_R6             = 28382,
     SPELL_PRIEST_TOUCH_OF_WEAKNESS_TRIGGER         = 28598,
     SPELL_PRIEST_PAIN_SPIKE_HEAL                   = 45556,
+    SPELL_PRIEST_PAIN_SPIKE_SET_BONUS              = 52699,
+    SPELL_PRIEST_PAIN_SPIKE_SET_HEAL               = 52700,
     SPELL_PRIEST_VAMPIRIC_TOUCH_R1                 = 45557,
     SPELL_PRIEST_VAMPIRIC_TOUCH_R2                 = 45558,
     SPELL_PRIEST_SHADOW_MEND                       = 45554,
@@ -89,6 +91,7 @@ enum PriestSpells
     SPELL_PRIEST_ENLIGHTEN_DAMAGE                  = 51474,
     SPELL_PRIEST_ENLIGHTEN_DUMMY                   = 51475,
     SPELL_PRIEST_ENLIGHTEN                         = 51476,
+    SPELL_PRIEST_IMPROVED_LIGHTWELL                = 51798,
     SPELL_PRIEST_BOOK_OF_PRAYER_MANA               = 52942,
 };
 
@@ -240,24 +243,36 @@ GameObject* FindOwnedLightwellNear(WorldObject const* center, ObjectGuid ownerGu
     return nullptr;
 }
 
+int32 GetImprovedLightwellBonus(Unit* owner, SpellEffectIndex effIdx)
+{
+    if (!owner)
+        return 0;
+
+    if (Aura* improvedLightwell = owner->GetAura(SPELL_PRIEST_IMPROVED_LIGHTWELL, effIdx))
+        return improvedLightwell->GetModifier()->m_amount;
+
+    return 0;
+}
+
 GameObject* FindPriestLightwell(Unit* owner, Unit* target, uint32 auraId)
 {
     if (GameObject* lightwell = owner->GetGameObject(auraId))
         return lightwell;
 
+    float const splendorRadius = LIGHTWELL_SPLENDOR_RADIUS + GetImprovedLightwellBonus(owner, EFFECT_INDEX_0);
     if (target)
-        if (GameObject* lightwell = FindOwnedLightwellNear(target, owner->GetObjectGuid(), LIGHTWELL_SPLENDOR_RADIUS))
+        if (GameObject* lightwell = FindOwnedLightwellNear(target, owner->GetObjectGuid(), splendorRadius))
             return lightwell;
 
     return FindOwnedLightwellNear(owner, owner->GetObjectGuid(), LIGHTWELL_FALLBACK_SEARCH_RADIUS);
 }
 
-bool IsValidLightwellTarget(Unit const* owner, WorldObject const* lightwell, Unit const* target)
+bool IsValidLightwellTarget(Unit const* owner, WorldObject const* lightwell, Unit const* target, float splendorRadius)
 {
     return target
         && target->IsAlive()
         && owner->IsFriendlyTo(target)
-        && lightwell->IsWithinDistInMap(target, LIGHTWELL_SPLENDOR_RADIUS)
+        && lightwell->IsWithinDistInMap(target, splendorRadius)
         && target->GetHealth() < target->GetMaxHealth()
         && !target->HasAura(SPELL_PRIEST_HOLY_ATTENUATION);
 }
@@ -265,20 +280,21 @@ bool IsValidLightwellTarget(Unit const* owner, WorldObject const* lightwell, Uni
 Unit* SelectLightwellTarget(Unit* owner, GameObject* lightwell, Unit* procTarget)
 {
     std::list<Unit*> targets;
-    LightwellUnitInRangeCheck check(lightwell, LIGHTWELL_SPLENDOR_RADIUS);
+    float const splendorRadius = LIGHTWELL_SPLENDOR_RADIUS + GetImprovedLightwellBonus(owner, EFFECT_INDEX_0);
+    LightwellUnitInRangeCheck check(lightwell, splendorRadius);
     MaNGOS::UnitListSearcher<LightwellUnitInRangeCheck> searcher(targets, check);
-    Cell::VisitAllObjects(lightwell, searcher, LIGHTWELL_SPLENDOR_RADIUS);
+    Cell::VisitAllObjects(lightwell, searcher, splendorRadius);
 
     for (std::list<Unit*>::iterator itr = targets.begin(); itr != targets.end();)
     {
-        if (!IsValidLightwellTarget(owner, lightwell, *itr))
+        if (!IsValidLightwellTarget(owner, lightwell, *itr, splendorRadius))
             itr = targets.erase(itr);
         else
             ++itr;
     }
 
     targets.remove(procTarget);
-    if (IsValidLightwellTarget(owner, lightwell, procTarget))
+    if (IsValidLightwellTarget(owner, lightwell, procTarget, splendorRadius))
         targets.push_back(procTarget);
 
     if (targets.empty())
@@ -579,6 +595,15 @@ struct spell_priest_pain_spike : public SpellScript
             return;
 
         spell->m_caster->CastCustomSpell(target, SPELL_PRIEST_PAIN_SPIKE_HEAL, &healAmount, nullptr, nullptr, true);
+
+        Unit* caster = spell->m_casterUnit;
+        Aura const* setBonus = caster ? caster->GetAura(SPELL_PRIEST_PAIN_SPIKE_SET_BONUS, EFFECT_INDEX_1) : nullptr;
+        if (!setBonus)
+            return;
+
+        int32 const setHealAmount = int32(spell->GetTotalEffectDamage() * setBonus->GetBasePoints() / 100.0f);
+        if (setHealAmount > 0)
+            caster->CastCustomSpell(caster, SPELL_PRIEST_PAIN_SPIKE_SET_HEAL, &setHealAmount, nullptr, nullptr, true);
     }
 };
 
@@ -742,6 +767,13 @@ struct spell_priest_blessed_recovery : public AuraScript
 
 struct spell_priest_lightwell : public AuraScript
 {
+    void OnHolderInit(SpellAuraHolder* holder, WorldObject* caster) override
+    {
+        Unit* owner = caster ? caster->ToUnit() : holder->GetTarget();
+        if (int32 bonusCharges = GetImprovedLightwellBonus(owner, EFFECT_INDEX_1); bonusCharges > 0)
+            holder->SetAuraCharges(holder->GetAuraCharges() + bonusCharges);
+    }
+
     std::optional<SpellAuraProcResult> OnProc(Unit* owner, Unit* target, uint32 healAmount, int32 /*originalAmount*/, Aura* aura, SpellEntry const* /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 /*cooldown*/) override
     {
         if (!owner || !owner->IsAlive() || !healAmount)
