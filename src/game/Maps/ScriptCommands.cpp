@@ -676,6 +676,31 @@ bool Map::ScriptCommand_CreateItem(const ScriptInfo& script, WorldObject* source
     return false;
 }
 
+// SCRIPT_COMMAND_TAKE_MONEY (93)
+bool Map::ScriptCommand_TakeMoney(ScriptInfo const& script, WorldObject* source, WorldObject* target)
+{
+    Player* player;
+
+    if (!((player = ToPlayer(target)) || (player = ToPlayer(source))))
+    {
+        sLog.outError("SCRIPT_COMMAND_TAKE_MONEY (script id %u) call for a nullptr or non-player object (TypeIdSource: %u)(TypeIdTarget: %u), skipping.", script.id, source ? source->GetTypeId() : 0, target ? target->GetTypeId() : 0);
+        return true;
+    }
+
+    if (player->GetMoney() < script.takeMoney.amount)
+    {
+        Creature* creature = ToCreature(source);
+        if (!creature)
+            creature = ToCreature(target);
+
+        player->SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, creature, 0, 0);
+        return true;
+    }
+
+    player->ModifyMoney(-int32(script.takeMoney.amount));
+    return false;
+}
+
 // SCRIPT_COMMAND_DESPAWN_CREATURE (18)
 bool Map::ScriptCommand_DespawnCreature(const ScriptInfo& script, WorldObject* source, WorldObject* target)
 {
