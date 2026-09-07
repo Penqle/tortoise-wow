@@ -26,6 +26,12 @@ set (EXECUTABLE_SRCS
 	Main.cpp
 	Master.cpp
 	WorldRunnable.cpp
+	MaNGOSsoap.h
+	MaNGOSsoap.cpp
+	soap/soapStub.h
+	soap/soapH.h
+	soap/soapC.cpp
+	soap/soapServer.cpp
 
 )
 
@@ -69,6 +75,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/game/Threat
   ${CMAKE_SOURCE_DIR}/src/game/Transports
   ${CMAKE_SOURCE_DIR}/src/game/vmap
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/soap
+  ${CMAKE_SOURCE_DIR}/dep/include/gsoap
   ${CMAKE_BINARY_DIR}/src/shared
   ${CMAKE_BINARY_DIR}
   ${ACE_INCLUDE_DIR}
@@ -127,6 +136,11 @@ endif()
 
 target_link_libraries(${EXECUTABLE_NAME}
     libdeflate
+)
+
+# SOAP remote-command interface: vendored gsoap C++ runtime (2.8.135).
+target_link_libraries(${EXECUTABLE_NAME}
+    ${CMAKE_SOURCE_DIR}/dep/lib/gsoap/libgsoap++.a
 )
 
 
