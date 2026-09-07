@@ -1767,7 +1767,9 @@ void Spell::DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype)
         }
 
         // set the "Crafted by ..." property of the item
-        if (pItem->GetProto()->HasSignature())
+        if (pItem->GetProto()->HasSignature() ||
+            (player->HasChallenge(CHALLENGE_CRAFTMASTER) && player->GetLevel() < PLAYER_MAX_LEVEL &&
+             pItem->GetProto()->InventoryType != INVTYPE_NON_EQUIP))
             pItem->SetGuidValue(ITEM_FIELD_CREATOR, player->GetObjectGuid());
 
         // send info to the client

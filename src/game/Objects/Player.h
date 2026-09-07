@@ -1341,6 +1341,7 @@ class Player final: public Unit
         void MailHardcoreModeRewards(uint32 level);
         void MailVagrantModeRewards(uint32 level);
         void MailBoaringModeRewards(uint32 level);
+        void MailBrewmasterModeRewards();
         void AnnounceHardcoreModeLevelUp(uint32 level);
         // Titles
         bool IsCityProtector();

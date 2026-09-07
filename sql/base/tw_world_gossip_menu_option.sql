@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `gossip_menu_option`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gossip_menu_option` (
-  `menu_id` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `menu_id` mediumint(8) unsigned NOT NULL DEFAULT 0,
   `id` smallint(5) unsigned NOT NULL DEFAULT 0,
   `option_icon` mediumint(8) unsigned NOT NULL DEFAULT 0,
   `option_text` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
