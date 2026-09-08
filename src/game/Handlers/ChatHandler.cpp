@@ -294,7 +294,8 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             recv_data >> msg;
 
             // A module may take an addon message as a command of its own.
-            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+            if (lang == LANG_ADDON && IsLanguageAllowedForChatType(lang, type) &&
+                _player && sScriptMgr.OnAddonMessage(_player, msg))
                 return;
 
             if (!ProcessChatMessageAfterSecurityCheck(msg, lang, type))
