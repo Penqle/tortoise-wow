@@ -97,8 +97,6 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, time_
     MANGOS_ASSERT(!sock || transport == SessionTransport::Network);
 
     if (sock)
-    {
-        m_Address = remote_ip;
         sock->AddReference();
     }
     else
