@@ -1614,10 +1614,6 @@ class ScriptMgr
         bool IsBotManaged(Player* who);
         uint8 GetBotRoles(Player* who);
         bool OnAddonMessage(Player* from, std::string const& msg);
-        bool OnWhoRequest(Player* from, std::string const& text);
-        uint32 AppendWhoResults(WorldPacket& data, uint32 have, uint32 levelMin, uint32 levelMax,
-            uint32 racemask, uint32 classmask, uint32 zonesCount, uint32 const* zoneids,
-            uint32 team, bool allowTwoSide, std::wstring const& wantName);
         bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 action, const char* code);
         bool OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 sender, uint32 action, const char* code);
         bool OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest);

@@ -80,7 +80,6 @@ enum WorldHook
     WORLDHOOK_ON_BEFORE_WORLD_INITIALIZED,
     WORLDHOOK_ON_CHANNEL_BROADCAST,
     WORLDHOOK_ON_BOT_LOGIN_YIELD,
-    WORLDHOOK_APPEND_WHO,
     WORLDHOOK_END
 };
 
@@ -109,9 +108,6 @@ class WorldScript : public ScriptObject
         virtual void OnBeforeWorldInitialized() {}
         virtual void OnChannelBroadcast(uint32 /*guidLow*/, char const* /*channel*/, char const* /*msg*/) {}
         virtual void OnBotLoginYield(uint32 /*guidLow*/) {}
-        virtual uint32 OnAppendWho(WorldPacket& /*data*/, uint32 /*have*/, uint32 /*levelMin*/, uint32 /*levelMax*/,
-            uint32 /*racemask*/, uint32 /*classmask*/, uint32 /*zonesCount*/, uint32 const* /*zoneids*/,
-            uint32 /*team*/, bool /*allowTwoSide*/, std::wstring const& /*wantName*/) { return 0; }
 };
 
 enum PlayerHook
@@ -156,7 +152,6 @@ enum PlayerHook
     PLAYERHOOK_IS_MANAGED_BOT,
     PLAYERHOOK_GET_BOT_ROLES,
     PLAYERHOOK_ON_ADDON_MESSAGE,
-    PLAYERHOOK_ON_WHO_REQUEST,
     PLAYERHOOK_END
 };
 
@@ -211,11 +206,9 @@ class PlayerScript : public ScriptObject
         virtual bool IsManagedBot(Player* /*who*/) { return false; }
         virtual uint8 GetBotRoles(Player* /*who*/) { return 0; }
 
-        // A module may take an addon message, or the free text of a who-search, as a
-        // command of its own -- an addon that cannot speak can still search. Return
-        // true when the text was consumed; the core then neither relays nor searches.
+        // A module may take an addon message as a command of its own. Return true
+        // when the text was consumed; the core then does not relay it.
         virtual bool OnAddonMessage(Player* /*from*/, std::string const& /*msg*/) { return false; }
-        virtual bool OnWhoRequest(Player* /*from*/, std::string const& /*text*/) { return false; }
 };
 
 class CreatureScript : public ScriptObject, public UpdatableScript<Creature>
