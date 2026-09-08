@@ -231,7 +231,15 @@ public:
                 break;
         }
 
-        uint32 count = m.size();
+        const uint32 fromShadows = sScriptMgr.AppendWhoResults(data, clientcount,
+                                                 level_min, level_max,
+                                                 racemask, classmask,
+                                                 zones_count, zoneids,
+                                                 (uint32)team, allowTwoSideWhoList,
+                                                 wplayer_name);
+        clientcount += fromShadows;
+
+        uint32 count = m.size() + fromShadows;
         data.put(0, clientcount);                               // insert right count, listed count
         data.put(4, count > 49 ? count : clientcount);          // insert right count, online count
 
@@ -243,15 +251,11 @@ public:
 void WorldSession::HandleWhoOpcode(WorldPacket & recv_data)
 {
     DEBUG_LOG("WORLD: Recvd CMSG_WHO Message");
-    if (ReceivedWhoRequest())
-        return;
     //recv_data.hexlike();
 
     time_t t = time(nullptr);
 
 
-    if (t - m_lastWhoRequest < 30 && !(GetPlayer() && GetPlayer()->HasCustomFlag(CUSTOM_PLAYER_FLAG_BYPASS_WHO_COOLDOWN)))
-        return;
 
     std::string player_name, guild_name;
 
@@ -265,6 +269,18 @@ void WorldSession::HandleWhoOpcode(WorldPacket & recv_data)
     recv_data >> TaskLevelMin;                               // maximal player level, default 0
     recv_data >> TaskLevelMax;                               // minimal player level, default 100 (MAX_LEVEL)
     recv_data >> player_name;                                   // player name, case sensitive...
+
+    // A module may take the search text as a command of its own -- an addon that
+    // cannot speak can still search. Before the throttle on purpose: commands are
+    // not searches.
+    if (GetPlayer() && sScriptMgr.OnWhoRequest(GetPlayer(), player_name))
+        return;
+
+    if (ReceivedWhoRequest())
+        return;
+
+    if (t - m_lastWhoRequest < 30 && !(GetPlayer() && GetPlayer()->HasCustomFlag(CUSTOM_PLAYER_FLAG_BYPASS_WHO_COOLDOWN)))
+        return;
 
     recv_data >> guild_name;                                    // guild name, case sensitive...
 

@@ -515,6 +515,29 @@ void MotionMaster::MovePoint(uint32 id, const Movement::Location& location, uint
     MovePoint(id, location.x, location.y, location.z, options, speed, finalOrientation);
 }
 
+void MotionMaster::MovePath(Movement::PointsArray const& pointPath, uint32 /*moveMode*/, bool flying, bool walk)
+{
+    // Need at least a start and an end vertex to build a spline.
+    if (pointPath.size() < 2)
+        return;
+
+    DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s movement by path (%u points)",
+                     m_owner->GetGuidStr().c_str(), uint32(pointPath.size()));
+
+    // Interrupt any active spline before launching the new one so the path
+    // starts cleanly from the unit's current position (Launch() rewrites the
+    // first vertex to the live position).
+    if (!m_owner->IsStopped())
+        m_owner->StopMoving();
+
+    Movement::MoveSplineInit init(*m_owner, "MotionMaster::MovePath");
+    init.MovebyPath(pointPath);
+    init.SetWalk(walk);             // walk == false => run speed
+    if (flying)
+        init.SetFly();
+    init.Launch();
+}
+
 void MotionMaster::MoveWaypointAsDefault(uint32 startPoint /*=0*/, uint32 source /*=0==PATH_NO_PATH*/, uint32 initialDelay /*=0*/, uint32 overwriteGuid /*=0*/, uint32 overwriteEntry /*=0*/, bool repeat /*=true*/)
 {
     if (m_owner->IsCreature())

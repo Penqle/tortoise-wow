@@ -324,6 +324,10 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
         return;
     }
 
+    // Module hook: a bot session holding this character yields to the real client
+    // logging in.
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_BOT_LOGIN_YIELD,
+        [&](WorldScript* s) { s->OnBotLoginYield(playerGuid.GetCounter()); });
     // A real client always wins. Pending/Loading Headless sessions have not
     // materialized a Player yet, so cancel them before dispatching this login.
     if ((headlessState == HeadlessSessionState::Pending ||

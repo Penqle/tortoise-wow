@@ -20,6 +20,7 @@
  */
 
 #include "Common.h"
+#include "ScriptObjects.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "World.h"
@@ -133,6 +134,10 @@ void WorldSession::HandleGuildInviteOpcode(WorldPacket& recvPacket)
     data << GetPlayer()->GetName();
     data << guild->GetName();
     player->GetSession()->SendPacket(&data);
+
+    // Module hook: a managed bot has no client to click the invite window; the
+    // module answers for it a moment later.
+    ScriptRegistry<GuildScript>::ForEach([&](GuildScript* s) { s->OnGuildInvite(player); });
 
     DEBUG_LOG("WORLD: Sent (SMSG_GUILD_INVITE)");
 }

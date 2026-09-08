@@ -1862,6 +1862,52 @@ AuraScript* ScriptMgr::GetAuraScript(SpellEntry const* pSpell)
     return pTempScript->GetAuraScript(pSpell);
 }
 
+bool ScriptMgr::IsBotManaged(Player* who)
+{
+    bool managed = false;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_IS_MANAGED_BOT,
+        [&](PlayerScript* script) { if (script->IsManagedBot(who)) managed = true; });
+    return managed;
+}
+
+uint8 ScriptMgr::GetBotRoles(Player* who)
+{
+    uint8 roles = 0;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_GET_BOT_ROLES,
+        [&](PlayerScript* script) { roles = uint8(roles | script->GetBotRoles(who)); });
+    return roles;
+}
+
+bool ScriptMgr::OnAddonMessage(Player* from, std::string const& msg)
+{
+    bool consumed = false;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_ADDON_MESSAGE,
+        [&](PlayerScript* script) { if (!consumed && script->OnAddonMessage(from, msg)) consumed = true; });
+    return consumed;
+}
+
+bool ScriptMgr::OnWhoRequest(Player* from, std::string const& text)
+{
+    bool consumed = false;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_WHO_REQUEST,
+        [&](PlayerScript* script) { if (!consumed && script->OnWhoRequest(from, text)) consumed = true; });
+    return consumed;
+}
+
+uint32 ScriptMgr::AppendWhoResults(WorldPacket& data, uint32 have, uint32 levelMin, uint32 levelMax,
+            uint32 racemask, uint32 classmask, uint32 zonesCount, uint32 const* zoneids,
+            uint32 team, bool allowTwoSide, std::wstring const& wantName)
+{
+    uint32 total = 0;
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_APPEND_WHO,
+        [&](WorldScript* script)
+        {
+            total += script->OnAppendWho(data, have + total, levelMin, levelMax, racemask,
+                classmask, zonesCount, zoneids, team, allowTwoSide, wantName);
+        });
+    return total;
+}
+
 bool ScriptMgr::OnGossipHello(Player* pPlayer, Creature* pCreature)
 {
     Script* pTempScript = m_NPC_scripts[pCreature->GetScriptId()];

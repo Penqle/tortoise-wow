@@ -147,6 +147,10 @@ class MotionMaster : std::stack<MovementGenerator *>
         void MoveDistance(Unit* target, float distance);
         void ReInitializePatrolMovement();
 
+        // A module supplies a precomputed path and expects the unit to travel along
+        // it: a spline through the points, walk == false selects run speed.
+        void MovePath(Movement::PointsArray const& pointPath, uint32 moveMode, bool flying, bool walk = false);
+
         MovementGeneratorType GetCurrentMovementGeneratorType() const;
         static char const* GetMovementGeneratorTypeName(MovementGeneratorType generator);
         void GetUsedMovementGeneratorsList(std::vector<MovementGeneratorType>& list) const;

@@ -131,8 +131,17 @@ void LFTManager::Update(uint32 diff)
     TryMakeOffers();
 }
 
+uint8 LFTManager::SignedUpRole(ObjectGuid const& guid) const
+{
+    std::map<ObjectGuid, uint8>::const_iterator it = m_signedUpRole.find(guid);
+
+    return it == m_signedUpRole.end() ? 0 : it->second;
+}
+
 void LFTManager::OnPlayerLogout(ObjectGuid const& guid)
 {
+    m_signedUpRole.erase(guid);
+
     EnsureListingsLoaded();
     CleanupPlayer(guid);
 

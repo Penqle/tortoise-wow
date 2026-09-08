@@ -1023,6 +1023,16 @@ void Group::StartLootRoll(Creature* lootTarget, LootMethod method, Loot* loot, u
         loot->items[itemSlot].is_blocked = true;
         lootTarget->StartGroupLoot(this, LOOT_ROLL_TIMEOUT);
         RollId.push_back(r);
+
+        // The managed bots vote now rather than never. They have no client to
+        // send CMSG_LOOT_ROLL, so before this every roll they were part of ran
+        // its full thirty seconds and passed by default.
+        //
+        // After RollId.push_back on purpose: CountRollVote looks the roll up in
+        // that list, and a vote cast before it is in there finds nothing.
+        ScriptRegistry<GroupScript>::ForEach([&](GroupScript* s) {
+            s->OnLootRollStarted(this, lootTarget->GetObjectGuid(), itemSlot, lootItem.itemid);
+        });
     }
     else                                            // no looters??
         delete r;

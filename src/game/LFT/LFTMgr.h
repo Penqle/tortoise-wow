@@ -29,6 +29,10 @@ class LFTManager
         bool HandleAddonMessage(Player* player, uint32 type, std::string const& rawMessage);
         void Update(uint32 diff);
         void OnPlayerLogout(ObjectGuid const& guid);
+        // What somebody signed up as, kept after the queue has let go of them: a
+        // group forming is the moment anybody asks. Cleared on logout.
+        uint8 SignedUpRole(ObjectGuid const& guid) const;
+
 
         // Generic module API: queue a live in-world player through native validation.
         // World-thread only. Validates instances and role (via AllowedRoleMask, native
@@ -137,6 +141,9 @@ class LFTManager
 
         typedef std::map<uint32, Listing> ListingsMap;
         typedef std::map<ObjectGuid, QueuedPlayer> QueueMap;
+        // Survives the queue entry it came from; cleared on logout.
+        std::map<ObjectGuid, uint8> m_signedUpRole;
+
         typedef std::map<ObjectGuid, PendingRolecheck> RolecheckMap;
         typedef std::map<uint32, Offer> OffersMap;
 

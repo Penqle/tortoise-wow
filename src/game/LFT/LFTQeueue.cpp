@@ -1,3 +1,4 @@
+#include "ScriptMgr.h"
 #include "LFTMgr.h"
 
 #include "Group.h"
@@ -62,6 +63,11 @@ namespace
 
 void LFTManager::HandleQueueJoin(Player* player, std::vector<std::string> const& fields)
 {
+    // A managed bot never queues on its own behalf: a group formed for one steals
+    // members from groups formed for people, and nobody at the other end wanted it.
+    if (player && sScriptMgr.IsBotManaged(player))
+        return;
+
     if (fields.size() < 3)
         return;
 
@@ -239,9 +245,42 @@ void LFTManager::StartRolecheck(Player* leader, std::vector<std::string> const& 
     {
         if (Player* member = GetPlayer(guid))
         {
+            // A managed bot answers for itself, here and now.
+            //
+            // The rolecheck is an addon conversation: the server asks every member
+            // what they want to be, the addon opens a window, somebody clicks. A
+            // managed bot has no client and therefore no window and no click, so it
+            // never answered -- and because the check only completes when everybody
+            // has, a party with a managed bot in it could not list itself at all. It
+            // waited ninety seconds and expired, every time.
+            //
+            // The module knows its role, the same answer it would give in any group.
+            // There is nothing to ask and nobody to ask, so
+            // the response is simply written down, and no message is sent to a client
+            // that does not exist.
+            if (sScriptMgr.IsBotManaged(member))
+            {
+                if (uint8 roles = sScriptMgr.GetBotRoles(member))
+                    m_rolechecks[rolecheck.leaderGuid].responses[guid] = roles;
+
+                continue;
+            }
+
             Send(member, "S2C_ROLECHECK_START;" + joinedInstances);
             Send(member, "S2C_UPDATE_QUEUE_STATUS;pending_rolecheck");
         }
+    }
+
+    // And if that was everybody -- a party of managed bots with nobody left to ask -- the
+    // check is already finished rather than pending.
+    RolecheckMap::iterator itr = m_rolechecks.find(rolecheck.leaderGuid);
+
+    if (itr != m_rolechecks.end() &&
+        itr->second.responses.size() == itr->second.members.size())
+    {
+        PendingRolecheck finished = itr->second;
+        m_rolechecks.erase(itr);
+        EnqueueRolecheck(finished);
     }
 }
 
@@ -263,6 +302,7 @@ void LFTManager::EnqueuePlayer(Player* player, ObjectGuid const& leaderGuid, std
     queued.instances = instances;
     queued.roleMask = roleMask;
     queued.assignedRole = PickRole(roleMask, 0, 0, 0);
+    m_signedUpRole[queued.guid] = queued.assignedRole;   // outlives the queue entry
 
     m_queue[queued.guid] = queued;
     SendQueueJoined(player, m_queue[queued.guid]);
@@ -314,6 +354,7 @@ void LFTManager::CancelOffer(uint32 offerId, bool requeueAccepted, ObjectGuid co
         if (keepQueued && queued != m_queue.end())
         {
             queued->second.assignedRole = PickRole(queued->second.roleMask, 0, 0, 0);
+            m_signedUpRole[queued->first] = queued->second.assignedRole;
             if (Player* player = GetPlayer(itr->first))
                 SendQueueJoined(player, queued->second);
         }
@@ -462,6 +503,7 @@ bool LFTManager::TryBuildOfferForInstance(std::string const& instance)
     for (std::map<ObjectGuid, uint8>::const_iterator itr = selectedRoles.begin(); itr != selectedRoles.end(); ++itr)
     {
         m_queue[itr->first].assignedRole = itr->second;
+        m_signedUpRole[itr->first] = itr->second;
         m_playerOffers[itr->first] = offer.id;
         if (Player* player = GetPlayer(itr->first))
         {
