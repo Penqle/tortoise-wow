@@ -53,6 +53,16 @@ set(MODULES_COMMON_INCLUDES
   ${CMAKE_SOURCE_DIR}/src/game/Threat
   ${CMAKE_SOURCE_DIR}/src/game/Transports
   ${CMAKE_SOURCE_DIR}/src/game/vmap
+  ${CMAKE_SOURCE_DIR}/src/game/LFT
+  ${CMAKE_SOURCE_DIR}/src/game/MapNodes
+  ${CMAKE_SOURCE_DIR}/src/game/PacketBroadcast
+  ${CMAKE_SOURCE_DIR}/src/game/Logging
+  ${CMAKE_SOURCE_DIR}/src/game/Shop
+  ${CMAKE_SOURCE_DIR}/src/game/TWDebuff
+  ${CMAKE_SOURCE_DIR}/src/game/GuildBank
+  ${CMAKE_SOURCE_DIR}/src/game/HttpApi
+  ${CMAKE_SOURCE_DIR}/src/game/DiscordBot
+  ${CMAKE_SOURCE_DIR}/src/game/Analysis
   ${CMAKE_SOURCE_DIR}/dep/include
   ${CMAKE_SOURCE_DIR}/dep/recastnavigation
   ${CMAKE_SOURCE_DIR}/dep/include/g3dlite
