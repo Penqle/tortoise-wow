@@ -324,6 +324,15 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
         return;
     }
 
+    PlayerCacheData* cacheData = sObjectMgr.GetPlayerDataByGUID(playerGuid.GetCounter());
+    if (!cacheData || cacheData->uiAccount != GetAccountId())
+    {
+        WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
+        data << (uint8)1;
+        SendPacket(&data);
+        return;
+    }
+
     // Module hook: a bot session holding this character yields to the real client
     // logging in.
     ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_BOT_LOGIN_YIELD,
