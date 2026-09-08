@@ -447,7 +447,9 @@ bool WorldSession::Update(PacketFilter& updater)
 
 bool WorldSession::CanProcessPackets() const
 {
-    return (m_Socket && !m_Socket->IsClosed());
+    // Headless sessions have no socket, but trusted native modules may enqueue
+    // synthetic client packets for the normal opcode handlers.
+    return IsHeadless() || (m_Socket && !m_Socket->IsClosed());
 }
 
 void WorldSession::ProcessPackets(PacketFilter& updater)
