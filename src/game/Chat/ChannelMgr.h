@@ -43,6 +43,8 @@ class ChannelMgr
 
         Channel *GetOrCreateChannel(std::string const& name, bool allowAreaDependantChans = true);
         Channel *GetChannel(std::string const& name, PlayerPointer p, bool pkt = true);
+        // Read access for modules: every channel of this faction.
+        ChannelMap const& GetChannels() const { return channels; }
         void LeftChannel(std::string const& name);
         void CreateDefaultChannels();
         static void AnnounceBothFactionsChannel(std::string const& channelName, ObjectGuid playerGuid, char const* message);

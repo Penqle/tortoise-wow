@@ -95,6 +95,13 @@ class LFGQueue
         void AddToQueue(Player* leader, uint32 queAreaID);
         void RestoreOfflinePlayer(Player* player);
         bool IsPlayerInQueue(const ObjectGuid& plrGuid) const;
+        // Read access for modules: the queue entry of one player, if queued.
+        void GetPlayerQueueInfo(LFGPlayerQueueInfo* info, ObjectGuid plrGuid) const
+        {
+            auto it = m_QueuedPlayers.find(plrGuid);
+            if (it != m_QueuedPlayers.end() && info)
+                *info = it->second;
+        }
         void RemovePlayerFromQueue(const ObjectGuid& plrGuid, PlayerLeaveMethod leaveMethod = PLAYER_CLIENT_LEAVE); // 0 == by default system (cmsg, leader leave), 1 == by lfg system (no need report text you left queu)
         void RemoveGroupFromQueue(uint32 groupId, GroupLeaveMethod leaveMethod = GROUP_CLIENT_LEAVE);
         void Update(uint32 diff);
