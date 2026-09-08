@@ -6426,6 +6426,22 @@ void Player::RepopAtGraveyard()
 
     // Special handle for battleground maps
     uint32 TeleOptions = TELE_TO_NOT_UNSUMMON_PET;
+
+    // A managed bot cannot click an instance portal: released to the outdoor
+    // graveyard it would stand there as a ghost for good while its group carried
+    // on. So it comes back alive just inside the instance entrance instead.
+    bool const repopAtEntrance = sScriptMgr.IsBotManaged(this);
+
+    if (!IsAlive() && repopAtEntrance && GetMap() && GetMap()->IsDungeon())
+    {
+        if (AreaTriggerTeleport const* entrance = sObjectMgr.GetMapEntranceTrigger(GetMapId()))
+        {
+            ResurrectPlayer(1.0f);
+            SpawnCorpseBones();
+            TeleportTo(entrance->destination, TeleOptions);
+            return;
+        }
+    }
     if (BattleGround *bg = GetBattleGround())
     {
         ClosestGrave = bg->GetClosestGraveYard(this);
