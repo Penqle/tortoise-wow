@@ -40,7 +40,7 @@ libraries the playerbots module needs.
 |---|---|---|
 | `Setup-Testlab.ps1` | **yes** | The pipeline itself. |
 | `dbc_verifier.json` | **yes** | SHA256 manifest step 01 checks the DBC files against. The run stops without it. Not the same file as `tools/dbc_verification/manifest.json`. |
-| `Run-Testlab.bat` | recommended | Launcher that avoids the execution-policy change. The `.ps1` runs fine on its own if your policy already allows it. |
+| `Run-Testlab.bat` | optional | Convenience launcher: forwards arguments, checks the execution policy, keeps the window open on failure. The `.ps1` runs fine on its own. |
 | `README.md` | no | This document. |
 
 Copy the first three together; the script looks for `dbc_verifier.json` in the workspace
@@ -133,13 +133,33 @@ cd C:\WOW\testlab
 Start MariaDB (`server\1.Start mysql.bat`) before running — the pipeline needs it up, and
 the preflight will stop you if it is not.
 
-### Use `Run-Testlab.bat`, not the `.ps1` directly
+### Execution policy
 
-`Run-Testlab.bat` launches PowerShell with `-ExecutionPolicy Bypass -NoProfile` and
-forwards every argument. That scope applies to **that one process** — it changes nothing
-permanently, needs no administrator rights, and saves you from running
-`Set-ExecutionPolicy Bypass -Scope Process -Force` by hand each time. It also clears the
-mark-of-the-web Windows attaches to a script that arrived from the internet.
+Windows will not run an unsigned PowerShell script under the `Restricted` policy, which
+is the default on client editions. Allowing it for the current window only, leaving the
+machine setting alone:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
+
+A copy cloned or downloaded from the internet also carries a mark-of-the-web that blocks
+it under `RemoteSigned`. `Unblock-File` clears that:
+
+```powershell
+Get-ChildItem .\tools\testlab_pipeline\*.ps1 | Unblock-File
+```
+
+`Run-Testlab.bat` does none of this for you — whether to run scripts is your decision,
+not the launcher's. What it does do is check the policy first and tell you which of the
+two above you need, rather than failing with PowerShell's own message.
+
+### Use `Run-Testlab.bat`, or call the `.ps1` yourself
+
+The launcher forwards every argument, keeps your PowerShell profile out of the run so
+the pipeline behaves the same on every machine, and holds the window open on failure so
+a double-clicked run does not vanish before the error can be read. None of that is
+required — `Setup-Testlab.ps1` runs perfectly well on its own.
 
 All parameters work through it:
 
