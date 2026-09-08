@@ -104,6 +104,10 @@ enum BagFamily
     BAG_FAMILY_ENCHANTING_SUPP                  = 7,
     BAG_FAMILY_ENGINEERING_SUPP                 = 8,
     BAG_FAMILY_KEYS                             = 9,
+    BAG_FAMILY_MEAT                             = 10, // Turtle: rations bags
+    BAG_FAMILY_FISH                             = 11, // Turtle: fishing bags
+    BAG_FAMILY_LEATHER                          = 12, // Turtle: leatherworking bags
+    BAG_FAMILY_MINING                           = 13, // Turtle: mining bags (ore, stone, gems)
 };
 
 enum InventoryType
@@ -187,10 +191,12 @@ enum ItemSubclassContainer
     ITEM_SUBCLASS_ENGINEERING_CONTAINER = 4,
     ITEM_SUBCLASS_GEM_CONTAINER = 5,
     ITEM_SUBCLASS_MINING_CONTAINER = 6,
-    ITEM_SUBCLASS_LEATHERWORKING_CONTAINER = 7
+    ITEM_SUBCLASS_LEATHERWORKING_CONTAINER = 7,
+    ITEM_SUBCLASS_RATIONS_CONTAINER = 8,  // Turtle: rations bags (BAG_FAMILY_MEAT)
+    ITEM_SUBCLASS_FISHING_CONTAINER = 9   // Turtle: fishing bags (BAG_FAMILY_FISH)
 };
 
-#define MAX_ITEM_SUBCLASS_CONTAINER 8
+#define MAX_ITEM_SUBCLASS_CONTAINER 10
 
 enum ItemSubclassWeapon
 {

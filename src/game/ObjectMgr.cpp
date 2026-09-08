@@ -10146,7 +10146,7 @@ void ObjectMgr::LoadChatChannels()
 
         uint32 id = fields[0].GetUInt32();
         ChatChannelsEntry channel;
-        channel.id = 1;
+        channel.id = id;
         channel.flags = fields[1].GetUInt32();
         channel.factionGroup = fields[2].GetUInt32();
 
@@ -10175,31 +10175,38 @@ ChatChannelsEntry const* ObjectMgr::GetChannelEntryFor(std::string const& name)
 {
     for (auto const& itr : m_chatChannelsMap)
     {
-        // need to remove %s from entryName if it exists before we match
-        for (const auto loc : itr.second.name)
+        for (std::string const& entryName : itr.second.name)
         {
-            std::string entryName(loc);
-            std::size_t removeString = entryName.find("%s");
-
             // Not loaded locale
             if (entryName.empty())
                 continue;
 
-            if (removeString != std::string::npos)
-                entryName.replace(removeString, 2, "");
+            std::size_t const zoneMarker = entryName.find("%s");
+            if (zoneMarker == std::string::npos)
+            {
+                if (entryName == name)
+                    return &itr.second;
+                continue;
+            }
 
-            if (name.find(entryName) != std::string::npos)
+            std::string const prefix = entryName.substr(0, zoneMarker);
+            std::string const suffix = entryName.substr(zoneMarker + 2);
+            if (name.size() < prefix.size() + suffix.size())
+                continue;
+
+            if (name.compare(0, prefix.size(), prefix) == 0 &&
+                name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0)
                 return &itr.second;
         }
 
         // search in shortcut name
-        for (const auto loc : itr.second.shortcut)
+        for (std::string const& shortcut : itr.second.shortcut)
         {
             // Not loaded locale
-            if (loc.empty())
+            if (shortcut.empty())
                 continue;
 
-            if (loc == name)
+            if (shortcut == name)
                 return &itr.second;
         }
     }
