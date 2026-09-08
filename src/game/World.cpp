@@ -32,6 +32,7 @@
 #include "Log.h"
 #include "Opcodes.h"
 #include "WorldSession.h"
+#include "HeadlessSessionMgr.h"
 #include "WorldPacket.h"
 #include "Weather.h"
 #include "Player.h"
@@ -185,6 +186,7 @@ World::World():
 
     m_timeRate = 1.0f;
     m_charDbWorkerThread    = nullptr;
+    m_headlessSessionMgr = std::make_unique<HeadlessSessionMgr>(*this);
 }
 
 /// World destructor
@@ -225,6 +227,8 @@ void World::InternalShutdown()
 		delete m_sessions.begin()->second;
 		m_sessions.erase(m_sessions.begin());
 	}
+
+    m_headlessSessionMgr->Shutdown();
 
 	CliCommandHolder* command = nullptr;
 	while (cliCmdQueue.next(command))
@@ -290,6 +294,50 @@ bool World::RemoveSession(uint32 id)
 void World::AddSession(WorldSession* s)
 {
     addSessQueue.add(s);
+}
+
+HeadlessSessionStartResult World::StartHeadlessSession(uint32 accountId, ObjectGuid characterGuid,
+    LocaleConstant locale, std::string const& tag)
+{
+    return m_headlessSessionMgr->Start(accountId, characterGuid, locale, tag);
+}
+
+bool World::StopHeadlessSession(ObjectGuid characterGuid, bool save)
+{
+    return m_headlessSessionMgr->Stop(characterGuid, save);
+}
+
+HeadlessSessionState World::GetHeadlessSessionState(ObjectGuid characterGuid) const
+{
+    return m_headlessSessionMgr->GetState(characterGuid);
+}
+
+void World::HandleHeadlessLoginCallback(LoginQueryHolder* holder)
+{
+    m_headlessSessionMgr->HandleLoginCallback(holder);
+}
+
+bool World::ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session,
+    WorldSession* replacement, uint32 accountId)
+{
+    return m_headlessSessionMgr->ReclaimForNetwork(characterGuid, session, replacement, accountId);
+}
+
+void World::StopHeadlessSessionsForAccount(uint32 accountId, bool save)
+{
+    m_headlessSessionMgr->StopForAccount(accountId, save);
+}
+
+bool World::HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded) const
+{
+    for (auto const& entry : m_sessions)
+    {
+        if (entry.second && entry.second != excluded &&
+            entry.second->GetAccountId() == accountId)
+            return true;
+    }
+
+    return false;
 }
 
 void World::AddSession_(WorldSession* s)
@@ -2389,6 +2437,11 @@ void LoadPlayerEggLoot();
             honorUpdateFile << "0";
     }
 
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
+    {
+        script->OnStartup();
+    });
+
     sLog.outString("Current content phase is set to %u.", GetContentPhase() + 1);
     uint32 uStartInterval = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
     sLog.outString("World server is up and running! Loading time: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000);
@@ -2435,11 +2488,6 @@ void World::DetectDBCLang()
     m_defaultDbcLocale = LocaleConstant(default_locale);
 
     sLog.outString("Using %s DBC locale as default.", localeNames[m_defaultDbcLocale]);
-    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
-    {
-        script->OnStartup();
-    });
-    
 }
 
 void World::ApiServerDeleter::operator()(HttpApi::ApiServer* p)
@@ -3038,6 +3086,8 @@ void World::BanAccount(uint32 accountId, uint32 duration, std::string reason, st
     else
         sAccountMgr.BanAccount(accountId, 0xFFFFFFFF);
 
+    StopHeadlessSessionsForAccount(accountId, true);
+
     if (WorldSession* sess = FindSession(accountId))
     {
         if (std::string(sess->GetPlayerName()) != author)
@@ -3110,6 +3160,8 @@ public:
                     sAccountMgr.BanAccount(account, time(nullptr) + holder->GetDuration());
                 else
                     sAccountMgr.BanAccount(account, 0xFFFFFFFF);
+
+                sWorld.StopHeadlessSessionsForAccount(account, true);
             }
             // Don't immediately kick if we're banning ourselves (destroys session, crash)
             if (account != holder->GetAuthorAccountId())
@@ -3491,6 +3543,8 @@ void World::UpdateSessions(uint32 diff)
     while (addSessQueue.next(sess))
         AddSession_(sess);
 
+    m_headlessSessionMgr->PromotePending();
+
     ///- Then send an update signal to remaining ones
     time_t time_now = time(nullptr);
 
@@ -3533,6 +3587,8 @@ void World::UpdateSessions(uint32 diff)
             itr++;
         }
     }
+
+    m_headlessSessionMgr->Update(diff);
 }
 
 // This handles the issued and queued CLI/RA commands

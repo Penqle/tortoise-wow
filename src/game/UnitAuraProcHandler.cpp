@@ -353,8 +353,11 @@ SpellProcEventTriggerCheck Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, Spel
         return SPELL_PROC_TRIGGER_FAILED;
 
     // In most cases req get honor or XP from kill
-    if ((EventProcFlag & PROC_FLAG_KILL) && IsPlayer())
+    if ((EventProcFlag & procFlag & PROC_FLAG_KILL) && IsPlayer())
     {
+        if (!pVictim)
+            return SPELL_PROC_TRIGGER_FAILED;
+
         bool allow = ((Player*)this)->IsHonorOrXPTarget(pVictim);
         if (!allow)
             return SPELL_PROC_TRIGGER_FAILED;

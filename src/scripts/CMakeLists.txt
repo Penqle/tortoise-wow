@@ -351,6 +351,7 @@ world/arathi_highlands.cpp
 world/ashenvale.cpp
 world/alahthalas.cpp
 world/azshara.cpp
+world/balor.cpp
 world/blasted_lands.cpp
 world/boss_omen.cpp
 world/boss_omen.h

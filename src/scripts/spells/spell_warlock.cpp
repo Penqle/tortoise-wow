@@ -59,6 +59,7 @@ enum WarlockSpells
     SPELL_WARLOCK_INCREASED_PET_DAMAGE           = 27230,
     SPELL_WARLOCK_SUMMON_FELGUARD                = 30146,
     SPELL_WARLOCK_LIFE_TAP_ENERGIZE              = 31818,
+    SPELL_WARLOCK_DARK_HARVEST_EFFECT            = 44071,
     SPELL_WARLOCK_DEMON_AVOIDANCE                = 46024,
     SPELL_WARLOCK_WRATHSTONE                     = 51700,
     SPELL_WARLOCK_UNLEASHED_POTENTIAL_R1         = 51718,
@@ -74,8 +75,11 @@ enum WarlockSpells
     SPELL_WARLOCK_SOUL_SIPHON_R1                 = 52558,
     SPELL_WARLOCK_SOUL_SIPHON_R2                 = 52559,
     SPELL_WARLOCK_SOUL_SIPHON_R3                 = 52560,
+    SPELL_WARLOCK_PLAGUEHEART_CURSE_OF_AGONY     = 52606,
+    SPELL_WARLOCK_DARK_HARVEST_DOOMGUARD         = 52656,
     SPELL_WARLOCK_FELSTONE_HEAL                  = 52657,
     SPELL_WARLOCK_MALEDICTION_TRIGGER            = 52670,
+    SPELL_WARLOCK_UNSPOKEN_CONFLAGRATE_TICK      = 52682,
     SPELL_WARLOCK_UNLEASHED_POTENTIAL_VISUAL     = 52965,
     SPELL_WARLOCK_GREATER_DEMON_ENSLAVE          = 53222,
     SPELL_WARLOCK_ENSLAVE_HEALING_REDUCTION      = 58184,
@@ -445,6 +449,11 @@ void ApplySoulSiphonDamageBonus(Unit* caster, Unit* target, SpellEntry const* sp
     damage *= (100.0f + float(percentPerEffect * effectCount)) / 100.0f;
 }
 
+bool IsFinalDarkHarvestTick(Aura const* aura)
+{
+    return aura && aura->GetAuraTicks() && aura->GetAuraTicks() == aura->GetAuraMaxTicks();
+}
+
 struct DarkHarvestPeriodicAuraState
 {
     uint32 spellId;
@@ -486,6 +495,9 @@ struct spell_warlock_conflagrate : public SpellScript
 
         damage += immolate->GetModifier()->m_amount;
 
+        if (spell->m_casterUnit && spell->m_casterUnit->HasAura(SPELL_WARLOCK_UNSPOKEN_CONFLAGRATE_TICK))
+            return;
+
         SpellAuraHolder* holder = immolate->GetHolder();
         int32 const remainingDuration = holder->GetAuraDuration();
         if (remainingDuration <= 3 * IN_MILLISECONDS)
@@ -498,7 +510,7 @@ struct spell_warlock_conflagrate : public SpellScript
     }
 };
 
-struct spell_warlock_curse_of_agony : public SpellScript
+struct spell_warlock_curse_of_agony : public SpellScript, public AuraScript
 {
     void OnAfterHit(Spell* spell) const override
     {
@@ -509,6 +521,31 @@ struct spell_warlock_curse_of_agony : public SpellScript
         ObjectGuid const& casterGuid = spell->m_casterUnit->GetObjectGuid();
         RemoveCasterCurseOfDoom(target, casterGuid);
         RemoveOtherCasterCurseOfAgonyRanks(target, casterGuid, spell->m_spellInfo->Id);
+    }
+
+    void OnPeriodicDamageCalculateAmount(Aura* aura, float& amount) override
+    {
+        if (!aura || !aura->GetSpellProto()->IsFitToFamily<SPELLFAMILY_WARLOCK, CF_WARLOCK_CURSE_OF_AGONY>())
+            return;
+
+        float bonus = (-1.0f + float((int32(aura->GetAuraTicks()) - 1) / 4)) * (aura->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_0) / 2.0f);
+        amount += std::max(bonus, 0.0f);
+
+        Unit* caster = aura->GetCaster();
+        Aura const* setBonus = caster ? caster->GetAura(SPELL_WARLOCK_PLAGUEHEART_CURSE_OF_AGONY, EFFECT_INDEX_0) : nullptr;
+        if (!setBonus)
+            return;
+
+        SpellEntry const* setBonusSpell = setBonus->GetSpellProto();
+        uint32 const effectIndex = setBonus->GetEffIndex();
+        uint32 const affectedMask = setBonusSpell->EffectItemType[effectIndex];
+        if (setBonusSpell->SpellFamilyName != aura->GetSpellProto()->SpellFamilyName ||
+            (affectedMask && !aura->GetSpellProto()->IsFitToFamilyMask(affectedMask)))
+            return;
+
+        int32 const tickLimit = setBonus->GetModifier()->m_miscvalue;
+        if (tickLimit > 0 && aura->GetAuraTicks() <= uint32(tickLimit))
+            amount *= (100.0f + float(setBonus->GetBasePoints())) / 100.0f;
     }
 };
 
@@ -948,6 +985,16 @@ struct spell_warlock_dark_harvest : public AuraScript
             caster->RemoveSpellCooldown(spellId, true);
     }
 
+    void TrySummonDoomguard(Aura* aura)
+    {
+        Unit* caster = aura ? aura->GetCaster() : nullptr;
+        Unit* target = aura ? aura->GetTarget() : nullptr;
+        if (!caster || !target || !caster->HasAura(SPELL_WARLOCK_DARK_HARVEST_DOOMGUARD) || !roll_chance_i(10))
+            return;
+
+        caster->CastSpell(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), SPELL_WARLOCK_DARK_HARVEST_EFFECT, true, nullptr, aura);
+    }
+
     void OnAfterApply(Aura* aura, bool apply) override
     {
         if (!aura || !IsDarkHarvestSpell(aura->GetId()) || aura->GetEffIndex() != EFFECT_INDEX_0)
@@ -962,7 +1009,10 @@ struct spell_warlock_dark_harvest : public AuraScript
         RestoreTickSpeed(aura->GetTarget());
 
         if (aura->GetRemoveMode() == AURA_REMOVE_BY_DEATH)
+        {
             ResetDarkHarvestCooldown(aura->GetCaster());
+            TrySummonDoomguard(aura);
+        }
     }
 
     void OnPeriodicTick(Aura* aura) override
@@ -979,6 +1029,11 @@ struct spell_warlock_dark_harvest : public AuraScript
             return;
 
         ApplySoulSiphonDamageBonus(aura->GetCaster(), aura->GetTarget(), aura->GetSpellProto(), amount);
+
+        if (IsFinalDarkHarvestTick(aura))
+            if (Unit* caster = aura->GetCaster())
+                if (caster->HasAura(SPELL_WARLOCK_DARK_HARVEST_DOOMGUARD))
+                    amount *= 4.0f;
     }
 };
 
@@ -1686,7 +1741,7 @@ void AddSC_warlock_spell_scripts()
 {
     RegisterSpellScript("spell_warlock_fire_shield", &GetSpellScript<spell_warlock_fire_shield>);
     RegisterSpellScript("spell_warlock_conflagrate", &GetSpellScript<spell_warlock_conflagrate>);
-    RegisterSpellScript("spell_warlock_curse_of_agony", &GetSpellScript<spell_warlock_curse_of_agony>);
+    RegisterSpellAndAuraScript("spell_warlock_curse_of_agony", &GetSpellScript<spell_warlock_curse_of_agony>, &GetAuraScript<spell_warlock_curse_of_agony>);
     RegisterSpellScript("spell_warlock_malediction_trigger", &GetSpellScript<spell_warlock_malediction_trigger>);
     RegisterSpellScript("spell_warlock_malediction_curse", &GetSpellScript<spell_warlock_malediction_curse>);
     RegisterSpellScript("spell_warlock_life_tap", &GetSpellScript<spell_warlock_life_tap>);

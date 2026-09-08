@@ -530,6 +530,7 @@ class AllGameObjectScript : public ScriptObject
         virtual void OnGameObjectRemoveWorld(GameObject* /*go*/) {}
         virtual void OnGameObjectUpdate(GameObject* /*go*/, uint32 /*diff*/) {}
         virtual bool CanGameObjectGossipHello(Player* /*player*/, GameObject* /*go*/) { return false; }
+        virtual bool CanGameObjectGossipSelect(Player* /*player*/, GameObject* /*go*/, uint32 /*sender*/, uint32 /*action*/, char const* /*code*/) { return false; }
         virtual GameObjectAI* GetGameObjectAI(GameObject* /*go*/) const { return nullptr; }
 };
 

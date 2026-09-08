@@ -1767,7 +1767,9 @@ void Spell::DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype)
         }
 
         // set the "Crafted by ..." property of the item
-        if (pItem->GetProto()->HasSignature())
+        if (pItem->GetProto()->HasSignature() ||
+            (player->HasChallenge(CHALLENGE_CRAFTMASTER) && player->GetLevel() < PLAYER_MAX_LEVEL &&
+             pItem->GetProto()->InventoryType != INVTYPE_NON_EQUIP))
             pItem->SetGuidValue(ITEM_FIELD_CREATOR, player->GetObjectGuid());
 
         // send info to the client
@@ -4992,9 +4994,14 @@ void Spell::EffectSelfResurrect(SpellEffectIndex eff_idx)
     {
         health += health * uint32(recoveryMod) / 100;
         mana += mana * uint32(recoveryMod) / 100;
-        health = std::min<uint32>(health, unitTarget->GetMaxHealth());
-        mana = std::min<uint32>(mana, unitTarget->GetMaxPower(POWER_MANA));
     }
+
+    if (Aura const* manaBonus = unitTarget->GetAura(51893, EFFECT_INDEX_0))
+        if (manaBonus->GetModifier()->m_amount > 0)
+            mana += mana * uint32(manaBonus->GetModifier()->m_amount) / 100;
+
+    health = std::min<uint32>(health, unitTarget->GetMaxHealth());
+    mana = std::min<uint32>(mana, unitTarget->GetMaxPower(POWER_MANA));
 
     Player *plr = ((Player*)unitTarget);
     plr->ResurrectPlayer(0.0f);

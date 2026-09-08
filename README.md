@@ -27,6 +27,8 @@ Modules can be built statically, dynamically, or disabled with the `MODULES` CMa
 Each discovered module also gets its own `MODULE_<NAME>` cache option for overriding the global setting.  
 Most modules can be ported from AzerothCore with minimal effort.  
 
+Modules can be given the topic [`tortoise-module`](https://github.com/topics/tortoise-module) for visibility.  
+
 See `modules/README.md` for module layout, build options, config loading, SQL migrations, and authoring notes.
 
 ## Operating Systems
@@ -79,4 +81,5 @@ See `CONTRIBUTING.md` for ways to get started.
 [13]: http://slproweb.com/products/Win32OpenSSL.html "OpenSSL for Windows"
 [14]: http://www.ubuntu.com/ "Ubuntu - The world's most popular free OS"
 [15]: http://windows.microsoft.com/ "Microsoft Windows"
+
 [21]: http://github.com/memononen/recastnavigation "Recast - Navigation-mesh Toolset for Games"

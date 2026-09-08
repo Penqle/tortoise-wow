@@ -35,6 +35,7 @@
 #include "MapNodes/AbstractPlayer.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
+#include "HeadlessSessionMgr.h"
 #include "Utilities/robin_hood.h"
 
 //#include "Creature.h"
@@ -54,13 +55,14 @@ class WorldSession;
 class Player;
 class SqlResultQueue;
 class QueryResult;
+class LoginQueryHolder;
+class BanAccountHandler;
 class World;
 class ChannelBroadcaster;
 namespace DiscordBot
 {
     class Bot;
 }
-
 namespace HttpApi
 {
     class ApiServer;
@@ -882,7 +884,9 @@ class World
         static volatile uint32 m_worldLoopCounter;
 
         friend class AccountDataWrapper;
-
+        friend class BanAccountHandler;
+        friend class CharacterHandler;
+        friend class WorldSession;
         World();
         ~World();
 
@@ -897,6 +901,16 @@ class World
         const SessionMap& GetAllSessions() const { return m_sessions; }
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
+        // Trusted native-module interface. Calls must run on the world thread;
+        // the manager owns construction, callbacks, lifetime and reclaim.
+        HeadlessSessionStartResult StartHeadlessSession(uint32 accountId, ObjectGuid characterGuid,
+            LocaleConstant locale, std::string const& tag);
+        bool StopHeadlessSession(ObjectGuid characterGuid, bool save = true);
+        HeadlessSessionState GetHeadlessSessionState(ObjectGuid characterGuid) const;
+
+
+        // Network account state is independent of headless character sessions.
+        bool HasOtherSessionForAccount(uint32 accountId, WorldSession const* excluded = nullptr) const;
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
@@ -1258,6 +1272,10 @@ class World
         void _UpdateRealmCharCount(QueryResult *resultCharCount, uint32 accountId);
 
     private:
+        void HandleHeadlessLoginCallback(LoginQueryHolder* holder);
+        bool ReclaimHeadlessSession(ObjectGuid characterGuid, WorldSession* session,
+            WorldSession* replacement, uint32 accountId);
+        void StopHeadlessSessionsForAccount(uint32 accountId, bool save);
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
         void setConfig(eConfigFloatValues index, char const* fieldname, float defvalue);
@@ -1300,6 +1318,7 @@ class World
         uint32 m_lastDiff = 0;
         SessionMap m_sessions;
         SessionSet m_disconnectedSessions;
+        std::unique_ptr<HeadlessSessionMgr> m_headlessSessionMgr;
         robin_hood::unordered_map<uint32 /*accountId*/, time_t /*last logout*/> m_accountsLastLogout;
         bool CanSkipQueue(WorldSession const* session);
 

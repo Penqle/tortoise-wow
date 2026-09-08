@@ -12,13 +12,6 @@ namespace
     static uint32 const LFT_ROLECHECK_TIMEOUT = 90 * IN_MILLISECONDS;
     static uint32 const LFT_OFFER_TIMEOUT = 90 * IN_MILLISECONDS;
 
-    enum LFTRoles
-    {
-        LFT_ROLE_TANK   = 0x01,
-        LFT_ROLE_HEALER = 0x02,
-        LFT_ROLE_DAMAGE = 0x04
-    };
-
     std::vector<std::string> SplitPreserveEmpty(std::string const& value, char delimiter)
     {
         std::vector<std::string> parts;
@@ -101,45 +94,8 @@ void LFTManager::HandleQueueLeave(Player* player)
 {
     if (!player)
         return;
-
-    ObjectGuid guid = player->GetObjectGuid();
-
-    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
-    {
-        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
-        {
-            CancelRolecheck(itr);
-            return;
-        }
-    }
-
-    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
-    if (offerItr != m_playerOffers.end())
-    {
-        CancelOffer(offerItr->second, true, guid, true);
-        TryMakeOffers();
-        return;
-    }
-
-    QueueMap::iterator queueItr = m_queue.find(guid);
-    if (queueItr == m_queue.end())
-        return;
-
-    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
-    std::vector<ObjectGuid> toRemove;
-    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
-    {
-        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
-        if (itrLeader == leaderGuid)
-            toRemove.push_back(itr->first);
-    }
-
-    for (ObjectGuid const& removeGuid : toRemove)
-    {
-        std::string name = m_queue[removeGuid].name;
-        m_queue.erase(removeGuid);
-        SendQueueLeft(removeGuid, name);
-    }
+    // Single owner for cancellation: addon and module both route through LeaveQueue.
+    LeaveQueue(player->GetObjectGuid());
 }
 
 void LFTManager::HandleGetQueueStatus(Player* player)
@@ -756,4 +712,152 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
         ++itr;
     }
 
+}
+
+// Generic module API. World-thread only. Reuses native queue/rolecheck/offers/groups
+// and addon packet behavior (SendQueueJoined/SendQueueLeft/TryMakeOffers).
+// Validates instances and role (AllowedRoleMask, native class mask); native grouping
+// constraints are team, hardcore and group formation (see CanQueuedPlayersGroup/
+// CanPlayersGroup); level is not compared by the core and remains caller/instance
+// policy. Grouped callers enter native rolecheck requiring per-member responses;
+// the leader's roleMask is only initial validation. Solo enqueues directly and is
+// the expected module use case.
+bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
+{
+    if (!player || !player->IsInWorld())
+        return false;
+
+    if (player->GetGroup() && player->GetGroup()->isRaidGroup())
+        return false;
+
+    if (player->GetGroup() && !player->GetGroup()->IsLeader(player->GetObjectGuid()))
+        return false;
+
+    std::vector<std::string> valid = GetSharedInstances(instances);
+    uint8 effective = roleMask & AllowedRoleMask(player);
+    if (valid.empty() || !effective)
+        return false;
+
+    ObjectGuid guid = player->GetObjectGuid();
+    CleanupPlayer(guid);
+
+    // Grouped players go through the native rolecheck so each member can pick a role.
+    // Solo participants enqueue directly without a roundtrip.
+    if (player->GetGroup())
+    {
+        StartRolecheck(player, valid);
+        return true;
+    }
+
+    EnqueuePlayer(player, guid, valid, effective);
+    TryMakeOffers();
+    return true;
+}
+
+bool LFTManager::LeaveQueue(Player* player)
+{
+    if (!player)
+        return false;
+    return LeaveQueue(player->GetObjectGuid());
+}
+
+bool LFTManager::LeaveQueue(ObjectGuid const& guid)
+{
+    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
+    {
+        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
+        {
+            CancelRolecheck(itr);
+            return true;
+        }
+    }
+
+    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
+    if (offerItr != m_playerOffers.end())
+    {
+        CancelOffer(offerItr->second, true, guid, true);
+        TryMakeOffers();
+        return true;
+    }
+
+    QueueMap::iterator queueItr = m_queue.find(guid);
+    if (queueItr == m_queue.end())
+        return false;
+
+    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
+    std::vector<ObjectGuid> toRemove;
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
+        if (itrLeader == leaderGuid)
+            toRemove.push_back(itr->first);
+    }
+
+    for (ObjectGuid const& removeGuid : toRemove)
+    {
+        QueueMap::iterator it = m_queue.find(removeGuid);
+        if (it != m_queue.end())
+        {
+            std::string name = it->second.name;
+            m_queue.erase(it);
+            SendQueueLeft(removeGuid, name);
+        }
+    }
+
+    return true;
+}
+
+bool LFTManager::IsQueued(ObjectGuid const& guid) const
+{
+    return m_queue.find(guid) != m_queue.end();
+}
+
+bool LFTManager::IsInOffer(ObjectGuid const& guid) const
+{
+    return m_playerOffers.find(guid) != m_playerOffers.end();
+}
+
+bool LFTManager::AcceptOffer(Player* player)
+{
+    if (!player)
+        return false;
+    return AcceptOffer(player->GetObjectGuid());
+}
+
+bool LFTManager::AcceptOffer(ObjectGuid const& guid)
+{
+    if (guid.IsEmpty())
+        return false;
+    Player* player = GetPlayer(guid);
+    if (!player)
+        return false;
+    if (!IsInOffer(guid))
+        return false;
+    // Reuse native handler: validates m_playerOffers/m_offers, updates accepted,
+    // broadcasts S2C_OFFER_UPDATE_COUNT, and completes the offer when full.
+    // Preserves timers, cancellation/requeue, packets, private state, addon behavior.
+    HandleOfferAccept(player);
+    return true;
+}
+
+std::vector<LFTManager::QueuedInfo> LFTManager::GetQueuedPlayers() const
+{
+    std::vector<QueuedInfo> out;
+    out.reserve(m_queue.size());
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        QueuedInfo info;
+        info.guid = itr->second.guid;
+        info.name = itr->second.name;
+        info.className = itr->second.className;
+        info.level = itr->second.level;
+        info.team = itr->second.team;
+        info.isHardcore = itr->second.isHardcore;
+        info.instances = itr->second.instances;
+        info.roleMask = itr->second.roleMask;
+        info.assignedRole = itr->second.assignedRole;
+        info.joinTime = itr->second.joinTime;
+        out.push_back(std::move(info));
+    }
+    return out;
 }

@@ -1341,6 +1341,7 @@ class Player final: public Unit
         void MailHardcoreModeRewards(uint32 level);
         void MailVagrantModeRewards(uint32 level);
         void MailBoaringModeRewards(uint32 level);
+        void MailBrewmasterModeRewards();
         void AnnounceHardcoreModeLevelUp(uint32 level);
         // Titles
         bool IsCityProtector();
@@ -2180,6 +2181,7 @@ class Player final: public Unit
 
         uint32 GetHomeBindMap() const { return m_homebindMapId; }
         uint16 GetHomeBindAreaId() const { return m_homebindAreaId; }
+        WorldLocation GetHomeBindLocation() const { return WorldLocation(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ); }
 
         void SendSummonRequest(ObjectGuid summonerGuid, uint32 mapId, uint32 zoneId, float x, float y, float z);
         void SetSummonPoint(uint32 mapid, float x, float y, float z)

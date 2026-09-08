@@ -13,6 +13,14 @@
 class Group;
 class Player;
 
+// Role masks shared by the queue's role-check and offer code.
+enum LFTRoles
+{
+    LFT_ROLE_TANK   = 0x01,
+    LFT_ROLE_HEALER = 0x02,
+    LFT_ROLE_DAMAGE = 0x04
+};
+
 class LFTManager
 {
     public:
@@ -21,6 +29,51 @@ class LFTManager
         bool HandleAddonMessage(Player* player, uint32 type, std::string const& rawMessage);
         void Update(uint32 diff);
         void OnPlayerLogout(ObjectGuid const& guid);
+
+        // Generic module API: queue a live in-world player through native validation.
+        // World-thread only. Validates instances and role (via AllowedRoleMask, native
+        // class mask) and owns queue/rolecheck/offers/groups.
+        // Native grouping constraints are team, hardcore and group formation (leader/party),
+        // enforced at offer formation (TryMakeOffers/CanQueuedPlayersGroup/CanPlayersGroup);
+        // level is not compared by the core and remains caller/instance policy even at offer time.
+        // Grouped callers enter native rolecheck: each party member must send a per-member
+        // rolecheck response (C2S_ROLECHECK_RESPONSE via HandleRolecheckResponse); the
+        // leader's roleMask is only initial validation (AllowedRoleMask) and does not assign
+        // members' roles. Solo queue (no group) enqueues directly and is the expected
+        // module use case.
+        // Returns true if the player (solo) was queued, or if grouped and leader the party
+        // entered rolecheck.
+        bool QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask);
+        // World-thread only. Single owner of cancellation - removes from
+        // rolecheck/offer/queue and restores addon state via S2C_QUEUE_LEFT.
+        // Both addon HandleQueueLeave and module calls route through here.
+        bool LeaveQueue(Player* player);
+        bool LeaveQueue(ObjectGuid const& guid);
+        bool IsQueued(ObjectGuid const& guid) const;
+        bool IsInOffer(ObjectGuid const& guid) const;
+        // World-thread only. Generic offer acceptance for machine-driven participants.
+        // Validates that the participant is live (in-world) and belongs to an offer,
+        // then reuses native HandleOfferAccept/CompleteOffer semantics (accepted-count,
+        // S2C_OFFER_UPDATE_COUNT, timers, cancellation/requeue, packets, private state).
+        // Core owns queue/offers/groups; addon behavior unchanged.
+        bool AcceptOffer(Player* player);
+        bool AcceptOffer(ObjectGuid const& guid);
+
+        struct QueuedInfo
+        {
+            ObjectGuid guid;
+            std::string name;
+            std::string className;
+            uint32 level = 0;
+            uint32 team = 0;
+            bool isHardcore = false;
+            std::vector<std::string> instances;
+            uint8 roleMask = 0;
+            uint8 assignedRole = 0;
+            time_t joinTime = 0;
+        };
+        // World-thread only. Copy of current queue for module policy decisions.
+        std::vector<QueuedInfo> GetQueuedPlayers() const;
 
     private:
         struct ListingSignup

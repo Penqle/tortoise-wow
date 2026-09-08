@@ -29,6 +29,8 @@ set (game_SRCS
     GameEventMgr.cpp
     GuardMgr.cpp
     GMTicketMgr.cpp
+    HeadlessSessionMgr.cpp
+    HeadlessSessionMgr.h
     GossipDef.cpp
     PerformanceMonitor.cpp
     HardcodedEvents.cpp
@@ -41,6 +43,8 @@ set (game_SRCS
     ObjectMgr.cpp
     ObjectPosSelector.cpp
     PlayerDump.cpp
+    PlayerLoginQueryHolder.cpp
+    PlayerLoginQueryHolder.h
     QuestDef.cpp
     ReputationMgr.cpp
     ScriptObjects.h
@@ -103,6 +107,8 @@ set (game_SRCS
     Handlers/BattleGroundHandler.cpp
     Handlers/ChannelBroadcaster.cpp
     Handlers/ChannelHandler.cpp
+    Handlers/CharacterCreation.cpp
+    Handlers/CharacterCreation.h
     Handlers/CharacterHandler.cpp
     Handlers/ChatHandler.cpp
     Handlers/CombatHandler.cpp
@@ -253,6 +259,7 @@ set (game_SRCS
     SharedDefines.h
     SocialMgr.h
     TransmogMgr.h
+    SessionTransport.h
     UnitEvents.h
     Weather.h
     World.h
