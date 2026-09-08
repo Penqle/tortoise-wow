@@ -698,6 +698,10 @@ void Channel::Say(ObjectGuid guid, const char *text, uint32 lang, bool skipCheck
     }
     else
     {
+        if (pPlayer && pPlayer->ToPlayer() && lang != LANG_ADDON)
+            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_CHANNEL,
+                [&](PlayerScript* s) { s->OnChatChannel(pPlayer->ToPlayer(), GetName().c_str(), text); });
+
         SendToAll(&data, (!skipCheck && !m_players[guid].IsModerator()) ? guid : ObjectGuid());
     }
 }
