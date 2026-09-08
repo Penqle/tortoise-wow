@@ -2533,10 +2533,6 @@ void TotalMoneyCallback(QueryResult* result, uint32 money)
 void World::Update(uint32 diff)
 {
     XScopeStatTimer ScopeStatTimer(sPerfMonitor.WorldTick);
-    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_UPDATE, [&](WorldScript* script)
-    {
-        script->OnUpdate(diff);
-    });
 
     ///- Update the different timers
     for (auto& timer : m_timers)
@@ -2779,6 +2775,15 @@ void World::Update(uint32 diff)
             sWorld.ShutdownServ(900, SHUTDOWN_MASK_RESTART, SHUTDOWN_EXIT_CODE);
         }
     }
+
+    // Moved here from the head of this function. Firing first meant a module acted
+    // before UpdateSessions, sMapMgr, sBattleGroundMgr and sLFTMgr had run, so every
+    // module tick decided on the PREVIOUS tick's world -- a module may hold several
+    // WorldScripts and was steering sixty crews on stale positions.
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_UPDATE, [&](WorldScript* script)
+    {
+        script->OnUpdate(diff);
+    });
 }
 
 /// Send a packet to all players (except self if mentioned)
