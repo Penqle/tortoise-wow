@@ -71,6 +71,18 @@ namespace VMAP
             /* void _unloadMap(uint32 pMapId, uint32 x, uint32 y); */
 
             std::shared_mutex m_modelsLock;
+
+            // Guards iInstanceMapTrees and the tiles hanging off it. The models
+            // lock above only covers the model file cache; the tree map itself
+            // was unsynchronised, while the playerbot travel search calls the
+            // query methods below from std::async worker threads and the world
+            // thread loads and unloads tiles underneath them. That raced, and
+            // it crashed in all three places - LoadMapTile, ~StaticMapTree and
+            // getAreaInfo. Mutable because the const query methods need it.
+            // Order is always this lock first, m_modelsLock second: _loadMap
+            // reaches acquireModelInstance through LoadMapTile, and nothing
+            // holding m_modelsLock ever touches the trees.
+            mutable std::shared_mutex m_treesLock;
         public:
             // public for debug
             G3D::Vector3 convertPositionToInternalRep(float x, float y, float z) const;

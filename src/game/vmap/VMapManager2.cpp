@@ -40,6 +40,7 @@ VMapManager2::VMapManager2()
 
 VMapManager2::~VMapManager2(void)
 {
+    std::unique_lock<std::shared_mutex> treeLock(m_treesLock);
     for (auto& iInstanceMapTree : iInstanceMapTrees)
         delete iInstanceMapTree.second;
 
@@ -90,6 +91,7 @@ VMAPLoadResult VMapManager2::loadMap(const char* pBasePath, unsigned int pMapId,
 
 bool VMapManager2::_loadMap(unsigned int pMapId, std::string const& basePath, uint32 tileX, uint32 tileY)
 {
+    std::unique_lock<std::shared_mutex> treeLock(m_treesLock);
     InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree == iInstanceMapTrees.end())
     {
@@ -112,6 +114,7 @@ bool VMapManager2::_loadMap(unsigned int pMapId, std::string const& basePath, ui
 
 void VMapManager2::unloadMap(unsigned int pMapId)
 {
+    std::unique_lock<std::shared_mutex> treeLock(m_treesLock);
     InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree != iInstanceMapTrees.end())
     {
@@ -128,6 +131,7 @@ void VMapManager2::unloadMap(unsigned int pMapId)
 
 void VMapManager2::unloadMap(unsigned int  pMapId, int x, int y)
 {
+    std::unique_lock<std::shared_mutex> treeLock(m_treesLock);
     InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree != iInstanceMapTrees.end())
     {
@@ -144,6 +148,7 @@ void VMapManager2::unloadMap(unsigned int  pMapId, int x, int y)
 
 bool VMapManager2::isInLineOfSight(unsigned int pMapId, float x1, float y1, float z1, float x2, float y2, float z2)
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     if (!isLineOfSightCalcEnabled()) return true;
     bool result = true;
     InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
@@ -162,6 +167,7 @@ bool VMapManager2::isInLineOfSight(unsigned int pMapId, float x1, float y1, floa
 
 ModelInstance* VMapManager2::FindCollisionModel(unsigned int mapId, float x0, float y0, float z0, float x1, float y1, float z1)
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     if (!isLineOfSightCalcEnabled())
         return nullptr;
 
@@ -186,6 +192,7 @@ otherwise the result pos will be the dest pos
 */
 bool VMapManager2::getObjectHitPos(unsigned int pMapId, float x1, float y1, float z1, float x2, float y2, float z2, float& rx, float& ry, float& rz, float pModifyDist)
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     bool result = false;
     rx = x2;
     ry = y2;
@@ -217,6 +224,7 @@ get height or INVALID_HEIGHT if no height available
 
 float VMapManager2::getHeight(unsigned int pMapId, float x, float y, float z, float maxSearchDist)
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     float height = VMAP_INVALID_HEIGHT_VALUE;           // no height
     if (isHeightCalcEnabled())
     {
@@ -240,6 +248,7 @@ float VMapManager2::getHeight(unsigned int pMapId, float x, float y, float z, fl
 
 bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float& z, uint32& flags, int32& adtId, int32& rootId, int32& groupId) const
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     bool result = false;
     InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree != iInstanceMapTrees.end())
@@ -255,6 +264,7 @@ bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float& z, 
 
 bool VMapManager2::isUnderModel(unsigned int pMapId, float x, float y, float z, float* outDist, float* inDist) const
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     bool result = false;
     InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree != iInstanceMapTrees.end())
@@ -268,6 +278,7 @@ bool VMapManager2::isUnderModel(unsigned int pMapId, float x, float y, float z, 
 
 bool VMapManager2::GetLiquidLevel(uint32 pMapId, float x, float y, float z, uint8 ReqLiquidType, float& level, float& floor, uint32& type) const
 {
+    std::shared_lock<std::shared_mutex> treeLock(m_treesLock);
     InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
     if (instanceTree != iInstanceMapTrees.end())
     {
