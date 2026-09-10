@@ -521,6 +521,43 @@ if(WIN32)
     DESTINATION ${LIBS_DIR}
     CONFIGURATIONS Debug
   )
+
+  # The pair above is not the only OpenSSL this binary ends up needing. OPENSSL_INCLUDE_DIR,
+  # set below to dep/windows/include/openssl, is the "openssl" folder itself rather than its
+  # parent - so "#include <openssl/x.h>", the form every file that actually touches OpenSSL
+  # here uses (src/shared/Auth/ARC4.cpp, BigNumber.cpp, the HTTP API's httplib.h), can never
+  # resolve through it. Those includes are satisfied by whatever else on the include path is
+  # laid out as include/openssl/*.h instead - on a build configured the way this project's own
+  # testlab pipeline configures one (ACE_ROOT pointed at a vcpkg installed tree), that is
+  # vcpkg's OpenSSL, which is 3.x. ARC4.cpp calls OSSL_PROVIDER_load(NULL, "legacy") to keep
+  # RC4 available for the login handshake - an OpenSSL-3-only API, no 1.1 equivalent - so this
+  # is a real dependency and not incidental: confirmed with dumpbin /dependents, mangosd.exe
+  # imports from both libcrypto-1_1-x64.dll AND libcrypto-3-x64.dll at once, not either/or.
+  #
+  # Deployed the same way ACE.dll and the Boost DLLs already are for this build - read from
+  # ACE_ROOT, since that is this project's own established way of pointing a Windows build at
+  # its vcpkg toolchain - but with file(GLOB), not a hard requirement: ACE_ROOT is not
+  # guaranteed to be a vcpkg tree with OpenSSL 3 sitting in it for every possible Windows build
+  # of this project, only for the one the pipeline produces, and a build that does not find
+  # these should not fail here over a DLL a different OpenSSL setup may not need at all.
+  if(ACE_ROOT)
+    # ACE_ROOT commonly arrives with Windows backslashes (-DACE_ROOT=C:\path	ocpkg, which
+    # is exactly how this project's own pipeline passes it). file(GLOB) matches fine against
+    # that, but embeds whatever it matched verbatim into the generated cmake_install.cmake -
+    # and an unescaped backslash there is a syntax error the moment it precedes a letter CMake
+    # does not recognise as an escape (, \l, ...). Normalizing first is what the rest of
+    # this file already relies on CMake doing for CMAKE_SOURCE_DIR-based paths automatically.
+    file(TO_CMAKE_PATH "${ACE_ROOT}" ACE_ROOT_NORMALIZED)
+    file(GLOB OPENSSL3_RELEASE_DLLS "${ACE_ROOT_NORMALIZED}/bin/libcrypto-3${OPENSSL_DLL_SUFFIX}.dll" "${ACE_ROOT_NORMALIZED}/bin/libssl-3${OPENSSL_DLL_SUFFIX}.dll")
+    file(GLOB OPENSSL3_DEBUG_DLLS   "${ACE_ROOT_NORMALIZED}/debug/bin/libcrypto-3${OPENSSL_DLL_SUFFIX}.dll" "${ACE_ROOT_NORMALIZED}/debug/bin/libssl-3${OPENSSL_DLL_SUFFIX}.dll")
+    if(OPENSSL3_RELEASE_DLLS)
+      install(FILES ${OPENSSL3_RELEASE_DLLS} DESTINATION ${LIBS_DIR} CONFIGURATIONS Release)
+    endif()
+    if(OPENSSL3_DEBUG_DLLS)
+      install(FILES ${OPENSSL3_DEBUG_DLLS} DESTINATION ${LIBS_DIR} CONFIGURATIONS Debug)
+    endif()
+  endif()
+
   if(PLATFORM MATCHES X86)
     # Copy dll's Windows needs
     install(
