@@ -599,6 +599,44 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
 
 //== Player ====================================================
 
+// Server-side / scriptable trade initiation. Mirrors the setup of
+// WorldSession::HandleInitiateTradeOpcode (same guards), but performs no item,
+// gold or accept action -- the actual exchange stays fully gated by the normal
+// HandleAcceptTradeOpcode path. Purely additive; no existing code path changes.
+bool Player::BeginTradeWith(Player* other)
+{
+    if (!other || other == this)
+        return false;
+    if (m_trade || other->m_trade)
+        return false;
+    if (!IsAlive() || !other->IsAlive())
+        return false;
+    if (HasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_PENDING_STUNNED) ||
+        other->HasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_PENDING_STUNNED))
+        return false;
+    if ((GetSession() && GetSession()->isLogingOut()) ||
+        (other->GetSession() && other->GetSession()->isLogingOut()))
+        return false;
+    if (IsTaxiFlying() || other->IsTaxiFlying() || !FindMap() || GetMap() != other->GetMap())
+        return false;
+    if (GetDistance3dToCenter(other) > TRADE_DISTANCE)
+        return false;
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_TRADE) && GetTeam() != other->GetTeam())
+        return false;
+
+    m_trade = new TradeData(this, other);
+    other->m_trade = new TradeData(other, this);
+    m_trade->SetScamPreventionDelay(200);
+    other->m_trade->SetScamPreventionDelay(200);
+
+    WorldPacket data(SMSG_TRADE_STATUS, 12);
+    data << uint32(TRADE_STATUS_BEGIN_TRADE);
+    data << ObjectGuid(GetObjectGuid());
+    if (other->GetSession())
+        other->GetSession()->SendPacket(&data);
+    return true;
+}
+
 UpdateMask Player::updateVisualBits;
 
 Player::Player(WorldSession *session) : Unit(),
