@@ -621,6 +621,14 @@ void WorldSession::HandleAuctionRemoveItem(WorldPacket & recv_data)
             std::ostringstream msgAuctionCanceledOwner;
             msgAuctionCanceledOwner << auction->itemTemplate << ":0:" << AUCTION_CANCELED;
 
+            // Unregister before the mail system takes ownership. SendMailTo
+            // may delete pItem and does not take the auction item lock, so a
+            // concurrent AH listing holding that lock could otherwise walk a
+            // freed Item. RemoveAItem blocks until any in-flight listing has
+            // finished, which is exactly the guarantee we need here.
+            // The RemoveAItem further down then becomes a no-op.
+            sAuctionMgr.RemoveAItem(auction->itemGuidLow);
+
             // item will deleted or added to received mail list
             MailDraft(msgAuctionCanceledOwner.str())
             .AddItem(pItem)

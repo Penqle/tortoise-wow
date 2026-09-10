@@ -942,6 +942,14 @@ void Master::_OnSignal(int s)
             uint32 anticrashOptions = sWorld.getConfig(CONFIG_UINT32_ANTICRASH_OPTIONS);
             // Log crash stack
             sLog.outInfo("Received SIGSEGV");
+            {
+                extern volatile uint32 g_ahLastPhase;
+                extern volatile uint32 g_ahLastIndex;
+                extern volatile uint32 g_ahLastAuctionId;
+                extern volatile uint32 g_ahLastItemGuid;
+                sLog.outInfo("AH_BREADCRUMB phase=%u index=%u lastGoodAuctionId=%u lastGoodItemGuid=%u",
+                             g_ahLastPhase, g_ahLastIndex, g_ahLastAuctionId, g_ahLastItemGuid);
+            }
             ACE_Stack_Trace st;
             sLog.outInfo("%s", st.c_str());
 

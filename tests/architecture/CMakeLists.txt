@@ -352,7 +352,13 @@ extract_native_fragment("${CORE_ROOT}/src/game/AuctionHouse/AuctionHouseMgr.cpp"
   "void AuctionHouseMgr::SendAuctionOutbiddedMail(" "void AuctionHouseObject::BuildListBidderItems(" NativeMarketRefund.inc)
 extract_native_fragment("${CORE_ROOT}/src/game/AuctionHouse/AuctionHouseMgr.cpp"
   "std::vector<AuctionSnapshot> AuctionHouseObject::GetAuctionsSnapshotPage(" "AuctionHouseMgr::AuctionHouseMgr()" NativeMarketPage.inc)
-foreach(test AhBotChatDispatchTest AhBotMarketTest AuctionSettlementTest)
+extract_native_fragment("${CORE_ROOT}/src/game/AuctionHouse/AuctionHouseMgr.cpp"
+  "void AuctionHouseMgr::SendAuctionWonMail(" "void AuctionHouseMgr::SendAuctionSuccessfulMail(" NativeAuctionWonMail.inc)
+extract_native_fragment("${CORE_ROOT}/src/game/AuctionHouse/AuctionHouseMgr.cpp"
+  "void AuctionHouseMgr::SendAuctionExpiredMail(" "AuctionHouseObject* AuctionHouseMgr::MakeNewAuctionHouseObject()" NativeAuctionExpiredMail.inc)
+extract_native_fragment("${CORE_ROOT}/src/game/Handlers/AuctionHouseHandler.cpp"
+  "void WorldSession::HandleAuctionRemoveItem(" "class AuctionHouseClientQueryTask" NativeAuctionCancel.inc)
+foreach(test AhBotChatDispatchTest AhBotMarketTest AuctionSettlementTest AuctionItemHandoffTest)
   add_executable(${test} ${test}.cpp)
   target_compile_features(${test} PRIVATE cxx_std_17)
   target_include_directories(${test} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" "${AHBOT_ROOT}" "${CORE_ROOT}/src/shared")

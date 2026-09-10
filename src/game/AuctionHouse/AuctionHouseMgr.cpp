@@ -41,6 +41,13 @@
 
 AuctionHouseMgr sAuctionMgr;
 
+// Crash breadcrumb for the auction listing walk. Printed by the SIGSEGV
+// handler in Master.cpp to locate a stale AuctionEntry in OrderedAuctionMap.
+volatile uint32 g_ahLastPhase = 0;      // 1 = unfiltered fast path, 2 = filtered
+volatile uint32 g_ahLastIndex = 0;      // iteration number within the walk
+volatile uint32 g_ahLastAuctionId = 0;  // last Id read without faulting
+volatile uint32 g_ahLastItemGuid = 0;   // last itemGuidLow read without faulting
+
 bool IsPlayerHardcore(uint32 lowGuid)
 {
     uint8 hardcoreStatus = 0;
@@ -275,8 +282,8 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction)
 
         if (bidder)
             bidder->GetSession()->SendAuctionBidderNotification(auction, true);
-        else
-            RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
+
+        RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
 
 
         if (!bidder_accId)
@@ -390,8 +397,8 @@ void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry * auction)
 
         if (owner)
             owner->GetSession()->SendAuctionOwnerNotification(auction, false);
-        else
-            RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
+
+        RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
 
         sLog.out(LOG_MAIL_AH, "SendAuctionExpiredMail for auc Id %u, item Id %u. Sending to player %s.", auction->Id, pItem->GetEntry(), owner ? owner->GetShortDescription().c_str() : "");
 
@@ -872,8 +879,13 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
         {
             auto itr = OrderedAuctionMap.cbegin();
             std::advance(itr, query.listfrom);
+            g_ahLastPhase = 1;
+            g_ahLastIndex = 0;
             for (; itr != OrderedAuctionMap.cend(); ++itr)
             {
+                ++g_ahLastIndex;
+                g_ahLastAuctionId = itr->second->Id;
+                g_ahLastItemGuid = itr->second->itemGuidLow;
                 if (!itr->second->IsAvailableFor(player))
                     continue;
 
@@ -892,9 +904,14 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
     std::string name;
     name.reserve(140);
 
+    g_ahLastPhase = 2;
+    g_ahLastIndex = 0;
     for (const auto& itr : OrderedAuctionMap)
     {
+        ++g_ahLastIndex;
         AuctionEntry* auctionEntry = itr.second;
+        g_ahLastAuctionId = auctionEntry->Id;
+        g_ahLastItemGuid = auctionEntry->itemGuidLow;
         Item *item = sAuctionMgr.GetAItem(auctionEntry->itemGuidLow);
         if (!item)
             continue;
