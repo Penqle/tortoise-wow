@@ -297,6 +297,11 @@ pAuraHandler AuraHandler[TOTAL_AURAS] =
     &Aura::HandleNoImmediateEffect,                         //226 SPELL_AURA_MOD_RAGE_FROM_DAMAGE_DEALT implemented in Unit::HandleModRageFromDamageDealtAuraProc
 };
 
+void SpellAuraHolder::SetAura(uint32 slot, bool remove)
+{
+    m_target->SetUInt32Value(UNIT_FIELD_AURA + slot, remove ? 0 : GetId());
+}
+
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
 
 Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem) :

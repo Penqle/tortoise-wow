@@ -23,7 +23,7 @@
 #define MANGOS_SYSTEMCONFIG_H
 
 #include "Platform/Define.h"
-#include "revision.h"
+#include <revision.h>
 
 // Format is YYYYMMDDRR where RR is the change in the conf file
 // for that day.

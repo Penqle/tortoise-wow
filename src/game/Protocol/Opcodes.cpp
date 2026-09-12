@@ -627,7 +627,7 @@ void Opcodes::BuildOpcodeList()
     /*0x23B*/  StoreOpcode(SMSG_MAIL_LIST_RESULT,             "SMSG_MAIL_LIST_RESULT",            STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
     /*0x23C*/  StoreOpcode(CMSG_BATTLEFIELD_LIST,             "CMSG_BATTLEFIELD_LIST",            STATUS_LOGGEDIN,  PACKET_PROCESS_MAP,           &WorldSession::HandleBattlefieldListOpcode);
     /*0x23D*/  StoreOpcode(SMSG_BATTLEFIELD_LIST,             "SMSG_BATTLEFIELD_LIST",            STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
-    /*0x23E*/  StoreOpcode(CMSG_BATTLEFIELD_JOIN,             "CMSG_BATTLEFIELD_JOIN",            STATUS_LOGGEDIN,  PACKET_PROCESS_MAP,           &WorldSession::HandleBattlefieldJoinOpcode);
+    /*0x23E*/  StoreOpcode(CMSG_BATTLEFIELD_JOIN,             "CMSG_BATTLEFIELD_JOIN",            STATUS_LOGGEDIN,  PACKET_PROCESS_WORLD,         &WorldSession::HandleBattlefieldJoinOpcode);
     /*0x23F*/  StoreOpcode(SMSG_BATTLEFIELD_WIN,              "SMSG_BATTLEFIELD_WIN",             STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
     /*0x240*/  StoreOpcode(SMSG_BATTLEFIELD_LOSE,             "SMSG_BATTLEFIELD_LOSE",            STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
     /*0x241*/  StoreOpcode(CMSG_TAXICLEARNODE,                "CMSG_TAXICLEARNODE",               STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_NULL);
@@ -776,7 +776,7 @@ void Opcodes::BuildOpcodeList()
     /*0x2D0*/  StoreOpcode(CMSG_MOVE_WATER_WALK_ACK,          "CMSG_MOVE_WATER_WALK_ACK",         STATUS_LOGGEDIN,  PACKET_PROCESS_MOVEMENT,      &WorldSession::HandleMovementFlagChangeToggleAck);
     /*0x2D1*/  StoreOpcode(CMSG_MOVE_NOT_ACTIVE_MOVER,        "CMSG_MOVE_NOT_ACTIVE_MOVER",       STATUS_LOGGEDIN,  PACKET_PROCESS_MOVEMENT,      &WorldSession::HandleMoveNotActiveMoverOpcode);
     /*0x2D2*/  StoreOpcode(SMSG_PLAY_SOUND,                   "SMSG_PLAY_SOUND",                  STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
-    /*0x2D3*/  StoreOpcode(CMSG_BATTLEFIELD_STATUS,           "CMSG_BATTLEFIELD_STATUS",          STATUS_LOGGEDIN,  PACKET_PROCESS_MAP,           &WorldSession::HandleBattlefieldStatusOpcode);
+    /*0x2D3*/  StoreOpcode(CMSG_BATTLEFIELD_STATUS,           "CMSG_BATTLEFIELD_STATUS",          STATUS_LOGGEDIN,  PACKET_PROCESS_WORLD,         &WorldSession::HandleBattlefieldStatusOpcode);
     /*0x2D4*/  StoreOpcode(SMSG_BATTLEFIELD_STATUS,           "SMSG_BATTLEFIELD_STATUS",          STATUS_NEVER,     PACKET_PROCESS_MAX_TYPE,      &WorldSession::Handle_ServerSide);
     /*0x2D5*/  StoreOpcode(CMSG_BATTLEFIELD_PORT,             "CMSG_BATTLEFIELD_PORT",            STATUS_LOGGEDIN,  PACKET_PROCESS_WORLD,         &WorldSession::HandleBattleFieldPortOpcode);
     /*0x2D6*/  StoreOpcode(MSG_INSPECT_HONOR_STATS,           "MSG_INSPECT_HONOR_STATS",          STATUS_LOGGEDIN,  PACKET_PROCESS_MAP,           &WorldSession::HandleInspectHonorStatsOpcode);

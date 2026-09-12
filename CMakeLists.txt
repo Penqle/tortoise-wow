@@ -327,9 +327,18 @@ else()
     set(rev_date "1970-01-01 00:00:00 +0000")
     set(rev_hash "unknown")
   endif()
-  
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/revision.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/src/shared/revision.h)
 endif()
+
+# Keep generated revision metadata out of the tracked source tree.
+# The generated include directory is placed first so <revision.h>
+# resolves to this build-specific header rather than src/shared/revision.h.
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generated")
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/revision.h.cmake"
+  "${CMAKE_BINARY_DIR}/generated/revision.h"
+  @ONLY
+)
+include_directories(BEFORE "${CMAKE_BINARY_DIR}/generated")
 
 message(STATUS "")
 message(STATUS "Core revision: ${rev_hash} ${rev_date} ")
@@ -500,16 +509,23 @@ set(CMAKE_INSTALL_RPATH ${LIBS_DIR})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(WIN32)
+  if(DEP_ARCH STREQUAL "x64")
+    set(OPENSSL_DLL_SUFFIX "-x64")
+  else()
+    set(OPENSSL_DLL_SUFFIX "")
+  endif()
   install(
     FILES
-      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_release/libeay32.dll
+      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_release/libcrypto-1_1${OPENSSL_DLL_SUFFIX}.dll
+      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_release/libssl-1_1${OPENSSL_DLL_SUFFIX}.dll
       ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_release/libmySQL.dll
     DESTINATION ${LIBS_DIR}
     CONFIGURATIONS Release
   )
   install(
     FILES
-      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_debug/libeay32.dll
+      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_debug/libcrypto-1_1${OPENSSL_DLL_SUFFIX}.dll
+      ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_debug/libssl-1_1${OPENSSL_DLL_SUFFIX}.dll
       ${CMAKE_SOURCE_DIR}/dep/windows/lib/${DEP_ARCH}_debug/libmySQL.dll
     DESTINATION ${LIBS_DIR}
     CONFIGURATIONS Debug

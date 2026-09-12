@@ -991,7 +991,7 @@ bool ChatHandler::HandleListAurasCommand(char* /*args*/)
             {
                 PSendSysMessage(LANG_COMMAND_TARGET_AURADETAIL, holder->GetId(), aur->GetEffIndex(),
                     aur->GetModifier()->m_auraname, aur->GetAuraDuration(), aur->GetAuraMaxDuration(), aur->GetAuraPeriodicTimer(), aur->GetStackAmount(),
-                    name,
+                    name.c_str(),           // std::string through a printf vararg is an error under clang
                     (holder->IsPassive() ? passiveStr : ""), (talent ? talentStr : ""),
                     holder->GetCasterGuid().GetString().c_str());
             }
@@ -2644,7 +2644,7 @@ bool ChatHandler::HandleGuildHouseCommand(char* args)
     {
         CharacterDatabase.PExecute("REPLACE INTO guild_house VALUES (%u, %u, %f, %f, %f, %f);",
             guild_id, player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
-        PSendSysMessage("The guild house teleport for %s was created.", sGuildMgr.GetGuildNameById(guild_id));
+        PSendSysMessage("The guild house teleport for %s was created.", sGuildMgr.GetGuildNameById(guild_id).c_str());
     }
     else
     {
@@ -5349,7 +5349,7 @@ bool ChatHandler::HandleInstanceStatsCommand(char* /*args*/)
 bool ChatHandler::HandleGMListFullCommand(char* /*args*/)
 {
     ///- Get the accounts with GM Level >0
-    QueryResult *result = LoginDatabase.Query("SELECT username, rank FROM account"
+    QueryResult *result = LoginDatabase.Query("SELECT username, `rank` FROM account"
                           " WHERE rank > 0");
     if (result)
     {

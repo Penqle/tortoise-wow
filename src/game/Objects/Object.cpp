@@ -3774,10 +3774,8 @@ float WorldObject::MeleeSpellMissChance(Unit* pVictim, WeaponAttackType attType,
     // PvP - PvE melee chances
     if (pVictim->GetTypeId() == TYPEID_PLAYER)
         missChance = 5.0f - skillDiff * 0.04f;
-    else if (skillDiff < -10)
-        missChance = 5.0f - skillDiff * 0.2f;
     else
-        missChance = 5.0f - skillDiff * 0.1f;
+        missChance = 5.0f - skillDiff * 0.2f;
 
     // Low level reduction
     if (!pVictim->IsPlayer() && pVictim->GetLevel() < 10)
@@ -3809,12 +3807,6 @@ float WorldObject::MeleeSpellMissChance(Unit* pVictim, WeaponAttackType attType,
             }
         }
     } 
-
-    // There is some code in 1.12 that explicitly adds a modifier that causes the first 1% of +hit gained from
-    // talents or gear to be ignored against monsters with more than 10 Defense Skill above the attacking players Weapon Skill.
-    // https://us.forums.blizzard.com/en/wow/t/bug-hit-tables/185675/33
-    if (skillDiff < -10 && hitChance > 0)
-        hitChance -= 1.0f;
 
     // Hit chance depends from victim auras
     if (attType == RANGED_ATTACK)
