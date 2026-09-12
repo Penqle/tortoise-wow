@@ -29,6 +29,8 @@ set (game_SRCS
     GameEventMgr.cpp
     GuardMgr.cpp
     GMTicketMgr.cpp
+    HeadlessSessionMgr.cpp
+    HeadlessSessionMgr.h
     GossipDef.cpp
     PerformanceMonitor.cpp
     HardcodedEvents.cpp
@@ -41,6 +43,8 @@ set (game_SRCS
     ObjectMgr.cpp
     ObjectPosSelector.cpp
     PlayerDump.cpp
+    PlayerLoginQueryHolder.cpp
+    PlayerLoginQueryHolder.h
     QuestDef.cpp
     ReputationMgr.cpp
     ScriptObjects.h
@@ -103,6 +107,8 @@ set (game_SRCS
     Handlers/BattleGroundHandler.cpp
     Handlers/ChannelBroadcaster.cpp
     Handlers/ChannelHandler.cpp
+    Handlers/CharacterCreation.cpp
+    Handlers/CharacterCreation.h
     Handlers/CharacterHandler.cpp
     Handlers/ChatHandler.cpp
     Handlers/CombatHandler.cpp
@@ -193,8 +199,6 @@ set (game_SRCS
     OutdoorPvP/Register.cpp
     PacketBroadcast/MovementBroadcaster.cpp
     PacketBroadcast/PlayerBroadcaster.cpp
-    PlayerBots/PlayerBotAI.cpp
-    PlayerBots/PlayerBotMgr.cpp
     Protocol/Opcodes.cpp
     Protocol/WorldSocket.cpp
     Protocol/WorldSocketMgr.cpp
@@ -255,6 +259,7 @@ set (game_SRCS
     SharedDefines.h
     SocialMgr.h
     TransmogMgr.h
+    SessionTransport.h
     UnitEvents.h
     Weather.h
     World.h
@@ -389,8 +394,6 @@ set (game_SRCS
     OutdoorPvP/OutdoorPvPSI.h
     PacketBroadcast/MovementBroadcaster.h
     PacketBroadcast/PlayerBroadcaster.h
-    PlayerBots/PlayerBotAI.h
-    PlayerBots/PlayerBotMgr.h
     Protocol/Opcodes.h
     Protocol/WorldSocket.h
     Protocol/WorldSocketMgr.h
@@ -533,7 +536,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Objects
   ${CMAKE_CURRENT_SOURCE_DIR}/OutdoorPvP
   ${CMAKE_CURRENT_SOURCE_DIR}/PacketBroadcast
-  ${CMAKE_CURRENT_SOURCE_DIR}/PlayerBots
   ${CMAKE_CURRENT_SOURCE_DIR}/Protocol
   ${CMAKE_CURRENT_SOURCE_DIR}/Spells
   ${CMAKE_CURRENT_SOURCE_DIR}/Threat

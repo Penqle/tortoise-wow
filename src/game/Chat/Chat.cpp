@@ -1384,7 +1384,7 @@ void ChatHandler::CheckIntegrity(ChatCommand *table, ChatCommand *parentCommand)
 
         if (command->ChildCommands)
         {
-            if (command->Handler)
+            if (command->Handler || command->ModuleHandler)
             {
                 if (parentCommand)
                     sLog.outError("Subcommand '%s' of command '%s' have handler and subcommands in same time, must be used '' subcommand for handler instead.",
@@ -1399,7 +1399,7 @@ void ChatHandler::CheckIntegrity(ChatCommand *table, ChatCommand *parentCommand)
 
             CheckIntegrity(command->ChildCommands, command);
         }
-        else if (!command->Handler)
+        else if (!command->Handler && !command->ModuleHandler)
         {
             if (parentCommand)
                 sLog.outError("Subcommand '%s' of command '%s' not have handler and subcommands in same time. Must have some from its!",
@@ -1526,7 +1526,7 @@ ChatCommandSearchResult ChatHandler::FindCommand(ChatCommand* table, char const*
         }
 
         // must be have handler is explicitly selected
-        if (!table[i].Handler)
+        if (!table[i].Handler && !table[i].ModuleHandler)
             continue;
 
         // command found directly in to table
@@ -1660,7 +1660,10 @@ void ChatHandler::ExecuteCommand(const char* text)
                 }
             }
 
-            if ((this->*(command->Handler))((char*)text))   // text content destroyed at call
+            bool const handled = command->ModuleHandler
+                ? command->ModuleHandler(this, (char*)text)
+                : (this->*(command->Handler))((char*)text);   // text content destroyed at call
+            if (handled)
             {
                 if (m_session && command->Flags & COMMAND_FLAGS_CRITICAL)
                 {

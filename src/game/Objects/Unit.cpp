@@ -3746,6 +3746,17 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
     // When we call _AddSpellAuraHolder, we must have a free aura slot
     holder->_AddSpellAuraHolder();
 
+    // Module hook: a positive aura from another player, first application only --
+    // a refresh is not a new gift.
+    if (holder->IsPositive())
+        if (Unit* caster = holder->GetCaster())
+            if (caster != this && caster->IsPlayer())
+            {
+                const uint32 buffId = holder->GetId();
+                ScriptRegistry<UnitScript>::ForEachEnabledHook(UNITHOOK_ON_BUFF_RECEIVED,
+                    [&](UnitScript* s) { s->OnBuffReceived(this, (Player*)caster, buffId); });
+            }
+
     return true;
 }
 

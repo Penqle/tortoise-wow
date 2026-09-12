@@ -1862,6 +1862,30 @@ AuraScript* ScriptMgr::GetAuraScript(SpellEntry const* pSpell)
     return pTempScript->GetAuraScript(pSpell);
 }
 
+bool ScriptMgr::IsBotManaged(Player* who)
+{
+    bool managed = false;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_IS_MANAGED_BOT,
+        [&](PlayerScript* script) { if (script->IsManagedBot(who)) managed = true; });
+    return managed;
+}
+
+uint8 ScriptMgr::GetBotRoles(Player* who)
+{
+    uint8 roles = 0;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_GET_BOT_ROLES,
+        [&](PlayerScript* script) { roles = uint8(roles | script->GetBotRoles(who)); });
+    return roles;
+}
+
+bool ScriptMgr::OnAddonMessage(Player* from, std::string const& msg)
+{
+    bool consumed = false;
+    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_ADDON_MESSAGE,
+        [&](PlayerScript* script) { if (!consumed && script->OnAddonMessage(from, msg)) consumed = true; });
+    return consumed;
+}
+
 bool ScriptMgr::OnGossipHello(Player* pPlayer, Creature* pCreature)
 {
     Script* pTempScript = m_NPC_scripts[pCreature->GetScriptId()];

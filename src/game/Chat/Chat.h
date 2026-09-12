@@ -71,6 +71,8 @@ public:
         uint8              Flags;
         std::string        FullName;
         uint32             PermissionMask = 0;
+        // A module binds a free function here; Handler is the core's member pointer.
+        bool             (*ModuleHandler)(ChatHandler* handler, char* args) = nullptr;
 };
 
 enum ChatCommandSearchResult

@@ -78,6 +78,8 @@ enum WorldHook
     WORLDHOOK_ON_SHUTDOWN,
     WORLDHOOK_ON_AFTER_UNLOAD_ALL_MAPS,
     WORLDHOOK_ON_BEFORE_WORLD_INITIALIZED,
+    WORLDHOOK_ON_CHANNEL_BROADCAST,
+    WORLDHOOK_ON_BOT_LOGIN_YIELD,
     WORLDHOOK_END
 };
 
@@ -104,6 +106,8 @@ class WorldScript : public ScriptObject
         virtual void OnShutdown() {}
         virtual void OnAfterUnloadAllMaps() {}
         virtual void OnBeforeWorldInitialized() {}
+        virtual void OnChannelBroadcast(uint32 /*guidLow*/, char const* /*channel*/, char const* /*msg*/) {}
+        virtual void OnBotLoginYield(uint32 /*guidLow*/) {}
 };
 
 enum PlayerHook
@@ -140,6 +144,14 @@ enum PlayerHook
     PLAYERHOOK_ON_MAP_CHANGED,
     PLAYERHOOK_ON_BEFORE_TELEPORT,
     PLAYERHOOK_ON_LOOT_ITEM,
+    PLAYERHOOK_ON_CHAT_SAY,
+    PLAYERHOOK_ON_CHAT_CHANNEL,
+    PLAYERHOOK_ON_CHAT_WHISPER,
+    PLAYERHOOK_ON_CHAT_GUILD,
+    PLAYERHOOK_ON_TEXT_EMOTE_HEARD,
+    PLAYERHOOK_IS_MANAGED_BOT,
+    PLAYERHOOK_GET_BOT_ROLES,
+    PLAYERHOOK_ON_ADDON_MESSAGE,
     PLAYERHOOK_END
 };
 
@@ -186,6 +198,17 @@ class PlayerScript : public ScriptObject
         virtual void OnMapChanged(Player* /*player*/) {}
         virtual void OnBeforeTeleport(Player* /*player*/, uint32 /*mapId*/, float /*x*/, float /*y*/, float /*z*/, float /*orientation*/) {}
         virtual void OnLootItem(Player* /*player*/, Item* /*item*/, uint32 /*count*/, ObjectGuid /*lootGuid*/) {}
+        virtual void OnChatSay(Player* /*from*/, float /*range*/, char const* /*msg*/) {}
+        virtual void OnChatChannel(Player* /*from*/, char const* /*channel*/, char const* /*msg*/) {}
+        virtual void OnChatWhisper(Player* /*from*/, char const* /*msg*/) {}
+        virtual void OnChatGuild(Player* /*from*/, char const* /*msg*/) {}
+        virtual void OnTextEmoteHeard(Player* /*from*/, uint32 /*textEmote*/, ObjectGuid /*target*/) {}
+        virtual bool IsManagedBot(Player* /*who*/) { return false; }
+        virtual uint8 GetBotRoles(Player* /*who*/) { return 0; }
+
+        // A module may take an addon message as a command of its own. Return true
+        // when the text was consumed; the core then does not relay it.
+        virtual bool OnAddonMessage(Player* /*from*/, std::string const& /*msg*/) { return false; }
 };
 
 class CreatureScript : public ScriptObject, public UpdatableScript<Creature>
@@ -465,6 +488,7 @@ enum UnitHook
     UNITHOOK_ON_UNIT_ENTER_COMBAT,
     UNITHOOK_ON_UNIT_EXIT_COMBAT,
     UNITHOOK_ON_UNIT_DEATH,
+    UNITHOOK_ON_BUFF_RECEIVED,
     UNITHOOK_END
 };
 
@@ -490,6 +514,7 @@ class UnitScript : public ScriptObject
         virtual void OnUnitEnterCombat(Unit* /*unit*/, Unit* /*victim*/) {}
         virtual void OnUnitExitCombat(Unit* /*unit*/) {}
         virtual void OnUnitDeath(Unit* /*unit*/, Unit* /*killer*/) {}
+        virtual void OnBuffReceived(Unit* /*target*/, Player* /*caster*/, uint32 /*spellId*/) {}
 };
 
 class WorldObjectScript : public ScriptObject
@@ -700,6 +725,7 @@ class GroupScript : public ScriptObject
         virtual void OnRemoveMember(Group* /*group*/, ObjectGuid /*guid*/, uint8 /*method*/) {}
         virtual void OnChangeLeader(Group* /*group*/, ObjectGuid /*newLeaderGuid*/, ObjectGuid /*oldLeaderGuid*/) {}
         virtual void OnDisband(Group* /*group*/) {}
+        virtual void OnLootRollStarted(Group* /*group*/, ObjectGuid const& /*target*/, uint32 /*itemSlot*/, uint32 /*itemId*/) {}
 };
 
 class GuildScript : public ScriptObject
@@ -711,6 +737,7 @@ class GuildScript : public ScriptObject
         virtual void OnRemoveMember(Guild* /*guild*/, Player* /*player*/, bool /*isDisbanding*/, bool /*isKicked*/) {}
         virtual void OnCreate(Guild* /*guild*/, Player* /*leader*/, std::string const& /*name*/) {}
         virtual void OnDisband(Guild* /*guild*/) {}
+        virtual void OnGuildInvite(Player* /*invited*/) {}
 };
 
 class MailScript : public ScriptObject

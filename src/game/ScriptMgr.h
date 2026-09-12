@@ -22,6 +22,7 @@
 #define _SCRIPTMGR_H
 
 #include "Common.h"
+#include <string>
 #include "Log.h"
 #include "Policies/Singleton.h"
 #include "ObjectGuid.h"
@@ -1517,6 +1518,8 @@ struct Script
     void RegisterSelf(bool reportUnused = true);
 };
 
+class WorldPacket;
+
 class ScriptMgr
 {
     public:
@@ -1608,6 +1611,9 @@ class ScriptMgr
 
         bool OnGossipHello(Player* pPlayer, Creature* pCreature);
         bool OnGossipHello(Player* pPlayer, GameObject* pGameObject);
+        bool IsBotManaged(Player* who);
+        uint8 GetBotRoles(Player* who);
+        bool OnAddonMessage(Player* from, std::string const& msg);
         bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 action, const char* code);
         bool OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 sender, uint32 action, const char* code);
         bool OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest);
