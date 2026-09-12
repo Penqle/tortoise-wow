@@ -110,7 +110,9 @@ int ns1__executeCommand(struct soap* soap, char* command, char** result)
     if (!sAccountMgr.CheckPassword(accountId, soap->passwd))
         return 401;
 
-    if (sAccountMgr.GetSecurity(accountId) < SOAPThread::MinLevel)
+    // The rank cache is filled at startup and by .account set gmlevel; an account
+    // inserted or promoted by SQL while the world runs is not in it. Read the row.
+    if (sAccountMgr.GetSecurityFromDatabase(accountId) < SOAPThread::MinLevel)
         return 403;
 
     if (!command || !*command)
