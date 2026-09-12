@@ -145,6 +145,7 @@ enum PlayerHook
     PLAYERHOOK_ON_BEFORE_TELEPORT,
     PLAYERHOOK_ON_LOOT_ITEM,
     PLAYERHOOK_ON_CHAT_SAY,
+    PLAYERHOOK_ON_CHAT_YELL,
     PLAYERHOOK_ON_CHAT_CHANNEL,
     PLAYERHOOK_ON_CHAT_WHISPER,
     PLAYERHOOK_ON_CHAT_GUILD,
@@ -199,6 +200,7 @@ class PlayerScript : public ScriptObject
         virtual void OnBeforeTeleport(Player* /*player*/, uint32 /*mapId*/, float /*x*/, float /*y*/, float /*z*/, float /*orientation*/) {}
         virtual void OnLootItem(Player* /*player*/, Item* /*item*/, uint32 /*count*/, ObjectGuid /*lootGuid*/) {}
         virtual void OnChatSay(Player* /*from*/, float /*range*/, char const* /*msg*/) {}
+        virtual void OnChatYell(Player* /*from*/, float /*range*/, char const* /*msg*/) {}
         virtual void OnChatChannel(Player* /*from*/, char const* /*channel*/, char const* /*msg*/) {}
         virtual void OnChatWhisper(Player* /*from*/, char const* /*msg*/) {}
         virtual void OnChatGuild(Player* /*from*/, char const* /*msg*/) {}
