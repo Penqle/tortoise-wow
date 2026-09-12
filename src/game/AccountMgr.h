@@ -108,6 +108,10 @@ class AccountMgr
 
         void Load();
         AccountTypes GetSecurity(uint32 acc_id);
+        // Reads the rank from the account row instead of the cache LoadGmLevels
+        // fills at startup: callers outside the game (SOAP) must see a row that
+        // was inserted or changed by SQL while the world runs.
+        AccountTypes GetSecurityFromDatabase(uint32 acc_id);
         void SetSecurity(uint32 accId, AccountTypes sec);
 
         void LoadGmLevels();
